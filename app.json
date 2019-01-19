@@ -1,0 +1,14 @@
+{
+  "name": "Holochain Version Control",
+  "description": "Git version control for any Holochain app",
+  "authors": [
+    {
+      "identifier": "Guillem Cordoba <guillem.cordoba@gmail.com>",
+      "public_key_source": "",
+      "signature": ""
+    }
+  ],
+  "version": "0.1.0",
+  "dht": {},
+  "properties": null
+}
