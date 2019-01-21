@@ -26,18 +26,18 @@ impl Tree {
 /** Structure to receive and send the contents of a commit  */
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub enum CommitNode {
-  ChildTree(CommitTree),
+  ChildTree(CommitContent),
   ChildBlob(Blob),
 }
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
-pub struct CommitTree {
+pub struct CommitContent {
   contents: HashMap<String, CommitNode>,
 }
 
-impl CommitTree {
-  fn new(contents: HashMap<String, CommitNode>) -> CommitTree {
-    CommitTree { contents: contents }
+impl CommitContent {
+  fn new(contents: HashMap<String, CommitNode>) -> CommitContent {
+    CommitContent { contents: contents }
   }
 }
 
@@ -76,7 +76,7 @@ pub fn definition() -> ValidatingEntryType {
 /**
  * Recursevely goes through the tree, retrieving its contents
  */
-pub fn build_tree_content(tree: Tree) -> ZomeApiResult<Option<CommitTree>> {
+pub fn build_tree_content(tree: Tree) -> ZomeApiResult<Option<CommitContent>> {
   let mut contents = HashMap::new();
 
   // Iterate through the dht addressed map and store the results in a new value map
@@ -96,10 +96,10 @@ pub fn build_tree_content(tree: Tree) -> ZomeApiResult<Option<CommitTree>> {
     }
   }
 
-  Ok(Some(CommitTree::new(contents)))
+  Ok(Some(CommitContent::new(contents)))
 }
 
-pub fn get_tree_content(tree_address: Address) -> ZomeApiResult<Option<CommitTree>> {
+pub fn get_tree_content(tree_address: Address) -> ZomeApiResult<Option<CommitContent>> {
   if let Some(Entry::App(_, tree_entry)) = hdk::get_entry(&tree_address)? {
     let tree_contents = Tree::try_from(tree_entry)?;
     return build_tree_content(tree_contents);
@@ -111,7 +111,7 @@ pub fn get_tree_content(tree_address: Address) -> ZomeApiResult<Option<CommitTre
 /**
  * Recursevely go through the tree storing its contents
  */
-pub fn store_tree_content(content: CommitTree) -> ZomeApiResult<Address> {
+pub fn store_tree_content(content: CommitContent) -> ZomeApiResult<Address> {
   let mut contents: HashMap<String, Address> = HashMap::new();
 
   for (key, val) in content.contents.into_iter() {

@@ -49,7 +49,7 @@ define_zome! {
       }
 
       create_commit: {
-        inputs: |branch_address: Address, message: String, content: tree::CommitTree|,
+        inputs: |branch_address: Address, message: String, content: tree::CommitContent|,
         outputs: |result: ZomeApiResult<Address>|,
         handler: branch::handle_create_commit
       }
@@ -62,7 +62,7 @@ define_zome! {
 
 /*       get_commit_contents: {
         inputs: |commit_address: Address|,
-        outputs: |result: ZomeApiResult<Option<tree::CommitTree>>|,
+        outputs: |result: ZomeApiResult<Option<tree::CommitContent>>|,
         handler: commit::handle_get_commit_contents
       }
  */    }

@@ -11,7 +11,7 @@ use hdk::{
   },
 };
 
-use crate::tree::CommitTree;
+use crate::tree::CommitContent;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Branch {
@@ -62,7 +62,7 @@ pub fn definition() -> ValidatingEntryType {
 pub fn handle_create_commit(
   branch_address: Address,
   message: String,
-  content: CommitTree,
+  content: CommitContent,
 ) -> ZomeApiResult<Address> {
   let tree_address = crate::tree::store_tree_content(content)?;
 

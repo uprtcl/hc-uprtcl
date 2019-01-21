@@ -1,4 +1,4 @@
-use crate::tree::CommitTree;
+use crate::tree::CommitContent;
 use boolinator::Boolinator;
 use hdk::{
   entry_definition::ValidatingEntryType,
@@ -84,7 +84,7 @@ pub fn handle_get_commit_info(commit_address: Address) -> ZomeApiResult<Option<E
 /**
  * Retrieves the full contents of the commit with the given address
  */
-pub fn handle_get_commit_contents(commit_address: Address) -> ZomeApiResult<Option<CommitTree>> {
+pub fn handle_get_commit_contents(commit_address: Address) -> ZomeApiResult<Option<CommitContent>> {
   if let Some(Entry::App(_, commit_entry)) = hdk::get_entry(&commit_address)? {
     let commit = Commit::try_from(commit_entry)?;
     return crate::tree::get_tree_content(commit.tree_address);

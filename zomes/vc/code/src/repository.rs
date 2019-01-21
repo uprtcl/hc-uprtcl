@@ -3,10 +3,7 @@ use hdk::{
   entry_definition::ValidatingEntryType,
   error::ZomeApiResult,
   holochain_core_types::{
-    cas::content::Address,
-    dna::entry_types::Sharing,
-    entry::Entry,
-    error::HolochainError,
+    cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
 };
@@ -86,8 +83,9 @@ pub fn handle_create_branch_in_repository(
 /**
  * Links the given branch to the given repository as an active branch
  */
-pub fn link_branch_to_repository(repository_address: &Address,
-  branch_address: &Address
+pub fn link_branch_to_repository(
+  repository_address: &Address,
+  branch_address: &Address,
 ) -> ZomeApiResult<()> {
   hdk::link_entries(repository_address, branch_address, "active_branches")
 }
