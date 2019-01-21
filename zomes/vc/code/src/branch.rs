@@ -88,13 +88,19 @@ pub fn create_commit_in_branch(
   Ok(commit_address)
 }
 
+/** 
+ * Create new branch with the given name
+ */
+pub fn create_new_empty_branch(name: String) -> ZomeApiResult<Address> {
+  let branch_entry = Entry::App("branch".into(), Branch::new(&name).into());
+  hdk::commit_entry(&branch_entry)
+}
+
 /**
- * Create new branch with the head pointing the given commit with the given name
+ * Create new branch with the given name with the head pointing the given commit 
  */
 pub fn create_new_branch(commit_address: Address, name: String) -> ZomeApiResult<Address> {
-  let branch_entry = Entry::App("branch".into(), Branch::new(&name).into());
-
-  let branch_address = hdk::commit_entry(&branch_entry)?;
+  let branch_address = create_new_empty_branch(name)?;
 
   hdk::link_entries(&branch_address, &commit_address, "branch_head")?;
 

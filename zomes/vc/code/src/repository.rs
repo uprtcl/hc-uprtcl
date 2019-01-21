@@ -60,11 +60,16 @@ pub fn definition() -> ValidatingEntryType {
 pub fn handle_create_repository(name: String) -> ZomeApiResult<Address> {
   let repository_entry = Entry::App("repository".into(), Repository::new(&name).into());
 
-  hdk::commit_entry(&repository_entry)
+  let repository_address = hdk::commit_entry(&repository_entry)?;
+  let branch_address = crate::branch::create_new_empty_branch(String::from("master"))?;
+
+  link_branch_to_repository(&repository_address, &branch_address)?;
+
+  Ok(repository_address)
 }
 
 /**
- * Creates a new branch in the given repository with the head pointint to the given commit
+ * Creates a new branch in the given repository with the head pointing to the given commit
  */
 pub fn handle_create_branch_in_repository(
   repository_address: Address,
@@ -73,7 +78,16 @@ pub fn handle_create_branch_in_repository(
 ) -> ZomeApiResult<Address> {
   let branch_address = crate::branch::create_new_branch(commit_address, name)?;
 
-  hdk::link_entries(&repository_address, &branch_address, "active_branches")?;
+  link_branch_to_repository(&repository_address, &branch_address)?;
 
   Ok(branch_address)
+}
+
+/**
+ * Links the given branch to the given repository as an active branch
+ */
+pub fn link_branch_to_repository(repository_address: &Address,
+  branch_address: &Address
+) -> ZomeApiResult<()> {
+  hdk::link_entries(repository_address, branch_address, "active_branches")
 }
