@@ -18,10 +18,10 @@ use hdk::{
 // see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
 
 pub mod blob;
-pub mod tree;
-pub mod commit;
 pub mod branch;
+pub mod commit;
 pub mod repository;
+pub mod tree;
 
 define_zome! {
   entries: [
@@ -36,16 +36,29 @@ define_zome! {
 
   functions: {
     main (Public) {
+      // Repositories
       create_repository: {
         inputs: |name: String|,
         outputs: |result: ZomeApiResult<Address>|,
         handler: repository::handle_create_repository
       }
 
+      get_repository_info: {
+        inputs: |repository_address: Address|,
+        outputs: |result: ZomeApiResult<Option<Entry>>|,
+        handler: repository::handle_get_repository_info
+      }
+
       create_branch_in_repository: {
         inputs: |repository_address: Address, commit_address: Address, name: String|,
         outputs: |result: ZomeApiResult<Address>|,
         handler: repository::handle_create_branch_in_repository
+      }
+
+      get_repository_branches: {
+        inputs: |repository_address: Address|,
+        outputs: |result: ZomeApiResult<Vec<ZomeApiResult<Entry>>>|,
+        handler: repository::handle_get_repository_branches
       }
 
       create_commit: {
@@ -60,11 +73,12 @@ define_zome! {
         handler: commit::handle_get_commit_info
       }
 
-/*       get_commit_contents: {
+/*        get_commit_contents: {
         inputs: |commit_address: Address|,
         outputs: |result: ZomeApiResult<Option<tree::CommitContent>>|,
         handler: commit::handle_get_commit_contents
       }
- */    }
+ */
+    }
   }
 }

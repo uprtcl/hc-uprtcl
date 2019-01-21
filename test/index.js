@@ -1,22 +1,38 @@
-// This test file uses the tape testing framework.
-// To learn more, go here: https://github.com/substack/tape
+const path = require('path');
 const test = require('tape');
-const Container = require('@holochain/holochain-nodejs');
 
-// instantiate an app from the DNA JSON bundle
-const app = Container.loadAndInstantiate("dist/bundle.json")
+const { Config, Container } = require('@holochain/holochain-nodejs');
 
-// activate the new instance
-app.start()
+const dnaPath = path.join(__dirname, '../dist/bundle.json');
+const dna = Config.dna(dnaPath);
+const agentAlice = Config.agent('alice');
+const agentBob = Config.agent('bob');
 
-test('description of example test', (t) => {
+const instanceAlice = Config.instance(agentAlice, dna);
+const instanceBob = Config.instance(agentBob, dna);
+
+const config = Config.container([instanceAlice, instanceBob]);
+const container = new Container(config);
+
+container.start();
+const alice = container.makeCaller('alice', dnaPath);
+
+test('create repository', async t => {
   // Make a call to a Zome function
   // indicating the capability and function, and passing it an input
-  // const result = app.call("zome-name", "capability-name", "function-name", {})
+  const newRepoAddress = alice.call('vc', 'main', 'create_repository', {
+    name: 'myNewRepository'
+  });
+
+  const result = alice.call('vc', 'main', 'get_repository_info', {
+    repository_address: newRepoAddress.Ok
+  });
+
+  const repoInfo = JSON.parse(result.Ok.App[1]);
 
   // check for equality of the actual and expected results
-  // t.equal(result, "expected result!")
+  t.equal(repoInfo.name, 'myNewRepository');
 
   // ends this test
-  t.end()
-})
+  t.end();
+});

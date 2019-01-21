@@ -38,7 +38,7 @@ pub fn definition() -> ValidatingEntryType {
 
     links: [
       to!(
-        "branches",
+        "branch",
         tag: "active_branches",
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
@@ -50,6 +50,8 @@ pub fn definition() -> ValidatingEntryType {
     ]
   )
 }
+
+/** Exposed functions */
 
 /**
  * Create a new repository with the given name
@@ -66,6 +68,13 @@ pub fn handle_create_repository(name: String) -> ZomeApiResult<Address> {
 }
 
 /**
+ * Retrieves the information about the repository
+ */
+pub fn handle_get_repository_info(repository_address: Address) -> ZomeApiResult<Option<Entry>> {
+  hdk::get_entry(&repository_address)
+}
+
+/**
  * Creates a new branch in the given repository with the head pointing to the given commit
  */
 pub fn handle_create_branch_in_repository(
@@ -78,6 +87,10 @@ pub fn handle_create_branch_in_repository(
   link_branch_to_repository(&repository_address, &branch_address)?;
 
   Ok(branch_address)
+}
+
+pub fn handle_get_repository_branches(repository_address: Address) -> ZomeApiResult<Vec<ZomeApiResult<Entry>>> {
+  hdk::get_links_and_load(&repository_address, "active_branches")
 }
 
 /**
