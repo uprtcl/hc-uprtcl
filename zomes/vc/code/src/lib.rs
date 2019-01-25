@@ -14,6 +14,7 @@ use hdk::{
   error::ZomeApiResult,
   holochain_core_types::{cas::content::Address, entry::Entry},
 };
+use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
 
 // see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
 
@@ -51,15 +52,27 @@ define_zome! {
       }
 
       create_branch_in_context: {
-        inputs: |context_address: Address, commit_address: Address, name: String|,
+        inputs: |commit_address: Address, name: String|,
         outputs: |result: ZomeApiResult<Address>|,
         handler: context::handle_create_branch_in_context
       }
 
       get_context_branches: {
         inputs: |context_address: Address|,
-        outputs: |result: ZomeApiResult<Vec<ZomeApiResult<Entry>>>|,
+        outputs: |result: ZomeApiResult<GetLinksResult>|,
         handler: context::handle_get_context_branches
+      }
+
+      get_branch_info: {
+        inputs: |branch_address: Address|,
+        outputs: |result: ZomeApiResult<Option<Entry>>|,
+        handler: branch::handle_get_branch_info
+      }
+
+      get_branch_head: {
+        inputs: |branch_address: Address|,
+        outputs: |result: ZomeApiResult<GetLinksResult>|,
+        handler: branch::handle_get_branch_head
       }
 
       create_commit: {

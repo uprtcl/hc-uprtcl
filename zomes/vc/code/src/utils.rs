@@ -1,8 +1,9 @@
 
 use hdk::{
-  error::ZomeApiResult,
+  error::{ZomeApiError, ZomeApiResult},
+  
   holochain_core_types::{
-    cas::content::Address,
+    cas::content::{Address, Content},
     entry::Entry,
   },
 };
@@ -19,3 +20,13 @@ pub fn store_entry_if_new(entry: Entry) -> ZomeApiResult<Address> {
     None => hdk::commit_entry(&entry),
   }
 }
+
+/**
+ * Gets the entry from the DHT if it exists, returns error otherwise
+ */
+pub fn get_entry_content(entry_address: &Address) -> ZomeApiResult<Content> {
+  match hdk::get_entry(entry_address)? {
+    Some(Entry::App(_, entry)) => Ok(entry),
+    _ => Err(ZomeApiError::from(String::from("entry does not exist"))),
+  }
+} 

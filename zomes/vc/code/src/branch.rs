@@ -5,12 +5,13 @@ use crate::commit::{
 use boolinator::Boolinator;
 use hdk::{
   entry_definition::ValidatingEntryType,
-  error::{ZomeApiError, ZomeApiResult},
+  error::ZomeApiResult,
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
 };
+use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
 use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
@@ -61,6 +62,13 @@ pub fn definition() -> ValidatingEntryType {
 /** Zome exposed functions */
 
 /**
+ * Retrieves the information about the branch
+ */
+pub fn handle_get_branch_info(branch_address: Address) -> ZomeApiResult<Option<Entry>> {
+  hdk::get_entry(&branch_address)
+}
+
+/**
  * Handles the creation of a commit: store all the contents of the commit, and commits them in the branch
  */
 pub fn handle_create_commit(
@@ -72,6 +80,14 @@ pub fn handle_create_commit(
 
   create_commit_in_branch(branch_address, message, content_address)
 }
+
+/**
+ * Returns the address of the head commit for the given branch
+ */
+pub fn handle_get_branch_head(branch_address: Address) -> ZomeApiResult<GetLinksResult> {
+  hdk::get_links(&branch_address, "branch_head")
+}
+
 
 /** Helper functions */
 
@@ -93,27 +109,20 @@ pub fn create_commit_in_branch(
   message: String,
   content_address: Address,
 ) -> ZomeApiResult<Address> {
-  let maybe_branch_entry = hdk::get_entry(&branch_address)?;
+  let branch = Branch::try_from(crate::utils::get_entry_content(&branch_address)?)?;
+  let parent_commit_address = hdk::get_links(&branch_address, "branch_head")?;
 
-  match hdk::get_entry(&branch_address)? {
-    Some(Entry::App(_, branch_entry)) => {
-      let branch = Branch::try_from(branch_entry)?;
-      let parent_commit_address = hdk::get_links(&branch_address, "branch_head")?;
+  let commit_address = crate::commit::create_commit(
+    branch.context_address,
+    message,
+    content_address,
+    parent_commit_address.addresses(),
+  )?;
 
-      let commit_address = crate::commit::create_commit(
-        branch.context_address,
-        message,
-        content_address,
-        parent_commit_address.addresses().to_owned(),
-      )?;
+  // TODO: delete the previous link to the branch head commit
+  hdk::link_entries(&branch_address, &commit_address, "branch_head")?;
 
-      // TODO: delete the previous link to the branch head commit
-      hdk::link_entries(&branch_address, &commit_address, "branch_head")?;
-
-      Ok(commit_address)
-    }
-    _ => Err(ZomeApiError::from(String::from("branch does not exist"))),
-  }
+  Ok(commit_address)
 }
 
 /**
@@ -129,12 +138,12 @@ pub fn create_new_empty_branch(context_address: &Address, name: String) -> ZomeA
  */
 pub fn create_new_branch(
   context_address: &Address,
-  commit_address: Address,
+  commit_address: &Address,
   name: String,
 ) -> ZomeApiResult<Address> {
   let branch_address = create_new_empty_branch(context_address, name)?;
 
-  hdk::link_entries(&branch_address, &commit_address, "branch_head")?;
+  hdk::link_entries(&branch_address, commit_address, "branch_head")?;
 
   Ok(branch_address)
 }

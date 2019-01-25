@@ -1,4 +1,3 @@
-use crate::{blob::Blob, tree::Tree};
 use boolinator::Boolinator;
 use hdk::{
   entry_definition::ValidatingEntryType,
@@ -10,6 +9,7 @@ use hdk::{
   AGENT_ADDRESS,
 };
 use std::convert::TryFrom;
+use crate::{blob::Blob, tree::Tree};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Commit {
@@ -105,7 +105,7 @@ pub fn create_commit(
   context_address: Address,
   message: String,
   content_address: Address,
-  parent_commits: Vec<Address>,
+  parent_commits: &Vec<Address>,
 ) -> ZomeApiResult<Address> {
   let commit_entry = Entry::App(
     "commit".into(),
@@ -114,10 +114,18 @@ pub fn create_commit(
       &AGENT_ADDRESS,
       &message,
       &content_address,
-      &parent_commits,
+      parent_commits,
     )
     .into(),
   );
 
   hdk::commit_entry(&commit_entry)
+}
+
+/**
+ * Gets the commit and returns its context address
+ */
+pub fn get_context_address(commit_address: &Address) -> ZomeApiResult<Address> {
+  let commit = Commit::try_from(crate::utils::get_entry_content(commit_address)?)?;
+  Ok(commit.context_address)
 }
