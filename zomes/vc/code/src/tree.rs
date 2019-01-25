@@ -14,7 +14,8 @@ use std::convert::TryFrom;
 /** Structure to store a tree in the DHT */
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Tree {
-  contents: HashMap<String, Address>,
+  // <Name of the context in this tree, Address of the referred branch of commit>
+  contents: HashMap<String, Address>, 
 }
 
 impl Tree {
@@ -23,22 +24,8 @@ impl Tree {
   }
 }
 
-/** Structure to receive and send the contents of a commit  */
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
-pub enum CommitNode {
-  ChildTree(CommitContent),
-  ChildBlob(Blob),
-}
+pub struct TreeContents {
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
-pub struct CommitContent {
-  contents: HashMap<String, CommitNode>,
-}
-
-impl CommitContent {
-  fn new(contents: HashMap<String, CommitNode>) -> CommitContent {
-    CommitContent { contents: contents }
-  }
 }
 
 pub fn definition() -> ValidatingEntryType {
@@ -73,6 +60,17 @@ pub fn definition() -> ValidatingEntryType {
     )
 }
 
+/** Helper functions */
+
+/**
+ * Stores the contents of the given tree in the DHT, if it didn't exist before
+ */
+pub fn store_tree(tree: Tree) -> ZomeApiResult<Address> {
+  let tree_entry = Entry::App("tree".into(), tree.into());
+  crate::utils::store_entry_if_new(tree_entry)
+}
+
+/* 
 /**
  * Recursevely goes through the tree, retrieving its contents
  */
@@ -134,3 +132,4 @@ pub fn store_tree_content(content: CommitContent) -> ZomeApiResult<Address> {
     None => hdk::commit_entry(&tree_entry),
   }
 }
+ */

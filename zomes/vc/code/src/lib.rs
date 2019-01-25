@@ -20,8 +20,9 @@ use hdk::{
 pub mod blob;
 pub mod branch;
 pub mod commit;
-pub mod repository;
+pub mod context;
 pub mod tree;
+pub mod utils;
 
 define_zome! {
   entries: [
@@ -29,7 +30,7 @@ define_zome! {
     tree::definition(),
     commit::definition(),
     branch::definition(),
-    repository::definition()
+    context::definition()
   ]
 
   genesis: || { Ok(()) }
@@ -37,32 +38,32 @@ define_zome! {
   functions: {
     main (Public) {
       // Repositories
-      create_repository: {
+      create_context: {
         inputs: |name: String|,
         outputs: |result: ZomeApiResult<Address>|,
-        handler: repository::handle_create_repository
+        handler: context::handle_create_context
       }
 
-      get_repository_info: {
-        inputs: |repository_address: Address|,
+      get_context_info: {
+        inputs: |context_address: Address|,
         outputs: |result: ZomeApiResult<Option<Entry>>|,
-        handler: repository::handle_get_repository_info
+        handler: context::handle_get_context_info
       }
 
-      create_branch_in_repository: {
-        inputs: |repository_address: Address, commit_address: Address, name: String|,
+      create_branch_in_context: {
+        inputs: |context_address: Address, commit_address: Address, name: String|,
         outputs: |result: ZomeApiResult<Address>|,
-        handler: repository::handle_create_branch_in_repository
+        handler: context::handle_create_branch_in_context
       }
 
-      get_repository_branches: {
-        inputs: |repository_address: Address|,
+      get_context_branches: {
+        inputs: |context_address: Address|,
         outputs: |result: ZomeApiResult<Vec<ZomeApiResult<Entry>>>|,
-        handler: repository::handle_get_repository_branches
+        handler: context::handle_get_context_branches
       }
 
       create_commit: {
-        inputs: |branch_address: Address, message: String, content: tree::CommitContent|,
+        inputs: |branch_address: Address, message: String, content: commit::CommitContent|,
         outputs: |result: ZomeApiResult<Address>|,
         handler: branch::handle_create_commit
       }
@@ -73,12 +74,12 @@ define_zome! {
         handler: commit::handle_get_commit_info
       }
 
-/*        get_commit_contents: {
+      get_commit_content: {
         inputs: |commit_address: Address|,
-        outputs: |result: ZomeApiResult<Option<tree::CommitContent>>|,
-        handler: commit::handle_get_commit_contents
+        outputs: |result: ZomeApiResult<Option<Entry>>|,
+        handler: commit::handle_get_commit_content
       }
- */
+
     }
   }
 }

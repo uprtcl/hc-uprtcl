@@ -3,26 +3,34 @@ use hdk::{
   entry_definition::ValidatingEntryType,
   error::ZomeApiResult,
   holochain_core_types::{
-    cas::content::Address,
-    dna::entry_types::Sharing,
-    entry::Entry,
-    error::HolochainError,
+    cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
 };
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
+pub enum BlobType {
+  HolochainEntry {
+    dna_address: Address,
+    entry_address: Address,
+  },
+}
+
+#[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Blob {
-  dna_address: Address,
-  entry_address: Address,
+  content: BlobType,
 }
 
 impl Blob {
-  fn new(dna_address: Address, entry_address: Address) -> Blob {
-    Blob {
-      dna_address: dna_address,
-      entry_address: entry_address,
-    }
+  fn new(content: BlobType) -> Blob {
+    Blob { content: content }
+  }
+
+  fn from(dna_address: Address, entry_address: Address) -> Blob {
+    Blob::new(BlobType::HolochainEntry {
+      dna_address: dna_address.to_owned(),
+      entry_address: entry_address.to_owned(),
+    })
   }
 }
 
@@ -63,10 +71,5 @@ pub fn definition() -> ValidatingEntryType {
  */
 pub fn store_blob(blob: Blob) -> ZomeApiResult<Address> {
   let blob_entry = Entry::App("blob".into(), blob.into());
-  let blob_address = hdk::entry_address(&blob_entry)?;
-
-  match hdk::get_entry(&blob_address)? {
-    Some(blob) => Ok(blob_address),
-    None => hdk::commit_entry(&blob_entry),
-  }
+  crate::utils::store_entry_if_new(blob_entry)
 }

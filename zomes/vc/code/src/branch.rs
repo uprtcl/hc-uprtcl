@@ -1,26 +1,28 @@
+use crate::commit::{
+  CommitContent,
+  CommitContent::{ContentBlob, ContentTree},
+};
 use boolinator::Boolinator;
 use hdk::{
   entry_definition::ValidatingEntryType,
-  error::ZomeApiResult,
+  error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::{
-    cas::content::Address,
-    dna::entry_types::Sharing,
-    entry::Entry,
-    error::HolochainError,
+    cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
 };
-
-use crate::tree::CommitContent;
+use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Branch {
+  context_address: Address,
   name: String,
 }
 
 impl Branch {
-  fn new(name: &str) -> Branch {
+  fn new(context_address: &Address, name: &str) -> Branch {
     Branch {
+      context_address: context_address.to_owned(),
       name: name.to_owned(),
     }
   }
@@ -56,6 +58,8 @@ pub fn definition() -> ValidatingEntryType {
   )
 }
 
+/** Zome exposed functions */
+
 /**
  * Handles the creation of a commit: store all the contents of the commit, and commits them in the branch
  */
@@ -64,9 +68,21 @@ pub fn handle_create_commit(
   message: String,
   content: CommitContent,
 ) -> ZomeApiResult<Address> {
-  let tree_address = crate::tree::store_tree_content(content)?;
+  let content_address = store_commit_content(content)?;
 
-  create_commit_in_branch(branch_address, message, tree_address)
+  create_commit_in_branch(branch_address, message, content_address)
+}
+
+/** Helper functions */
+
+/**
+ * Stores the contents of the commit in the DHT
+ */
+fn store_commit_content(content: CommitContent) -> ZomeApiResult<Address> {
+  match content {
+    ContentBlob(blob) => crate::blob::store_blob(blob),
+    ContentTree(tree) => crate::tree::store_tree(tree),
+  }
 }
 
 /**
@@ -75,32 +91,48 @@ pub fn handle_create_commit(
 pub fn create_commit_in_branch(
   branch_address: Address,
   message: String,
-  tree_address: Address,
+  content_address: Address,
 ) -> ZomeApiResult<Address> {
-  let parent_commit_address = hdk::get_links(&branch_address, "branch_head")?;
+  let maybe_branch_entry = hdk::get_entry(&branch_address)?;
 
-  let commit_address =
-    crate::commit::create_commit(message, tree_address, parent_commit_address.addresses().to_owned())?;
+  match hdk::get_entry(&branch_address)? {
+    Some(Entry::App(_, branch_entry)) => {
+      let branch = Branch::try_from(branch_entry)?;
+      let parent_commit_address = hdk::get_links(&branch_address, "branch_head")?;
 
-  // TODO: delete the previous link to the branch head commit
-  hdk::link_entries(&branch_address, &commit_address, "branch_head")?;
+      let commit_address = crate::commit::create_commit(
+        branch.context_address,
+        message,
+        content_address,
+        parent_commit_address.addresses().to_owned(),
+      )?;
 
-  Ok(commit_address)
+      // TODO: delete the previous link to the branch head commit
+      hdk::link_entries(&branch_address, &commit_address, "branch_head")?;
+
+      Ok(commit_address)
+    }
+    _ => Err(ZomeApiError::from(String::from("branch does not exist"))),
+  }
 }
 
-/** 
+/**
  * Create new branch with the given name
  */
-pub fn create_new_empty_branch(name: String) -> ZomeApiResult<Address> {
-  let branch_entry = Entry::App("branch".into(), Branch::new(&name).into());
+pub fn create_new_empty_branch(context_address: &Address, name: String) -> ZomeApiResult<Address> {
+  let branch_entry = Entry::App("branch".into(), Branch::new(context_address, &name).into());
   hdk::commit_entry(&branch_entry)
 }
 
 /**
- * Create new branch with the given name with the head pointing the given commit 
+ * Create new branch with the given name with the head pointing the given commit
  */
-pub fn create_new_branch(commit_address: Address, name: String) -> ZomeApiResult<Address> {
-  let branch_address = create_new_empty_branch(name)?;
+pub fn create_new_branch(
+  context_address: &Address,
+  commit_address: Address,
+  name: String,
+) -> ZomeApiResult<Address> {
+  let branch_address = create_new_empty_branch(context_address, name)?;
 
   hdk::link_entries(&branch_address, &commit_address, "branch_head")?;
 

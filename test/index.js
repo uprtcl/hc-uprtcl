@@ -17,21 +17,21 @@ const container = new Container(config);
 container.start();
 const alice = container.makeCaller('alice', dnaPath);
 
-test('create repository', async t => {
+test('create content', async t => {
   // Make a call to a Zome function
   // indicating the capability and function, and passing it an input
-  const newRepoAddress = alice.call('vc', 'main', 'create_repository', {
-    name: 'myNewRepository'
+  const newContextAddress = alice.call('vc', 'main', 'create_context', {
+    name: 'myNewContext'
   });
 
-  const result = alice.call('vc', 'main', 'get_repository_info', {
-    repository_address: newRepoAddress.Ok
+  const result = alice.call('vc', 'main', 'get_context_info', {
+    context_address: newContextAddress.Ok
   });
 
-  const repoInfo = JSON.parse(result.Ok.App[1]);
+  const contextInfo = JSON.parse(result.Ok.App[1]);
 
   // check for equality of the actual and expected results
-  t.equal(repoInfo.name, 'myNewRepository');
+  t.equal(contextInfo.name, 'myNewContext');
 
   // ends this test
   t.end();
