@@ -29,4 +29,4 @@ pub fn get_entry_content(entry_address: &Address) -> ZomeApiResult<Content> {
     Some(Entry::App(_, entry)) => Ok(entry),
     _ => Err(ZomeApiError::from(String::from("entry does not exist"))),
   }
-} 
+}
