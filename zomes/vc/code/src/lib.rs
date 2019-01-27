@@ -26,6 +26,7 @@ pub mod commit;
 pub mod context;
 pub mod tree;
 pub mod utils;
+pub mod merge;
 
 define_zome! {
   entries: [
@@ -72,7 +73,7 @@ define_zome! {
 
       get_branch_head: {
         inputs: |branch_address: Address|,
-        outputs: |result: ZomeApiResult<GetLinksResult>|,
+        outputs: |result: ZomeApiResult<Address>|,
         handler: branch::handle_get_branch_head
       }
 

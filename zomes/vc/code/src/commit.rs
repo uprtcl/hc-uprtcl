@@ -18,6 +18,7 @@ pub struct Commit {
 
   author_address: Address,
   message: String,
+  // Content can point to a tree or a blob
   content_address: Address,
   parent_commits_addresses: Vec<Address>,
 }
@@ -134,4 +135,24 @@ pub fn store_commit_content(content: CommitContent) -> ZomeApiResult<Address> {
 pub fn get_context_address(commit_address: &Address) -> ZomeApiResult<Address> {
   let commit = Commit::try_from(crate::utils::get_entry_content(commit_address)?)?;
   Ok(commit.context_address)
+}
+
+/**
+ * Merges the given commits and returns the resulting commit
+ * Pre: both commits belong to the same context
+ */
+pub fn merge_commits(
+  from_commit_address: Address,
+  to_commit_address: Address,
+  merge_commit_message: String
+) -> ZomeApiResult<Address> {
+  let merge_content_address = crate::merge::merge_commits_contents(from_commit_address, to_commit_address)?;
+  let to_commit: Commit = Commit::try_from(crate::utils::get_entry_content(&to_commit_address)?)?;
+
+  create_commit(
+    to_commit.context_address,
+    merge_commit_message,
+    merge_content_address,
+    &vec![from_commit_address, to_commit_address],
+  )
 }

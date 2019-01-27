@@ -1,17 +1,12 @@
-use crate::commit::{
-  CommitContent,
-  CommitContent::{ContentBlob, ContentTree},
-};
-use boolinator::Boolinator;
+use crate::commit::CommitContent;
 use hdk::{
   entry_definition::ValidatingEntryType,
-  error::ZomeApiResult,
+  error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
 };
-use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
 use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
@@ -77,19 +72,59 @@ pub fn handle_create_commit(
   content: CommitContent,
 ) -> ZomeApiResult<Address> {
   let content_address = crate::commit::store_commit_content(content)?;
-
   create_commit_in_branch(branch_address, message, content_address)
 }
 
 /**
  * Returns the address of the head commit for the given branch
  */
-pub fn handle_get_branch_head(branch_address: Address) -> ZomeApiResult<GetLinksResult> {
-  hdk::get_links(&branch_address, "branch_head")
+pub fn handle_get_branch_head(branch_address: Address) -> ZomeApiResult<Address> {
+  let links_result = hdk::get_links(&branch_address, "branch_head")?;
+
+  if links_result.addresses().len() == 0 {
+    return Err(ZomeApiError::from(String::from(
+      "given branch has not commits",
+    )));
+  }
+  Ok(links_result.addresses().get(0).unwrap().to_owned())
 }
 
+/**
+ * Merges the head commits of the two given branches and returns the resulting commit
+ */
+pub fn handle_merge_branches(
+  from_branch_address: Address,
+  to_branch_address: Address,
+) -> ZomeApiResult<Address> {
+  let from_branch: Branch =
+    Branch::try_from(crate::utils::get_entry_content(&from_branch_address)?)?;
+  let to_branch: Branch = Branch::try_from(crate::utils::get_entry_content(&to_branch_address)?)?;
+
+  if from_branch.context_address != to_branch.context_address {
+    return Err(ZomeApiError::from(String::from(
+      "given branches do not belong to the same context",
+    )));
+  }
+
+  let from_commit_address = handle_get_branch_head(from_branch_address)?;
+  let to_commit_address = handle_get_branch_head(to_branch_address)?;
+
+  crate::commit::merge_commits(
+    from_commit_address,
+    to_commit_address,
+    format!("merge {} into {}", from_branch.name, to_branch.name),
+  )
+}
 
 /** Helper functions */
+
+/**
+ * Sets the given branch head pointing to the given commit head
+ */
+pub fn set_branch_head(branch_address: &Address, commit_address: &Address) -> ZomeApiResult<()> {
+  // TODO: delete the previous link to the branch head commit
+  hdk::link_entries(branch_address, commit_address, "branch_head")
+}
 
 /**
  * Create a new commit in the given branch, pointing to the given tree address
@@ -109,8 +144,7 @@ pub fn create_commit_in_branch(
     parent_commit_address.addresses(),
   )?;
 
-  // TODO: delete the previous link to the branch head commit
-  hdk::link_entries(&branch_address, &commit_address, "branch_head")?;
+  set_branch_head(&branch_address, &commit_address)?;
 
   Ok(commit_address)
 }
