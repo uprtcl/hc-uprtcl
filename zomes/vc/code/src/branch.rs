@@ -76,7 +76,7 @@ pub fn handle_create_commit(
   message: String,
   content: CommitContent,
 ) -> ZomeApiResult<Address> {
-  let content_address = store_commit_content(content)?;
+  let content_address = crate::commit::store_commit_content(content)?;
 
   create_commit_in_branch(branch_address, message, content_address)
 }
@@ -90,16 +90,6 @@ pub fn handle_get_branch_head(branch_address: Address) -> ZomeApiResult<GetLinks
 
 
 /** Helper functions */
-
-/**
- * Stores the contents of the commit in the DHT
- */
-fn store_commit_content(content: CommitContent) -> ZomeApiResult<Address> {
-  match content {
-    ContentBlob(blob) => crate::blob::store_blob(blob),
-    ContentTree(tree) => crate::tree::store_tree(tree),
-  }
-}
 
 /**
  * Create a new commit in the given branch, pointing to the given tree address

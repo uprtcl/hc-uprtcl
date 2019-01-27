@@ -1,3 +1,5 @@
+use crate::commit::CommitContent::{ContentBlob, ContentTree};
+use crate::{blob::Blob, tree::Tree};
 use boolinator::Boolinator;
 use hdk::{
   entry_definition::ValidatingEntryType,
@@ -9,7 +11,6 @@ use hdk::{
   AGENT_ADDRESS,
 };
 use std::convert::TryFrom;
-use crate::{blob::Blob, tree::Tree};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Commit {
@@ -77,23 +78,18 @@ pub fn handle_get_commit_info(commit_address: Address) -> ZomeApiResult<Option<E
  * Retrieves the contents of the commit with the given address
  */
 pub fn handle_get_commit_content(commit_address: Address) -> ZomeApiResult<Option<Entry>> {
-  if let Some(Entry::App(_, commit_entry)) = hdk::get_entry(&commit_address)? {
-    let commit = Commit::try_from(commit_entry)?;
-
-    return hdk::get_entry(&(commit.content_address));
-    /* 
-    Useful when full commit contents should be retrieved, to iterate deep into the tree
-    if let Some(Entry::App(_, content_entry)) = hdk::get_entry(&commit.content_address)? {
-      match Blob::try_from(content_entry) {
-        Ok(blob) => Ok(Some(CommitContent::ContentBlob(blob))) as ZomeApiResult<Option<CommitContent>>,
-        Err(_) => Ok(Some(CommitContent::ContentTree(Tree::try_from(
-          content_entry,
-        )?))),
-      };
-    } */
-  }
-
-  Ok(None)
+  let commit = Commit::try_from(crate::utils::get_entry_content(&commit_address)?)?;
+  hdk::get_entry(&(commit.content_address))
+  /*
+  Useful when full commit contents should be retrieved, to iterate deep into the tree
+  if let Some(Entry::App(_, content_entry)) = hdk::get_entry(&commit.content_address)? {
+    match Blob::try_from(content_entry) {
+      Ok(blob) => Ok(Some(CommitContent::ContentBlob(blob))) as ZomeApiResult<Option<CommitContent>>,
+      Err(_) => Ok(Some(CommitContent::ContentTree(Tree::try_from(
+        content_entry,
+      )?))),
+    };
+  } */
 }
 
 /** Helper functions */
@@ -120,6 +116,16 @@ pub fn create_commit(
   );
 
   hdk::commit_entry(&commit_entry)
+}
+
+/**
+ * Stores the contents of the commit in the DHT
+ */
+pub fn store_commit_content(content: CommitContent) -> ZomeApiResult<Address> {
+  match content {
+    ContentBlob(blob) => crate::blob::store_blob(blob),
+    ContentTree(tree) => crate::tree::store_tree(tree),
+  }
 }
 
 /**
