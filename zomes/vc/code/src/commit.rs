@@ -43,12 +43,28 @@ impl Commit {
   pub fn get_parent_commits_addresses(self) -> Vec<Address> {
     self.parent_commits_addresses
   }
+
+  pub fn get_content_address(&self) -> &Address {
+    &(self.content_address)
+  }
 }
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub enum CommitContent {
   ContentBlob(Blob),
   ContentTree(Tree),
+}
+
+impl CommitContent {
+  pub fn from(content_address: &Address) -> ZomeApiResult<CommitContent> {
+    match Tree::try_from(crate::utils::get_entry_content(content_address)?) {
+      Ok(tree) => Ok(ContentTree(tree)),
+      Err(_) => {
+        let blob: Blob = Blob::try_from(crate::utils::get_entry_content(content_address)?)?;
+        Ok(ContentBlob(blob))
+      }
+    }
+  }
 }
 
 pub fn definition() -> ValidatingEntryType {
@@ -87,6 +103,7 @@ pub fn handle_get_commit_content(commit_address: Address) -> ZomeApiResult<Optio
   hdk::get_entry(&(commit.content_address))
   /*
   Useful when full commit contents should be retrieved, to iterate deep into the tree
+
   if let Some(Entry::App(_, content_entry)) = hdk::get_entry(&commit.content_address)? {
     match Blob::try_from(content_entry) {
       Ok(blob) => Ok(Some(CommitContent::ContentBlob(blob))) as ZomeApiResult<Option<CommitContent>>,
@@ -148,9 +165,10 @@ pub fn get_context_address(commit_address: &Address) -> ZomeApiResult<Address> {
 pub fn merge_commits(
   from_commit_address: Address,
   to_commit_address: Address,
-  merge_commit_message: String
+  merge_commit_message: String,
 ) -> ZomeApiResult<Address> {
-  /* let merge_content_address = crate::merge::merge_commits_contents(from_commit_address, to_commit_address)?;
+  let merge_content_address =
+    crate::merge::merge_commits_contents(&from_commit_address, &to_commit_address)?;
   let to_commit: Commit = Commit::try_from(crate::utils::get_entry_content(&to_commit_address)?)?;
 
   create_commit(
@@ -158,7 +176,5 @@ pub fn merge_commits(
     merge_commit_message,
     merge_content_address,
     &vec![from_commit_address, to_commit_address],
-  ) */
-
-  crate::merge::merge_commits_contents(from_commit_address, to_commit_address)
+  )
 }

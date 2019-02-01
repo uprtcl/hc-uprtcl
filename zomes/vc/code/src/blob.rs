@@ -8,7 +8,7 @@ use hdk::{
   },
 };
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+#[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson)]
 pub enum BlobType {
   HolochainEntry {
     dna_address: Address,
@@ -16,7 +16,7 @@ pub enum BlobType {
   },
 }
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+#[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Blob {
   content: BlobType,
 }

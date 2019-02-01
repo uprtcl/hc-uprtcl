@@ -19,13 +19,13 @@ pub struct Tree {
 }
 
 impl Tree {
-  fn new(contents: HashMap<String, Address>) -> Tree {
+  pub fn new(contents: HashMap<String, Address>) -> Tree {
     Tree { contents: contents }
   }
-}
 
-pub struct TreeContents {
-
+  pub fn get_contents(&self) -> &HashMap<String, Address> {
+    return &self.contents;
+  }
 }
 
 pub fn definition() -> ValidatingEntryType {
