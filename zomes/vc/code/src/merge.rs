@@ -72,7 +72,6 @@ fn build_merge_content(
   to_content: CommitContent,
   ancestor_content: CommitContent,
 ) -> ZomeApiResult<CommitContent> {
-
   let merge_contents = MergeContents {
     from_content,
     to_content,
@@ -85,27 +84,41 @@ fn build_merge_content(
       to_content: ContentTree(to_tree),
       ancestor_content: ContentTree(ancestor_tree),
     } => {
-      let merge_keys: HashSet<&String> = from_tree
+      // Iterate over all the keys of the three trees
+      let mut merge_keys: HashSet<String> = from_tree
         .get_contents()
         .keys()
-        .collect::<HashSet<&String>>();
-      merge_keys.union(&to_tree.get_contents().keys().collect::<HashSet<&String>>());
-      merge_keys.union(
-        &ancestor_tree
-          .get_contents()
-          .keys()
-          .collect::<HashSet<&String>>(),
-      );
+        .cloned()
+        .collect::<HashSet<String>>();
+      merge_keys = merge_keys
+        .union(
+          &to_tree
+            .get_contents()
+            .keys()
+            .cloned()
+            .collect::<HashSet<String>>(),
+        ).cloned()
+        .collect();
+      merge_keys = merge_keys
+        .union(
+          &ancestor_tree
+            .get_contents()
+            .keys()
+            .cloned()
+            .collect::<HashSet<String>>(),
+        ).cloned()
+        .collect();
 
       let mut merged_contents: HashMap<String, Address> = HashMap::new();
 
+      // For each key, call get_merge_result and include the result in the merge resulting contents
       for key in merge_keys.into_iter() {
         if let Some(result_address) = get_merge_result(
-          from_tree.get_contents().get(key),
-          to_tree.get_contents().get(key),
-          ancestor_tree.get_contents().get(key),
+          from_tree.get_contents().get(&key),
+          to_tree.get_contents().get(&key),
+          ancestor_tree.get_contents().get(&key),
         )? {
-          merged_contents.insert(key.to_owned(), result_address.to_owned());
+          merged_contents.insert(key, result_address.to_owned());
         }
       }
 
@@ -123,18 +136,28 @@ fn build_merge_content(
   }
 }
 
+/**
+ * Returns which commit's content (the original commit, the merge source commit or the merge target commit)
+ * should be the result of the merge operation
+ *
+ * Reference: https://stackoverflow.com/questions/30409863/git-merge-internals
+ */
 fn get_merge_result<T: Eq>(
   maybe_from: Option<T>,
   maybe_to: Option<T>,
   maybe_ancestor: Option<T>,
 ) -> ZomeApiResult<Option<T>> {
   if maybe_ancestor == maybe_from && maybe_ancestor == maybe_to {
+    // If item has not changed, return it
     return Ok(maybe_ancestor);
   } else if maybe_ancestor == maybe_from && maybe_ancestor != maybe_to {
+    // If item has changed only in one commit...
     return Ok(maybe_to);
   } else if maybe_ancestor != maybe_from && maybe_ancestor == maybe_to {
+    // ...return the changed commit content
     return Ok(maybe_from);
   } else {
+    // Any other case, conflict
     return Err(ZomeApiError::from(format!(
       "there was a conflict trying to merge"
     )));
@@ -190,20 +213,15 @@ fn find_most_recent_common_ancestor(
   heap.push(DistancedCommit::new(from_commit_address, 0));
   heap.push(DistancedCommit::new(to_commit_address, 0));
 
-  hdk::debug("MERGING: 1")?;
-
   while let Some(DistancedCommit {
     commit_address,
     distance,
   }) = heap.pop()
   {
-    hdk::debug(format!("MERGING: 2 {}", commit_address))?;
-
     let commit: Commit = Commit::try_from(crate::utils::get_entry_content(&commit_address)?)?;
     let new_distance = distance + 1;
 
     for parent_commit_address in commit.get_parent_commits_addresses().into_iter() {
-      hdk::debug(format!("MERGING: 3 {}", parent_commit_address))?;
       if visited_commits.contains_key(&parent_commit_address) {
         return Ok(parent_commit_address);
       }

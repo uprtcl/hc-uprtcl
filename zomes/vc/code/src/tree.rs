@@ -30,20 +30,20 @@ impl Tree {
 
 pub fn definition() -> ValidatingEntryType {
   entry!(
-      name: "tree",
-      description: "a tree object",
-      sharing: Sharing::Public,
-      native_type: Tree,
+    name: "tree",
+    description: "a tree object",
+    sharing: Sharing::Public,
+    native_type: Tree,
 
-      validation_package: || {
-        hdk::ValidationPackageDefinition::ChainFull
-      },
+    validation_package: || {
+      hdk::ValidationPackageDefinition::ChainFull
+    },
 
-      validation: |tree: Tree, _ctx: hdk::ValidationData| {
-        Ok(())
-      },
+    validation: |tree: Tree, _ctx: hdk::ValidationData| {
+      Ok(())
+    },
 
-      links: [
+    links: [
   /*
         TODO: is it necessary to link trees to their children?
         to!(
@@ -56,8 +56,8 @@ pub fn definition() -> ValidatingEntryType {
             Ok(())
           }
         ), */
-      ]
-    )
+    ]
+  )
 }
 
 /** Helper functions */

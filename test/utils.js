@@ -3,21 +3,12 @@
 const createCommit = async function(
   caller,
   branchAddress,
-  { message, dnaAddress, entryAddress }
+  { message, commitContent }
 ) {
   return await caller.callSync('vc', 'create_commit', {
     branch_address: branchAddress,
     message: message,
-    content: {
-      ContentBlob: {
-        content: {
-          HolochainEntry: {
-            dna_address: dnaAddress,
-            entry_address: entryAddress
-          }
-        }
-      }
-    }
+    content: commitContent
   });
 };
 
@@ -40,12 +31,26 @@ const getContextBranches = function(caller, contextAddress) {
   });
 };
 
+const getCommitInfo = function(caller, commitAddress) {
+  return caller.call('vc', 'get_commit_info', {
+    commit_address: commitAddress
+  });
+};
+
+const getCommitContent = function(caller, commitAddress) {
+  return caller.call('vc', 'get_commit_content', {
+    commit_address: commitAddress
+  });
+};
+
+//const mergeBranches = async function(caller, fromBranchAddress, toBranchAddress) {}
+
 /** Aggregation functions that call the basic zome functions */
 
 const createContextAndCommit = async function(
   caller,
   contextName,
-  { message, dnaAddress, entryAddress }
+  { message, commitContent }
 ) {
   const { Ok: contextAddress } = await createContext(caller, contextName);
   const {
@@ -53,8 +58,7 @@ const createContextAndCommit = async function(
   } = getContextBranches(caller, contextAddress);
   const { Ok: commitAddress } = await createCommit(caller, branchAddresses[0], {
     message,
-    dnaAddress,
-    entryAddress
+    commitContent
   });
 
   return {
@@ -64,21 +68,43 @@ const createContextAndCommit = async function(
   };
 };
 
-const createNCommits = async function(
-  caller,
-  number,
-  branchAddress,
-  { message, dnaAddress, entryAddress }
-) {
+const createNCommits = async function(caller, branchAddress, commits) {
   var lastCommitAddress;
-  for (var i = 0; i < number; i++) {
+  for (var { message, commitContent } of commits) {
     lastCommitAddress = await createCommit(caller, branchAddress, {
       message,
-      dnaAddress,
-      entryAddress
+      commitContent
     });
   }
   return lastCommitAddress;
+};
+
+/** Helper builders */
+
+const buildBlobCommit = function(message, dnaAddress, entryAddress) {
+  return {
+    message: message,
+    commitContent: {
+      ContentBlob: {
+        content: {
+          HolochainEntry: {
+            dna_address: dnaAddress,
+            entry_address: entryAddress
+          }
+        }
+      }
+    }
+  };
+};
+const buildTreeCommit = function(message, treeContents) {
+  return {
+    message: message,
+    commitContent: {
+      ContentTree: {
+        contents: treeContents
+      }
+    }
+  };
 };
 
 module.exports = {
@@ -87,5 +113,9 @@ module.exports = {
   createBranch,
   createContext,
   createContextAndCommit,
-  getContextBranches
+  getContextBranches,
+  buildBlobCommit,
+  buildTreeCommit,
+  getCommitContent,
+  getCommitInfo
 };
