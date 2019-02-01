@@ -86,7 +86,7 @@ pub fn handle_get_branch_head(branch_address: Address) -> ZomeApiResult<Address>
       "given branch has not commits",
     )));
   }
-  Ok(links_result.addresses().get(0).unwrap().to_owned())
+  Ok(links_result.addresses().last().unwrap().to_owned())
 }
 
 /**

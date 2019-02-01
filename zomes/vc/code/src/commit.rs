@@ -39,6 +39,10 @@ impl Commit {
       parent_commits_addresses: parent_commits_addresses.to_owned(),
     }
   }
+
+  pub fn get_parent_commits_addresses(self) -> Vec<Address> {
+    self.parent_commits_addresses
+  }
 }
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
@@ -146,7 +150,7 @@ pub fn merge_commits(
   to_commit_address: Address,
   merge_commit_message: String
 ) -> ZomeApiResult<Address> {
-  let merge_content_address = crate::merge::merge_commits_contents(from_commit_address, to_commit_address)?;
+  /* let merge_content_address = crate::merge::merge_commits_contents(from_commit_address, to_commit_address)?;
   let to_commit: Commit = Commit::try_from(crate::utils::get_entry_content(&to_commit_address)?)?;
 
   create_commit(
@@ -154,5 +158,7 @@ pub fn merge_commits(
     merge_commit_message,
     merge_content_address,
     &vec![from_commit_address, to_commit_address],
-  )
+  ) */
+
+  crate::merge::merge_commits_contents(from_commit_address, to_commit_address)
 }

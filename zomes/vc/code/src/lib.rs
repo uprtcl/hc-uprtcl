@@ -24,9 +24,9 @@ pub mod blob;
 pub mod branch;
 pub mod commit;
 pub mod context;
+pub mod merge;
 pub mod tree;
 pub mod utils;
-pub mod merge;
 
 define_zome! {
   entries: [
@@ -40,65 +40,72 @@ define_zome! {
   genesis: || { Ok(()) }
 
   functions: [
-      // Repositories
-      create_context: {
-        inputs: |name: String|,
-        outputs: |result: ZomeApiResult<Address>|,
-        handler: context::handle_create_context
-      }
+    // Repositories
+    create_context: {
+      inputs: |name: String|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: context::handle_create_context
+    }
 
-      get_context_info: {
-        inputs: |context_address: Address|,
-        outputs: |result: ZomeApiResult<Option<Entry>>|,
-        handler: context::handle_get_context_info
-      }
+    get_context_info: {
+      inputs: |context_address: Address|,
+      outputs: |result: ZomeApiResult<Option<Entry>>|,
+      handler: context::handle_get_context_info
+    }
 
-      create_branch_in_context: {
-        inputs: |commit_address: Address, name: String|,
-        outputs: |result: ZomeApiResult<Address>|,
-        handler: context::handle_create_branch_in_context
-      }
+    create_branch_in_context: {
+      inputs: |commit_address: Address, name: String|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: context::handle_create_branch_in_context
+    }
 
-      get_context_branches: {
-        inputs: |context_address: Address|,
-        outputs: |result: ZomeApiResult<GetLinksResult>|,
-        handler: context::handle_get_context_branches
-      }
+    get_context_branches: {
+      inputs: |context_address: Address|,
+      outputs: |result: ZomeApiResult<GetLinksResult>|,
+      handler: context::handle_get_context_branches
+    }
 
-      get_branch_info: {
-        inputs: |branch_address: Address|,
-        outputs: |result: ZomeApiResult<Option<Entry>>|,
-        handler: branch::handle_get_branch_info
-      }
+    get_branch_info: {
+      inputs: |branch_address: Address|,
+      outputs: |result: ZomeApiResult<Option<Entry>>|,
+      handler: branch::handle_get_branch_info
+    }
 
-      get_branch_head: {
-        inputs: |branch_address: Address|,
-        outputs: |result: ZomeApiResult<Address>|,
-        handler: branch::handle_get_branch_head
-      }
+    get_branch_head: {
+      inputs: |branch_address: Address|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: branch::handle_get_branch_head
+    }
 
-      create_commit: {
-        inputs: |branch_address: Address, message: String, content: commit::CommitContent|,
-        outputs: |result: ZomeApiResult<Address>|,
-        handler: branch::handle_create_commit
-      }
+    create_commit: {
+      inputs: |branch_address: Address, message: String, content: commit::CommitContent|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: branch::handle_create_commit
+    }
 
-      get_commit_info: {
-        inputs: |commit_address: Address|,
-        outputs: |result: ZomeApiResult<Option<Entry>>|,
-        handler: commit::handle_get_commit_info
-      }
+    get_commit_info: {
+      inputs: |commit_address: Address|,
+      outputs: |result: ZomeApiResult<Option<Entry>>|,
+      handler: commit::handle_get_commit_info
+    }
 
-      get_commit_content: {
-        inputs: |commit_address: Address|,
-        outputs: |result: ZomeApiResult<Option<Entry>>|,
-        handler: commit::handle_get_commit_content
-      }
+    get_commit_content: {
+      inputs: |commit_address: Address|,
+      outputs: |result: ZomeApiResult<Option<Entry>>|,
+      handler: commit::handle_get_commit_content
+    }
 
+    merge_branches: {
+      inputs: |from_branch_address: Address, to_branch_address: Address|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: branch::handle_merge_branches
+    }
   ]
 
   capabilities: {
-    public (Public) [create_context, get_context_info, create_branch_in_context, get_context_branches, get_branch_info, get_branch_head, create_commit, get_commit_info, get_commit_content]
+    public (Public) [create_context, get_context_info, create_branch_in_context, 
+      get_context_branches, get_branch_info, get_branch_head, create_commit, 
+      get_commit_info, get_commit_content, merge_branches]
   }
 
 }
