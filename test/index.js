@@ -29,22 +29,26 @@ const {
   buildBlobCommit,
   buildTreeCommit,
   getCommitContent,
-  getCommitInfo
+  getCommitInfo,
+  mergeBranches,
+  branchAndMerge,
+  getBranchHead,
+  chain,
+  getContextHistory,
+  getBranchHistory,
+  getCommitHistory,
+  getBranchInfo
 } = require('./utils');
 
 const DNA_ADDRESS = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const ENTRY_ADDRESS = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 
-const blobCommit = message =>
-  buildBlobCommit(message, DNA_ADDRESS, ENTRY_ADDRESS);
-
-const treeCommit = message =>
-  buildTreeCommit(message, { file1: ENTRY_ADDRESS });
+const blobCommit = () => buildBlobCommit(DNA_ADDRESS, ENTRY_ADDRESS);
 
 scenario1.runTape('create context', async (t, { alice }) => {
   // Make a call to a Zome function
   // indicating the capability and function, and passing it an input
-  const { Ok: contextAddress } = await createContext(alice, 'myNewContext');
+  const { Ok: contextAddress } = await createContext('myNewContext')(alice);
   t.equal(contextAddress, 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en');
 
   const result = alice.call('vc', 'get_context_info', {
@@ -60,48 +64,46 @@ scenario1.runTape('create context', async (t, { alice }) => {
 scenario1.runTape(
   'create two commits in master branch',
   async (t, { alice }) => {
-    const { Ok: contextAddress } = await createContext(alice, 'myNewContext');
+    const { Ok: contextAddress } = await createContext('myNewContext')(alice);
 
     const {
       Ok: { addresses: branchAddresses }
-    } = getContextBranches(alice, contextAddress);
+    } = getContextBranches(contextAddress)(alice);
     t.equal(
       branchAddresses[0],
       'QmdYFTXuTyuaXbyLAPHmemgkjsaVQ5tfpnLqY9on5JZmzR'
     );
 
     const { Ok: firstCommitAddress } = await createCommit(
-      alice,
       branchAddresses[0],
-      blobCommit('first commit')
-    );
+      'first commit',
+      blobCommit()
+    )(alice);
     t.equal(
       firstCommitAddress,
       'QmNgSzUcfn5jECm4SSACdSsgDXeMSMJCgYmE64Z5ghFx8Y'
     );
 
-    const { Ok: branchHead } = alice.call('vc', 'get_branch_head', {
-      branch_address: branchAddresses[0]
-    });
+    const { Ok: branchHead } = getBranchHead(branchAddresses[0])(alice);
     t.equal(branchHead, firstCommitAddress);
 
     const { Ok: secondCommitAddress } = await createCommit(
-      alice,
       branchAddresses[0],
-      blobCommit('second commit')
-    );
+      'second commit',
+      blobCommit()
+    )(alice);
     t.equal(
       secondCommitAddress,
       'QmSypeps1AtQtSXBvShrywYUPZp8ZazobxDEeNDS2DrJim'
     );
 
-    const commitInfoJsonString = getCommitInfo(alice, secondCommitAddress);
+    const commitInfoJsonString = getCommitInfo(secondCommitAddress)(alice);
     const commitInfo = JSON.parse(commitInfoJsonString.Ok.App[1]);
 
     t.equal(commitInfo.context_address, contextAddress);
     t.equal(commitInfo.parent_commits_addresses[0], firstCommitAddress);
 
-    const commitJsonString = getCommitContent(alice, secondCommitAddress);
+    const commitJsonString = getCommitContent(secondCommitAddress)(alice);
     const commitContent = JSON.parse(commitJsonString.Ok.App[1]);
 
     t.equal(commitContent.content.HolochainEntry.dna_address, DNA_ADDRESS);
@@ -112,80 +114,56 @@ scenario1.runTape(
 scenario1.runTape(
   'create a develop branch and a commit in it',
   async (t, { alice }) => {
-    const { contextAddress, commitAddress } = await createContextAndCommit(
-      alice,
+    const { commitAddress, contextAddress } = await createContextAndCommit(
       'myNewContext',
-      blobCommit('first commit')
-    );
+      'first commit',
+      blobCommit()
+    )(alice);
 
-    const { Ok: developAddress } = await createBranch(
-      alice,
-      commitAddress,
-      'develop'
+    const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
+      alice
     );
     t.equal(developAddress, 'QmRqn5F3J3uL8NRoCugfNJF8556cp1khZJAP1XAdVdL73S');
 
-    const developBranchJson = alice.call('vc', 'get_branch_info', {
-      branch_address: developAddress
-    });
+    const developBranchJson = getBranchInfo(developAddress)(alice);
     const developBranchInfo = JSON.parse(developBranchJson.Ok.App[1]);
     t.equal(developBranchInfo.context_address, contextAddress);
 
     const {
       Ok: { addresses: branchAddresses }
-    } = getContextBranches(alice, contextAddress);
+    } = getContextBranches(contextAddress)(alice);
     t.deepEqual(branchAddresses, [branchAddresses[0], developAddress]);
   }
 );
 
 scenario1.runTape('merge two branches', async (t, { alice }) => {
-  const { masterAddress } = await createContextAndCommit(
+  const { last, all } = await chain(
     alice,
-    'myNewContext',
-    treeCommit('first commit')
+    () =>
+      createContextAndCommit(
+        'myNewContext',
+        'first commit',
+        buildTreeCommit({
+          file1: ENTRY_ADDRESS,
+          file2: DNA_ADDRESS
+        })
+      ),
+    last =>
+      branchAndMerge(
+        last.masterAddress,
+        buildTreeCommit({
+          file1: ENTRY_ADDRESS,
+          file3: ENTRY_ADDRESS
+        })
+      )
   );
 
-  const { Ok: ancestorCommitAddress } = await createNCommits(
-    alice,
-    masterAddress,
-    Array(4).fill(treeCommit('master commit number '))
+  t.equal(
+    last,
+    'QmZmXmyG6tcPTySoBHdDg7BdksoXcNtQoYdKaw54Gj7rFu'
   );
 
-  const { Ok: developAddress } = await createBranch(
-    alice,
-    ancestorCommitAddress,
-    'develop'
-  );
-
-  const { Ok: masterCommit } = await createCommit(
-    alice,
-    masterAddress,
-    buildTreeCommit('master commit', {
-      file1: ENTRY_ADDRESS,
-      file2: DNA_ADDRESS
-    })
-  );
-
-  const { Ok: developCommit } = await createCommit(
-    alice,
-    developAddress,
-    buildTreeCommit('develop commit', {
-      file1: ENTRY_ADDRESS,
-      file3: ENTRY_ADDRESS
-    })
-  );
-
-  const { Ok: mergeCommitAddress } = await alice.callSync(
-    'vc',
-    'merge_branches',
-    {
-      from_branch_address: developAddress,
-      to_branch_address: masterAddress
-    }
-  );
-  t.equal(mergeCommitAddress, 'QmQWkvb8j2iRF3Xi6SreUKpCbNF6nL1FTRmf8KAkcMFhwn');
-
-  const { Ok: commitInfoJsonString } = getCommitInfo(alice, mergeCommitAddress);
+  const { Ok: commitInfoJsonString } = getCommitInfo(last)(alice);
   const commitInfo = JSON.parse(commitInfoJsonString.App[1]);
 
   t.deepEqual(commitInfo.parent_commits_addresses, [
@@ -193,9 +171,8 @@ scenario1.runTape('merge two branches', async (t, { alice }) => {
     masterCommit
   ]);
 
-  const { Ok: commitContentJsonString } = getCommitContent(
-    alice,
-    mergeCommitAddress
+  const { Ok: commitContentJsonString } = getCommitContent(last)(
+    alice
   );
   const { contents: commitContent } = JSON.parse(
     commitContentJsonString.App[1]

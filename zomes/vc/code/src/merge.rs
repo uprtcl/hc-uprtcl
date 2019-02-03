@@ -212,6 +212,8 @@ fn find_most_recent_common_ancestor(
 
   heap.push(DistancedCommit::new(from_commit_address, 0));
   heap.push(DistancedCommit::new(to_commit_address, 0));
+  visited_commits.insert(from_commit_address.to_owned(), 0);
+  visited_commits.insert(to_commit_address.to_owned(), 0);
 
   while let Some(DistancedCommit {
     commit_address,
