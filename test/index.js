@@ -42,6 +42,7 @@ const {
 
 const DNA_ADDRESS = 'QmdYFTXuTyuaXbyLAPHmemgkjsaVQ5tfpnLqY9on5JZmzR';
 const ENTRY_ADDRESS = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
+const SAMPLE_ADDRESS1 = 'QmRqn5F3J3uL8NRoCugfNJF8556cp1khZJAP1XAdVdL73S';
 
 const blobCommit = () => buildBlobCommit(DNA_ADDRESS, ENTRY_ADDRESS);
 
@@ -136,67 +137,106 @@ scenario1.runTape(
   }
 );
 
-scenario1.runTape('merge two branches', async (t, { alice }) => {
-  const { commitAddress, masterAddress } = await createContextAndCommit(
-    'myNewContext',
-    'first commit',
-    buildTreeCommit({
-      file1: ENTRY_ADDRESS,
-      file2: DNA_ADDRESS
-    })
-  )(alice);
+scenario1.runTape(
+  'merge two branches with no merge',
+  async (t, { alice }) => {
+    const { commitAddress, masterAddress } = await createContextAndCommit(
+      'myNewContext',
+      'first commit',
+      buildTreeCommit({
+        file1: ENTRY_ADDRESS,
+        file2: DNA_ADDRESS
+      })
+    )(alice);
 
-  const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
-    alice
-  );
-  const { Ok: developCommit } = await createCommit(
-    developAddress,
-    'develop commit',
-    buildTreeCommit({
-      file1: ENTRY_ADDRESS,
+    const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
+      alice
+    );
+    const { Ok: developCommit } = await createCommit(
+      developAddress,
+      'develop commit',
+      buildTreeCommit({
+        file1: ENTRY_ADDRESS,
+        file2: ENTRY_ADDRESS,
+        file3: ENTRY_ADDRESS
+      })
+    )(alice);
+
+    const { Ok: mergedCommitAddress } = await mergeBranches(
+      developAddress,
+      masterAddress
+    )(alice);
+
+    t.equal(
+      mergedCommitAddress,
+      'QmdazHAnnKXzKikbW9PVAUTg2rp5h9vCyUQzCsbiEBZRu9'
+    );
+
+    const { Ok: commitInfoJsonString } = getCommitInfo(mergedCommitAddress)(
+      alice
+    );
+    const commitInfo = JSON.parse(commitInfoJsonString.App[1]);
+
+    t.deepEqual(commitInfo.parent_commits_addresses, [
+      developCommit,
+      commitAddress
+    ]);
+
+    const { Ok: commitContentString } = getCommitContent(mergedCommitAddress)(
+      alice
+    );
+    const { contents: commitContent } = JSON.parse(commitContentString.App[1]);
+
+    t.deepEqual(commitContent, {
+      file3: ENTRY_ADDRESS,
       file2: ENTRY_ADDRESS,
-      file3: ENTRY_ADDRESS
-    })
-  )(alice);
+      file1: ENTRY_ADDRESS
+    });
 
-  const { Ok: mergedCommitAddress } = await mergeBranches(
-    developAddress,
-    masterAddress
-  )(alice);
-
-  t.equal(
-    mergedCommitAddress,
-    'QmdazHAnnKXzKikbW9PVAUTg2rp5h9vCyUQzCsbiEBZRu9'
-  );
-
-  const { Ok: commitInfoJsonString } = getCommitInfo(mergedCommitAddress)(
-    alice
-  );
-  const commitInfo = JSON.parse(commitInfoJsonString.App[1]);
-
-  t.deepEqual(commitInfo.parent_commits_addresses, [
-    developCommit,
-    commitAddress
-  ]);
-
-  const { Ok: commitContentString } = getCommitContent(mergedCommitAddress)(
-    alice
-  );
-  const { contents: commitContent } = JSON.parse(commitContentString.App[1]);
-
-  t.deepEqual(commitContent, {
-    file3: ENTRY_ADDRESS,
-    file2: ENTRY_ADDRESS,
-    file1: ENTRY_ADDRESS
-  });
-
-  const { Ok: lastMasterCommitAddress } = await getBranchHead(masterAddress)(
-    alice
-  );
-  t.equal(lastMasterCommitAddress, mergedCommitAddress);
-});
+    const { Ok: lastMasterCommitAddress } = await getBranchHead(masterAddress)(
+      alice
+    );
+    t.equal(lastMasterCommitAddress, mergedCommitAddress);
+  }
+);
 
 scenario1.runTape(
-  'merge two branches creates correct parents',
-  async (t, { alice }) => {}
+  'merge two branches with changed content creates conflict',
+  async (t, { alice }) => {
+    const { commitAddress, masterAddress } = await createContextAndCommit(
+      'myNewContext',
+      'first commit',
+      buildTreeCommit({
+        file1: ENTRY_ADDRESS,
+        file2: DNA_ADDRESS
+      })
+    )(alice);
+    const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
+      alice
+    );
+    const { Ok: masterCommit } = await createCommit(
+      masterAddress,
+      'master commit 2',
+      buildTreeCommit({
+        file1: ENTRY_ADDRESS,
+        file2: SAMPLE_ADDRESS1,
+        file3: ENTRY_ADDRESS
+      })
+    )(alice);
+    const { Ok: developCommit } = await createCommit(
+      developAddress,
+      'develop commit',
+      buildTreeCommit({
+        file1: ENTRY_ADDRESS,
+        file2: ENTRY_ADDRESS,
+        file4: ENTRY_ADDRESS
+      })
+    )(alice);
+
+    const result = await mergeBranches(developAddress, masterAddress)(alice);
+
+    t.deepEqual(result, {
+      Err: { Internal: 'there was a conflict trying to merge' }
+    });
+  }
 );
