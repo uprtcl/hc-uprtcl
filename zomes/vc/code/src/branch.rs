@@ -107,13 +107,17 @@ pub fn handle_merge_branches(
   }
 
   let from_commit_address = handle_get_branch_head(from_branch_address)?;
-  let to_commit_address = handle_get_branch_head(to_branch_address)?;
+  let to_commit_address = handle_get_branch_head(to_branch_address.clone())?;
 
-  crate::commit::merge_commits(
-    from_commit_address,
-    to_commit_address,
+  let merged_commit_address = crate::commit::merge_commits(
+    &from_commit_address,
+    &to_commit_address,
     format!("merge {} into {}", from_branch.name, to_branch.name),
-  )
+  )?;
+
+  set_branch_head(&to_branch_address, &merged_commit_address)?;
+
+  Ok(merged_commit_address)
 }
 
 /** Helper functions */

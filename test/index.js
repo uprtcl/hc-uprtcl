@@ -40,7 +40,7 @@ const {
   getBranchInfo
 } = require('./utils');
 
-const DNA_ADDRESS = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
+const DNA_ADDRESS = 'QmdYFTXuTyuaXbyLAPHmemgkjsaVQ5tfpnLqY9on5JZmzR';
 const ENTRY_ADDRESS = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 
 const blobCommit = () => buildBlobCommit(DNA_ADDRESS, ENTRY_ADDRESS);
@@ -81,7 +81,7 @@ scenario1.runTape(
     )(alice);
     t.equal(
       firstCommitAddress,
-      'QmNgSzUcfn5jECm4SSACdSsgDXeMSMJCgYmE64Z5ghFx8Y'
+      'QmdAEiLANFiMfZQ9ZTGLRkjSDr5kkD7zPFt5fF5qaExQBC'
     );
 
     const { Ok: branchHead } = getBranchHead(branchAddresses[0])(alice);
@@ -94,7 +94,7 @@ scenario1.runTape(
     )(alice);
     t.equal(
       secondCommitAddress,
-      'QmSypeps1AtQtSXBvShrywYUPZp8ZazobxDEeNDS2DrJim'
+      'QmPKNmfDA3rWUL3HHxqAeAhQDmQ7J2HyJjiBWFnVvBz2DU'
     );
 
     const commitInfoJsonString = getCommitInfo(secondCommitAddress)(alice);
@@ -136,60 +136,67 @@ scenario1.runTape(
   }
 );
 
+scenario1.runTape('merge two branches', async (t, { alice }) => {
+  const { commitAddress, masterAddress } = await createContextAndCommit(
+    'myNewContext',
+    'first commit',
+    buildTreeCommit({
+      file1: ENTRY_ADDRESS,
+      file2: DNA_ADDRESS
+    })
+  )(alice);
+
+  const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
+    alice
+  );
+  const { Ok: developCommit } = await createCommit(
+    developAddress,
+    'develop commit',
+    buildTreeCommit({
+      file1: ENTRY_ADDRESS,
+      file2: ENTRY_ADDRESS,
+      file3: ENTRY_ADDRESS
+    })
+  )(alice);
+
+  const { Ok: mergedCommitAddress } = await mergeBranches(
+    developAddress,
+    masterAddress
+  )(alice);
+
+  t.equal(
+    mergedCommitAddress,
+    'QmdazHAnnKXzKikbW9PVAUTg2rp5h9vCyUQzCsbiEBZRu9'
+  );
+
+  const { Ok: commitInfoJsonString } = getCommitInfo(mergedCommitAddress)(
+    alice
+  );
+  const commitInfo = JSON.parse(commitInfoJsonString.App[1]);
+
+  t.deepEqual(commitInfo.parent_commits_addresses, [
+    developCommit,
+    commitAddress
+  ]);
+
+  const { Ok: commitContentString } = getCommitContent(mergedCommitAddress)(
+    alice
+  );
+  const { contents: commitContent } = JSON.parse(commitContentString.App[1]);
+
+  t.deepEqual(commitContent, {
+    file3: ENTRY_ADDRESS,
+    file2: ENTRY_ADDRESS,
+    file1: ENTRY_ADDRESS
+  });
+
+  const { Ok: lastMasterCommitAddress } = await getBranchHead(masterAddress)(
+    alice
+  );
+  t.equal(lastMasterCommitAddress, mergedCommitAddress);
+});
+
 scenario1.runTape(
   'merge two branches creates correct parents',
-  async (t, { alice }) => {
-    const { commitAddress, masterAddress } = await createContextAndCommit(
-      'myNewContext',
-      'first commit',
-      buildTreeCommit({
-        file1: ENTRY_ADDRESS,
-        file2: DNA_ADDRESS
-      })
-    )(alice);
-
-    const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
-      alice
-    );
-    const { Ok: developCommit } = await createCommit(
-      developAddress,
-      'develop commit',
-      buildTreeCommit({
-        file1: ENTRY_ADDRESS,
-        file2: ENTRY_ADDRESS,
-        file3: ENTRY_ADDRESS
-      })
-    )(alice);
-
-    const { Ok: mergedCommitAddress } = await mergeBranches(
-      developAddress,
-      masterAddress
-    )(alice);
-
-    t.equal(
-      mergedCommitAddress,
-      'QmQe1YEGaRSKehmrCbNNWsn2tSyHxDSL6yv5mbKWdVTWqu'
-    );
-
-    const { Ok: commitInfoJsonString } = getCommitInfo(mergedCommitAddress)(
-      alice
-    );
-    const commitInfo = JSON.parse(commitInfoJsonString.App[1]);
-
-    t.deepEqual(commitInfo.parent_commits_addresses, [
-      developCommit,
-      commitAddress
-    ]);
-
-    const { Ok: commitContentString } = getCommitContent(mergedCommitAddress)(
-      alice
-    );
-    const { contents: commitContent } = JSON.parse(commitContentString.App[1]);
-
-    t.deepEqual(commitContent, {
-      file3: ENTRY_ADDRESS,
-      file2: DNA_ADDRESS,
-      file1: ENTRY_ADDRESS
-    });
-  }
+  async (t, { alice }) => {}
 );
