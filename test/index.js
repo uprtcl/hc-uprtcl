@@ -136,51 +136,60 @@ scenario1.runTape(
   }
 );
 
-scenario1.runTape('merge two branches', async (t, { alice }) => {
-  const { last, all } = await chain(
-    alice,
-    () =>
-      createContextAndCommit(
-        'myNewContext',
-        'first commit',
-        buildTreeCommit({
-          file1: ENTRY_ADDRESS,
-          file2: DNA_ADDRESS
-        })
-      ),
-    last =>
-      branchAndMerge(
-        last.masterAddress,
-        buildTreeCommit({
-          file1: ENTRY_ADDRESS,
-          file3: ENTRY_ADDRESS
-        })
-      )
-  );
+scenario1.runTape(
+  'merge two branches creates correct parents',
+  async (t, { alice }) => {
+    const { commitAddress, masterAddress } = await createContextAndCommit(
+      'myNewContext',
+      'first commit',
+      buildTreeCommit({
+        file1: ENTRY_ADDRESS,
+        file2: DNA_ADDRESS
+      })
+    )(alice);
 
-  t.equal(
-    last,
-    'QmZmXmyG6tcPTySoBHdDg7BdksoXcNtQoYdKaw54Gj7rFu'
-  );
+    const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
+      alice
+    );
+    const { Ok: developCommit } = await createCommit(
+      developAddress,
+      'develop commit',
+      buildTreeCommit({
+        file1: ENTRY_ADDRESS,
+        file2: ENTRY_ADDRESS,
+        file3: ENTRY_ADDRESS
+      })
+    )(alice);
 
-  const { Ok: commitInfoJsonString } = getCommitInfo(last)(alice);
-  const commitInfo = JSON.parse(commitInfoJsonString.App[1]);
+    const { Ok: mergedCommitAddress } = await mergeBranches(
+      developAddress,
+      masterAddress
+    )(alice);
 
-  t.deepEqual(commitInfo.parent_commits_addresses, [
-    developCommit,
-    masterCommit
-  ]);
+    t.equal(
+      mergedCommitAddress,
+      'QmQe1YEGaRSKehmrCbNNWsn2tSyHxDSL6yv5mbKWdVTWqu'
+    );
 
-  const { Ok: commitContentJsonString } = getCommitContent(last)(
-    alice
-  );
-  const { contents: commitContent } = JSON.parse(
-    commitContentJsonString.App[1]
-  );
+    const { Ok: commitInfoJsonString } = getCommitInfo(mergedCommitAddress)(
+      alice
+    );
+    const commitInfo = JSON.parse(commitInfoJsonString.App[1]);
 
-  t.deepEqual(commitContent, {
-    file3: ENTRY_ADDRESS,
-    file2: DNA_ADDRESS,
-    file1: ENTRY_ADDRESS
-  });
-});
+    t.deepEqual(commitInfo.parent_commits_addresses, [
+      developCommit,
+      commitAddress
+    ]);
+
+    const { Ok: commitContentString } = getCommitContent(mergedCommitAddress)(
+      alice
+    );
+    const { contents: commitContent } = JSON.parse(commitContentString.App[1]);
+
+    t.deepEqual(commitContent, {
+      file3: ENTRY_ADDRESS,
+      file2: DNA_ADDRESS,
+      file1: ENTRY_ADDRESS
+    });
+  }
+);
