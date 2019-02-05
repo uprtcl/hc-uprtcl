@@ -157,23 +157,10 @@ const getContextHistory = function(contextAddress) {
 
 /** Helper builders */
 
-const buildBlobCommit = function(dnaAddress, entryAddress) {
+const buildObject = function(dataAddress, subcontents = {}) {
   return {
-    ContentBlob: {
-      content: {
-        HolochainEntry: {
-          dna_address: dnaAddress,
-          entry_address: entryAddress
-        }
-      }
-    }
-  };
-};
-const buildTreeCommit = function(treeContents) {
-  return {
-    ContentTree: {
-      contents: treeContents
-    }
+    data: dataAddress,
+    subcontent: subcontents
   };
 };
 
@@ -200,8 +187,7 @@ module.exports = {
   createContext,
   createContextAndCommit,
   getContextBranches,
-  buildBlobCommit,
-  buildTreeCommit,
+  buildObject,
   getCommitContent,
   getCommitInfo,
   getBranchInfo,

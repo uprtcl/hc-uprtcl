@@ -20,18 +20,16 @@ use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
 
 // see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
 
-pub mod blob;
+pub mod object;
 pub mod branch;
 pub mod commit;
 pub mod context;
 pub mod merge;
-pub mod tree;
 pub mod utils;
 
 define_zome! {
   entries: [
-    blob::definition(),
-    tree::definition(),
+    object::definition(),
     commit::definition(),
     branch::definition(),
     context::definition()
@@ -78,7 +76,7 @@ define_zome! {
     }
 
     create_commit: {
-      inputs: |branch_address: Address, message: String, content: commit::CommitContent|,
+      inputs: |branch_address: Address, message: String, content: object::Object|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: branch::handle_create_commit
     }

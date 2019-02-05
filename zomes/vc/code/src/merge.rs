@@ -1,9 +1,5 @@
-use crate::blob::Blob;
-use crate::commit::{
-  Commit, CommitContent,
-  CommitContent::{ContentBlob, ContentTree},
-};
-use crate::tree::Tree;
+use crate::commit::Commit;
+use crate::object::Object;
 use hdk::{
   error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::{
@@ -27,8 +23,8 @@ pub fn merge_commits_contents(
     Commit::try_from(crate::utils::get_entry_content(from_commit_address)?)?;
   let to_commit: Commit = Commit::try_from(crate::utils::get_entry_content(to_commit_address)?)?;
 
-  if from_commit.get_content_address() == to_commit.get_content_address() {
-    return Ok(to_commit.get_content_address().to_owned());
+  if from_commit.get_object_address() == to_commit.get_object_address() {
+    return Ok(to_commit.get_object_address().to_owned());
   }
 
   // Else, compute most recent ancestor and try to merge the contents
@@ -38,102 +34,80 @@ pub fn merge_commits_contents(
   let ancestor_commit: Commit =
     Commit::try_from(crate::utils::get_entry_content(&ancestor_commit_address)?)?;
 
-  let ancestor_content = CommitContent::from(ancestor_commit.get_content_address())?;
-  let from_content = CommitContent::from(from_commit.get_content_address())?;
-  let to_content = CommitContent::from(to_commit.get_content_address())?;
+  let ancestor_content = Object::from(ancestor_commit.get_object_address())?;
+  let from_content = Object::from(from_commit.get_object_address())?;
+  let to_content = Object::from(to_commit.get_object_address())?;
 
   merge_content(from_content, to_content, ancestor_content)
-}
-
-struct MergeContents {
-  from_content: CommitContent,
-  to_content: CommitContent,
-  ancestor_content: CommitContent,
 }
 
 /**
  * Merges the given contents, stores the result and returns its address
  */
 fn merge_content(
-  from_content: CommitContent,
-  to_content: CommitContent,
-  ancestor_content: CommitContent,
+  from_content: Object,
+  to_content: Object,
+  ancestor_content: Object,
 ) -> ZomeApiResult<Address> {
   let merge_result = build_merge_content(from_content, to_content, ancestor_content)?;
 
-  crate::commit::store_commit_content(merge_result)
+  crate::object::store_object(merge_result)
 }
 
 /**
  * Builds the merged content from the given contents
  */
 fn build_merge_content(
-  from_content: CommitContent,
-  to_content: CommitContent,
-  ancestor_content: CommitContent,
-) -> ZomeApiResult<CommitContent> {
-  let merge_contents = MergeContents {
-    from_content,
-    to_content,
-    ancestor_content,
-  };
-
-  match merge_contents {
-    MergeContents {
-      from_content: ContentTree(from_tree),
-      to_content: ContentTree(to_tree),
-      ancestor_content: ContentTree(ancestor_tree),
-    } => {
-      // Iterate over all the keys of the three trees
-      let mut merge_keys: HashSet<String> = from_tree
-        .get_contents()
+  from_content: Object,
+  to_content: Object,
+  ancestor_content: Object,
+) -> ZomeApiResult<Object> {
+  // Iterate over all the keys of the three subcontent object
+  let mut merge_keys: HashSet<String> = from_content
+    .get_subcontent()
+    .keys()
+    .cloned()
+    .collect::<HashSet<String>>();
+  merge_keys = merge_keys
+    .union(
+      &to_content
+        .get_subcontent()
         .keys()
         .cloned()
-        .collect::<HashSet<String>>();
-      merge_keys = merge_keys
-        .union(
-          &to_tree
-            .get_contents()
-            .keys()
-            .cloned()
-            .collect::<HashSet<String>>(),
-        ).cloned()
-        .collect();
-      merge_keys = merge_keys
-        .union(
-          &ancestor_tree
-            .get_contents()
-            .keys()
-            .cloned()
-            .collect::<HashSet<String>>(),
-        ).cloned()
-        .collect();
+        .collect::<HashSet<String>>(),
+    )
+    .cloned()
+    .collect();
+  merge_keys = merge_keys
+    .union(
+      &ancestor_content
+        .get_subcontent()
+        .keys()
+        .cloned()
+        .collect::<HashSet<String>>(),
+    )
+    .cloned()
+    .collect();
 
-      let mut merged_contents: HashMap<String, Address> = HashMap::new();
+  let mut merged_contents: HashMap<String, Address> = HashMap::new();
 
-      // For each key, call get_merge_result and include the result in the merge resulting contents
-      for key in merge_keys.into_iter() {
-        if let Some(result_address) = get_merge_result(
-          from_tree.get_contents().get(&key),
-          to_tree.get_contents().get(&key),
-          ancestor_tree.get_contents().get(&key),
-        )? {
-          merged_contents.insert(key, result_address.to_owned());
-        }
-      }
-
-      Ok(ContentTree(Tree::new(merged_contents)))
+  // For each key, call get_merge_result and include the result in the merge resulting contents
+  for key in merge_keys.into_iter() {
+    if let Some(result_address) = get_merge_result(
+      from_content.get_subcontent().get(&key),
+      to_content.get_subcontent().get(&key),
+      ancestor_content.get_subcontent().get(&key),
+    )? {
+      merged_contents.insert(key, result_address.to_owned());
     }
-    MergeContents {
-      from_content: ContentBlob(from_blob),
-      to_content: ContentBlob(to_blob),
-      ancestor_content: ContentBlob(ancestor_blob),
-    } => {
-      let merged_blob = get_merge_result(Some(from_blob), Some(to_blob), Some(ancestor_blob))?;
-      Ok(ContentBlob(merged_blob.unwrap()))
-    }
-    _ => Err(ZomeApiError::from(String::from("conflict"))),
   }
+
+  let merged_data = get_merge_result(
+    from_content.get_data(),
+    to_content.get_data(),
+    ancestor_content.get_data(),
+  )?;
+  Ok(Object::new(merged_data, merged_contents))
 }
 
 /**

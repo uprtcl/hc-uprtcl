@@ -1,4 +1,3 @@
-use crate::commit::CommitContent;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},
@@ -7,6 +6,7 @@ use hdk::{
     json::JsonString,
   },
 };
+use crate::object::Object;
 use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
@@ -69,10 +69,10 @@ pub fn handle_get_branch_info(branch_address: Address) -> ZomeApiResult<Option<E
 pub fn handle_create_commit(
   branch_address: Address,
   message: String,
-  content: CommitContent,
+  content: Object,
 ) -> ZomeApiResult<Address> {
-  let content_address = crate::commit::store_commit_content(content)?;
-  create_commit_in_branch(branch_address, message, content_address)
+  let object_address = crate::object::store_object(content)?;
+  create_commit_in_branch(branch_address, message, object_address)
 }
 
 /**
