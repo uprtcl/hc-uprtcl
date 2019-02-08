@@ -34,6 +34,12 @@ define_zome! {
       outputs: |result: ZomeApiResult<Option<Entry>>|,
       handler: note::handle_get_note
     }
+
+    get_my_notes: {
+      inputs: | |,
+      outputs: |result: ZomeApiResult<Vec<ZomeApiResult<Entry>>>|,
+      handler: note::handle_get_my_notes
+    }
   ]
 
   capabilities: {
