@@ -4,7 +4,7 @@ const {
   Config,
   Container,
   Scenario
-} = require('../../holochain-rust/nodejs_container');
+} = require('../../holochain-rust/nodejs_conductor');
 Scenario.setTape(require('tape'));
 
 const dnaPath = path.join(__dirname, '../dist/bundle.json');

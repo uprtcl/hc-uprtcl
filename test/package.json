@@ -1,12 +1,11 @@
 {
   "dependencies": {
-    "@holochain/holochain-nodejs": "latest",
     "faucet": "0.0.1",
     "json3": "*",
     "sleep": "^5.2.3",
     "tape": "^4.9.1"
   },
   "scripts": {
-    "test": "node index.js | faucet"
+    "test": "tape index.js | faucet"
   }
 }

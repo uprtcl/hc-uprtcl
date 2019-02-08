@@ -1,0 +1,16 @@
+{
+  "name": "start-lit-element",
+  "version": "1.0.0",
+  "description": "start-lit-element",
+  "repository": "https://github.com/PolymerLabs/start-lit-element.git",
+  "main": "start-lit-element.js",
+  "scripts": {
+    "start": "tsc && polymer serve"
+  },
+  "author": "The Polymer Authors",
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "@webcomponents/webcomponentsjs": "latest",
+    "lit-element": "latest"
+  }
+}
