@@ -208,7 +208,7 @@ dependencies = [
 [[package]]
 name = "hdk"
 version = "0.0.3"
-source = "git+https://github.com/holochain/holochain-rust?branch=develop#876d5ebb079b7b101d3d218c5ce23551aca2a011"
+source = "git+https://github.com/holochain/holochain-rust?branch=develop#b87aa4bcd45817c4a3c0294ea68b504cd1f10b67"
 dependencies = [
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "holochain_core_types 0.0.3 (git+https://github.com/holochain/holochain-rust?branch=develop)",
@@ -224,7 +224,7 @@ dependencies = [
 [[package]]
 name = "holochain_core_types"
 version = "0.0.3"
-source = "git+https://github.com/holochain/holochain-rust?branch=develop#876d5ebb079b7b101d3d218c5ce23551aca2a011"
+source = "git+https://github.com/holochain/holochain-rust?branch=develop#b87aa4bcd45817c4a3c0294ea68b504cd1f10b67"
 dependencies = [
  "arrayref 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -252,7 +252,7 @@ dependencies = [
 [[package]]
 name = "holochain_core_types_derive"
 version = "0.0.3"
-source = "git+https://github.com/holochain/holochain-rust?branch=develop#876d5ebb079b7b101d3d218c5ce23551aca2a011"
+source = "git+https://github.com/holochain/holochain-rust?branch=develop#b87aa4bcd45817c4a3c0294ea68b504cd1f10b67"
 dependencies = [
  "quote 0.6.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.87 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -263,7 +263,7 @@ dependencies = [
 [[package]]
 name = "holochain_wasm_utils"
 version = "0.0.3"
-source = "git+https://github.com/holochain/holochain-rust?branch=develop#876d5ebb079b7b101d3d218c5ce23551aca2a011"
+source = "git+https://github.com/holochain/holochain-rust?branch=develop#b87aa4bcd45817c4a3c0294ea68b504cd1f10b67"
 dependencies = [
  "holochain_core_types 0.0.3 (git+https://github.com/holochain/holochain-rust?branch=develop)",
  "holochain_core_types_derive 0.0.3 (git+https://github.com/holochain/holochain-rust?branch=develop)",

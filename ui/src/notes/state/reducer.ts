@@ -1,6 +1,6 @@
 import { getType } from 'typesafe-actions';
 import { AnyAction } from 'redux';
-import { createNote } from './actions';
+import { createNote, getMyNotes } from './actions';
 import { Note } from '../types';
 
 export interface NotesState {
@@ -12,11 +12,10 @@ const initialState: NotesState = {
 };
 
 export function notesReducer(state = initialState, action: AnyAction) {
+  console.log(action);
   switch (action.type) {
-    case getType(createNote.success):
-      // The type checker now knows that action.payload has type
-      // set in the definition using the generic
-      // You literally cant go wrong!
+    case getType(getMyNotes.success):
+      state.notes = action.payload.map(entry => entry.Ok.App[1]);
       return state;
     default:
       return state;

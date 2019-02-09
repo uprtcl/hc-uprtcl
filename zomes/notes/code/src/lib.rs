@@ -29,6 +29,7 @@ define_zome! {
       outputs: |result: ZomeApiResult<Address>|,
       handler: note::handle_create_note
     }
+
     get_note: {
       inputs: |address: Address|,
       outputs: |result: ZomeApiResult<Option<Entry>>|,
@@ -43,6 +44,6 @@ define_zome! {
   ]
 
   capabilities: {
-    public (Public) [create_note,get_note]
+    public (Public) [create_note, get_note, get_my_notes]
   }
 }

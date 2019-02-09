@@ -13,14 +13,17 @@ import {
   combineReducers,
   Reducer,
   StoreEnhancer,
-  Action
+  Action,
+  AnyAction
 } from 'redux';
+import thunk, { ThunkMiddleware } from 'redux-thunk';
 import { lazyReducerEnhancer } from 'pwa-helpers/lazy-reducer-enhancer.js';
 
 import { connect } from '@holochain/hc-web-client/dist/index.js';
-import { holochainMiddleware } from '@holochain/hc-redux-middleware/build/main/lib/middleware';
+import { holochainMiddleware } from '@holochain/hc-redux-middleware';
 
 import { NotesState, notesReducer } from './notes/state/reducer';
+import { versionControlReducer } from './vc/state/reducer';
 
 // Overall state extends static states and partials lazy states.
 export interface RootState {
@@ -28,10 +31,10 @@ export interface RootState {
 }
 
 // this url should use the same port set up the holochain container
-const url = 'ws:localhost:3000';
+const url = 'ws:localhost:8888';
 const hcWc = connect(url);
 
-const middleware = holochainMiddleware(hcWc);
+const middleware = [holochainMiddleware(hcWc), thunk as ThunkMiddleware<RootState, AnyAction>];
 
 // Sets up a Chrome extension for time travel debugging.
 // See https://github.com/zalmoxisus/redux-devtools-extension for more information.
@@ -43,10 +46,11 @@ const devCompose: <Ext0, Ext1, StateExt0, StateExt1>(
 
 export const store = createStore(
   state => state as Reducer<RootState, Action<any>>,
-  devCompose(lazyReducerEnhancer(combineReducers), applyMiddleware(middleware))
+  devCompose(lazyReducerEnhancer(combineReducers), applyMiddleware(...middleware))
 );
 
 // Initially loaded reducers.
 store.addReducers({
-  notesReducer
+  notes: notesReducer,
+  versionControl: versionControlReducer
 });

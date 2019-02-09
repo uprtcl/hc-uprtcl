@@ -4,7 +4,7 @@ import { Note } from '../types';
 @customElement('note-component')
 export class NoteComponent extends LitElement {
   @property({ type: Object })
-  note!: Note;
+  note: Note;
 
   render() {
     return html`

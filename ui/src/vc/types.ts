@@ -1,4 +1,3 @@
-
 export interface Context {
   id: string;
   name: string;
@@ -23,7 +22,14 @@ export interface Commit {
   parent_commits_addresses: Array<string>;
 }
 
-export interface Object{
+export interface Object {
   data: string;
-  subcontents: Array<string>;
+  subcontent: { [key: string]: string };
+}
+
+export function objectFromAddress(address: string): Object {
+  return {
+    data: address,
+    subcontent: {}
+  };
 }

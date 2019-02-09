@@ -46,8 +46,6 @@ const SAMPLE_ADDRESS3 = 'QmRqn5F3J3uL8NRoCugfNJF8556cp1khZJAP1XAdVdL73S';
 const blobCommit = () => buildBlobCommit(SAMPLE_ADDRESS1, SAMPLE_ADDRESS2);
 
 scenario1.runTape('create context', async (t, { alice }) => {
-  // Make a call to a Zome function
-  // indicating the capability and function, and passing it an input
   const { Ok: contextAddress } = await createContext('myNewContext')(alice);
   t.equal(contextAddress, 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en');
 

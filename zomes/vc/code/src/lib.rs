@@ -16,15 +16,17 @@ use hdk::{
     cas::content::Address, entry::Entry, error::HolochainError, json::JsonString,
   },
 };
-use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
+use holochain_wasm_utils::api_serialization::{
+  get_entry::GetEntryResult, get_links::GetLinksResult,
+};
 
 // see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
 
-pub mod object;
 pub mod branch;
 pub mod commit;
 pub mod context;
 pub mod merge;
+pub mod object;
 pub mod utils;
 
 define_zome! {
@@ -47,11 +49,11 @@ define_zome! {
 
     get_context_info: {
       inputs: |context_address: Address|,
-      outputs: |result: ZomeApiResult<Option<Entry>>|,
+      outputs: |result: ZomeApiResult<GetEntryResult>|,
       handler: context::handle_get_context_info
     }
 
-    create_branch_in_context: {
+    create_branch: {
       inputs: |commit_address: Address, name: String|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: context::handle_create_branch_in_context
@@ -101,8 +103,8 @@ define_zome! {
   ]
 
   capabilities: {
-    public (Public) [create_context, get_context_info, create_branch_in_context, 
-      get_context_branches, get_branch_info, get_branch_head, create_commit, 
+    public (Public) [create_context, get_context_info, create_branch_in_context,
+      get_context_branches, get_branch_info, get_branch_head, create_commit,
       get_commit_info, get_commit_content, merge_branches]
   }
 
