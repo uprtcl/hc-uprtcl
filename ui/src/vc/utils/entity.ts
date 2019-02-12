@@ -93,11 +93,24 @@ function updateOne<T>(
   return entityState;
 }
 
+export function getSelectors<T>() {
+  return {
+    selectIds: (entityState: EntityState<T>) => entityState.ids,
+    selectEntities: (entityState: EntityState<T>) => entityState.entities,
+    selectAll: (entityState: EntityState<T>) =>
+      entityState.ids.map(id => entityState.entities[id]),
+    selectById: (id: string) => (entityState: EntityState<T>) =>
+      entityState.entities[id]
+  };
+}
+
 export function createEntityAdapter<T>(
   idSelector: IdSelector<T> = defaultIdSelector
 ) {
   return {
+    // Initial state
     getInitialState,
+    // Actions
     insertOne: (entity: T, entityState: EntityState<T>) =>
       insertOne(entityState, idSelector, entity),
     insertMany: (entities: T[], entityState: EntityState<T>) =>
@@ -109,6 +122,13 @@ export function createEntityAdapter<T>(
     updateOne: (update: Update<T>, entityState: EntityState<T>) =>
       updateOne(entityState, update),
     removeOne: (id: string, entityState: EntityState<T>) =>
-      removeEntity(entityState, id)
+      removeEntity(entityState, id),
+    // Selectors
+    selectIds: (entityState: EntityState<T>) => entityState.ids,
+    selectEntities: (entityState: EntityState<T>) => entityState.entities,
+    selectAll: (entityState: EntityState<T>) =>
+      entityState.ids.map(id => entityState.entities[id]),
+    selectById: (id: string) => (entityState: EntityState<T>) =>
+      entityState.entities[id]
   };
 }

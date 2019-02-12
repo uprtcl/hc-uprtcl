@@ -9,7 +9,7 @@ use hdk::{
   AGENT_ADDRESS,
 };
 use holochain_wasm_utils::api_serialization::{get_entry::{GetEntryOptions,GetEntryResult},get_links::GetLinksResult};
-use std::convert::TryFrom;
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Context {
@@ -107,6 +107,17 @@ pub fn handle_create_branch_in_context(
  */
 pub fn handle_get_context_branches(context_address: Address) -> ZomeApiResult<GetLinksResult> {
   hdk::get_links(&context_address, "active_branches")
+}
+
+pub fn handle_create_context_and_commit(context_name: String, commit_message: String, content_address: Address) -> ZomeApiResult<Address> {
+  let context_address = handle_create_context(context_name)?;
+
+  let branch_addresses = handle_get_context_branches(context_address.clone())?;
+  let master_address = branch_addresses.addresses().first().unwrap().to_owned();
+
+  crate::branch::handle_create_commit(master_address, commit_message, crate::object::Object::new(Some(content_address), HashMap::new()))?;
+
+  Ok(context_address)
 }
 
 /** Helper functions */

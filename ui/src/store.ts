@@ -22,12 +22,13 @@ import { lazyReducerEnhancer } from 'pwa-helpers/lazy-reducer-enhancer.js';
 import { connect } from '@holochain/hc-web-client/dist/index.js';
 import { holochainMiddleware } from '@holochain/hc-redux-middleware';
 
-import { NotesState, notesReducer } from './notes/state/reducer';
-import { versionControlReducer } from './vc/state/reducer';
+import { DocumentsState, documentsReducer } from './documents/state/reducer';
+import { versionControlReducer, VersionControlState } from './vc/state/reducer';
 
 // Overall state extends static states and partials lazy states.
 export interface RootState {
-  notes: NotesState;
+  documents: DocumentsState;
+  versionControl: VersionControlState
 }
 
 // this url should use the same port set up the holochain container
@@ -51,6 +52,6 @@ export const store = createStore(
 
 // Initially loaded reducers.
 store.addReducers({
-  notes: notesReducer,
+  documents: documentsReducer,
   versionControl: versionControlReducer
 });

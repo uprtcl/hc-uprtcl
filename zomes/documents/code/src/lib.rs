@@ -8,42 +8,43 @@ extern crate serde_json;
 #[macro_use]
 extern crate holochain_core_types_derive;
 
+use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
 use hdk::holochain_core_types::{
   cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
   json::JsonString,
 };
 use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
 
-pub mod note;
+pub mod document;
 
 define_zome! {
   entries: [
-      note::definition()
+      document::definition()
   ]
 
   genesis: || { Ok(()) }
 
   functions: [
-    create_note: {
+    create_document: {
       inputs: |title: String, content: String|,
       outputs: |result: ZomeApiResult<Address>|,
-      handler: note::handle_create_note
+      handler: document::handle_create_document
     }
 
-    get_note: {
+    get_document: {
       inputs: |address: Address|,
       outputs: |result: ZomeApiResult<Option<Entry>>|,
-      handler: note::handle_get_note
+      handler: document::handle_get_document
     }
 
-    get_my_notes: {
+    get_my_documents: {
       inputs: | |,
-      outputs: |result: ZomeApiResult<Vec<ZomeApiResult<Entry>>>|,
-      handler: note::handle_get_my_notes
+      outputs: |result: ZomeApiResult<GetLinksResult>|,
+      handler: document::handle_get_my_documents
     }
   ]
 
   capabilities: {
-    public (Public) [create_note, get_note, get_my_notes]
+    public (Public) [create_document, get_document, get_my_documents]
   }
 }

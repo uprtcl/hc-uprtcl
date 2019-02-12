@@ -9,6 +9,8 @@ export interface Branch {
   id: string;
   name: string;
   context_address: string;
+
+  branch_head: string;
 }
 
 export interface Commit {
