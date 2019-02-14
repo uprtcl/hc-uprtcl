@@ -11,7 +11,7 @@ const createCommit = function(branchAddress, message, commitContent) {
 
 const createBranch = function(commitAddress, name) {
   return async caller =>
-    await caller.callSync('vc', 'create_branch_in_context', {
+    await caller.callSync('vc', 'create_branch', {
       commit_address: commitAddress,
       name: name
     });

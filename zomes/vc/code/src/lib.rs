@@ -102,17 +102,17 @@ define_zome! {
       outputs: |result: ZomeApiResult<Option<Entry>>|,
       handler: commit::handle_get_commit_content
     }
-
-    // Helpers
+    
     create_context_and_commit: {
-      inputs: |context_name: String, commit_message: String, content_address: Address|,
-      outputs: |result: ZomeApiResult<Address>|,
+      inputs: |name: String, message: String, content: object::Object|,
+      outputs: |result: ZomeApiResult<context::CreatedCommitResponse>|,
       handler: context::handle_create_context_and_commit
     }
+    
   ]
 
   capabilities: {
-    public (Public) [create_context, get_context_info, create_branch_in_context,
+    public (Public) [create_context, get_context_info, create_branch,
       get_context_branches, get_branch_info, get_branch_head, create_commit,
       get_commit_info, get_commit_content, merge_branches, create_context_and_commit]
   }

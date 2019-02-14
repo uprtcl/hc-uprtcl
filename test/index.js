@@ -1,10 +1,6 @@
 const path = require('path');
 
-const {
-  Config,
-  Container,
-  Scenario
-} = require('../../holochain-rust/nodejs_conductor');
+const { Config, Scenario } = require('../../holochain-rust/nodejs_conductor');
 Scenario.setTape(require('tape'));
 
 const dnaPath = path.join(__dirname, '../dist/bundle.json');
@@ -53,7 +49,7 @@ scenario1.runTape('create context', async (t, { alice }) => {
     context_address: contextAddress
   });
 
-  const contextInfo = JSON.parse(result.Ok.App[1]);
+  const contextInfo = JSON.parse(result.Ok.result.Single.entry.App[1]);
 
   // check for equality of the actual and expected results
   t.equal(contextInfo.name, 'myNewContext');
@@ -239,4 +235,16 @@ scenario1.runTape(
       Err: { Internal: 'there was a conflict trying to merge' }
     });
   }
-);
+); 
+
+scenario1.runTape('create document', async (t, { alice }) => {
+  const { Ok: context_address } = await alice.callSync(
+    'documents',
+    'create_document',
+    {
+      title: 'Title',
+      content: 'content'
+    }
+  );
+  t.equal(context_address, 'QmNTSi7M2MCtsj2qJETdT7kuZ8wymPDZdiur2mJx7VRasZ');
+});

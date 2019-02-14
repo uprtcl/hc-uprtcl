@@ -37,11 +37,6 @@ define_zome! {
       handler: document::handle_get_document
     }
 
-    get_my_documents: {
-      inputs: | |,
-      outputs: |result: ZomeApiResult<GetLinksResult>|,
-      handler: document::handle_get_my_documents
-    }
   ]
 
   capabilities: {

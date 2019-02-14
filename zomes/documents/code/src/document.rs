@@ -1,4 +1,3 @@
-use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},
@@ -6,8 +5,11 @@ use hdk::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
-  AGENT_ADDRESS
+  AGENT_ADDRESS,
 };
+use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
+use serde_json::json;
+use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Document {
@@ -38,51 +40,47 @@ pub fn definition() -> ValidatingEntryType {
       Ok(())
     },
 
-    links: [
-      from!(
-        "%agent_id",
-        tag: "my_documents",
-        validation_package: || {
-          hdk::ValidationPackageDefinition::ChainFull
-        },
-        validation: |_source: Address, _target: Address, _validation_data: hdk::ValidationData | {
-          Ok(())
-        }
-      )
-    ]
+    links: []
   )
 }
 
 pub fn handle_create_document(title: String, content: String) -> ZomeApiResult<Address> {
-  let document_entry = Entry::App("document".into(), Document::new(title.clone(), content).into());
+  let document_entry = Entry::App(
+    "document".into(),
+    Document::new(title.clone(), content).into(),
+  );
   let document_address = hdk::commit_entry(&document_entry)?;
 
   #[derive(Serialize, Deserialize, Debug, DefaultJson)]
-  struct CreateContextAndCommitInput {
-    context_name: String,
-    commit_message: String,
-    content_address: Address 
+  struct OkResponse {
+    pub Ok: CreatedCommitResponse
   }
-  let input = CreateContextAndCommitInput {
-    context_name: title,
-    commit_message: String::from("first commit"),
-    content_address: document_address.clone()
-  };
-
-  let context_address = 
-    hdk::call(hdk::THIS_INSTANCE, "vc", "test_token", "create_context_and_commit", input.into())?;
-
-  hdk::debug(format!("HOLA {}", context_address));
+  #[derive(Serialize, Deserialize, Debug, DefaultJson)]
+  struct CreatedCommitResponse {
+    pub context_address: Address,
+    pub branch_address: Address,
+    pub commit_address: Address,
+  }
   
-  //hdk::link_entries(&AGENT_ADDRESS, &context_address, "my_documents")?;
+  let response_json = hdk::call(
+    hdk::THIS_INSTANCE,
+    "vc",
+    "test_token",
+    "create_context_and_commit",
+    json!({
+      "name": title,
+      "message": "first commit",
+      "content": { "data": document_address, "subcontent": {}}
+    })
+    .into(),
+  )?;
 
-  Ok(document_address)
+  let response = OkResponse::try_from(response_json)?;
+
+  Ok(response.Ok.context_address)
 }
 
 pub fn handle_get_document(address: Address) -> ZomeApiResult<Option<Entry>> {
   hdk::get_entry(&address)
 }
 
-pub fn handle_get_my_documents() -> ZomeApiResult<GetLinksResult> {
-  hdk::get_links(&AGENT_ADDRESS, "my_documents")
-}

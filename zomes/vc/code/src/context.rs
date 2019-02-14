@@ -44,6 +44,16 @@ pub fn definition() -> ValidatingEntryType {
     },
 
     links: [
+      from!(
+        "%agent_id",
+        tag: "created_contexts",
+        validation_package: || {
+          hdk::ValidationPackageDefinition::ChainFull
+        },
+        validation: |_source: Address, _target: Address, _validation_data: hdk::ValidationData | {
+          Ok(())
+        }
+      ),
       to!(
         "branch",
         tag: "active_branches",
@@ -64,12 +74,7 @@ pub fn definition() -> ValidatingEntryType {
  * Create a new context with the given name, passing the author and the current time
  */
 pub fn handle_create_context(name: String) -> ZomeApiResult<Address> {
-  // Create context
-  let context_entry = Entry::App(
-    "context".into(),
-    Context::new(&name, "now", &AGENT_ADDRESS).into(),
-  );
-  let context_address = hdk::commit_entry(&context_entry)?;
+  let context_address = create_context_entry(name)?;
 
   // Create main starting branch and link it to the newly created context
   let branch_address =
@@ -77,6 +82,10 @@ pub fn handle_create_context(name: String) -> ZomeApiResult<Address> {
   link_branch_to_context(&context_address, &branch_address)?;
 
   Ok(context_address)
+}
+
+pub fn get_created_context() -> ZomeApiResult<Vec<ZomeApiResult<Entry>>> {
+  hdk::get_links_and_load(&AGENT_ADDRESS, "created_contexts")
 }
 
 /**
@@ -109,18 +118,44 @@ pub fn handle_get_context_branches(context_address: Address) -> ZomeApiResult<Ge
   hdk::get_links(&context_address, "active_branches")
 }
 
-pub fn handle_create_context_and_commit(context_name: String, commit_message: String, content_address: Address) -> ZomeApiResult<Address> {
-  let context_address = handle_create_context(context_name)?;
+#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+pub struct CreatedCommitResponse {
+  context_address: Address,
+  branch_address: Address,
+  commit_address: Address
+}
 
-  let branch_addresses = handle_get_context_branches(context_address.clone())?;
-  let master_address = branch_addresses.addresses().first().unwrap().to_owned();
+pub fn handle_create_context_and_commit(name: String, message: String, content: crate::object::Object) -> ZomeApiResult<CreatedCommitResponse> {
+  let context_address = create_context_entry(name)?;
 
-  crate::branch::handle_create_commit(master_address, commit_message, crate::object::Object::new(Some(content_address), HashMap::new()))?;
-
-  Ok(context_address)
+  // Create main starting branch and link it to the newly created context
+  let branch_address =
+    crate::branch::create_new_empty_branch(&context_address, String::from("master"))?;
+  link_branch_to_context(&context_address, &branch_address)?;
+  
+  let commit_address = crate::branch::handle_create_commit(branch_address.clone(), message, content)?;
+  
+  Ok(CreatedCommitResponse {
+    context_address: context_address,
+    branch_address: branch_address,
+    commit_address: commit_address
+  })
 }
 
 /** Helper functions */
+
+pub fn create_context_entry(name: String) -> ZomeApiResult<Address> {
+  // Create context
+  let context_entry = Entry::App(
+    "context".into(),
+    Context::new(&name, "now", &AGENT_ADDRESS).into(),
+  );
+  let context_address = hdk::commit_entry(&context_entry)?;
+
+  hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts")?;
+
+  Ok(context_address)
+}
 
 /**
  * Links the given branch to the given repository as an active branch
