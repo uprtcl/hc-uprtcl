@@ -29,7 +29,7 @@ function insertOne<T>(
   entity: T
 ): EntityState<T> {
   const id = idSelector(entity);
-  entityState[id] = entity;
+  entityState.entities[id] = entity;
   entityState.ids.push(id);
   return entityState;
 }
@@ -57,7 +57,7 @@ function upsertOne<T>(
     entityState.ids.push(id);
   }
 
-  entityState[id] = entity;
+  entityState.entities[id] = entity;
   return entityState;
 }
 
@@ -77,7 +77,7 @@ function removeEntity<T>(
   entityState: EntityState<T>,
   id: string
 ): EntityState<T> {
-  delete entityState[id];
+  delete entityState.entities[id];
   entityState.ids.splice(entityState.ids.indexOf(id), 1);
   return entityState;
 }

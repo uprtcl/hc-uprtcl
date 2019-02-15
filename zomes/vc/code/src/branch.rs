@@ -8,6 +8,7 @@ use hdk::{
 };
 use crate::object::Object;
 use std::convert::TryFrom;
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntryOptions};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Branch {
@@ -59,8 +60,8 @@ pub fn definition() -> ValidatingEntryType {
 /**
  * Retrieves the information about the branch
  */
-pub fn handle_get_branch_info(branch_address: Address) -> ZomeApiResult<Option<Entry>> {
-  hdk::get_entry(&branch_address)
+pub fn handle_get_branch_info(branch_address: Address) -> ZomeApiResult<GetEntryResult> {
+  hdk::get_entry_result(&branch_address, GetEntryOptions::default())
 }
 
 /**

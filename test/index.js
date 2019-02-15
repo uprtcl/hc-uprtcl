@@ -32,15 +32,15 @@ const {
   getContextHistory,
   getBranchHistory,
   getCommitHistory,
-  getBranchInfo
+  getBranchInfo,
+  getContextHeadCommits,
+  getContextCurrentContents
 } = require('./utils');
 
 const SAMPLE_ADDRESS1 = 'QmdYFTXuTyuaXbyLAPHmemgkjsaVQ5tfpnLqY9on5JZmzR';
 const SAMPLE_ADDRESS2 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const SAMPLE_ADDRESS3 = 'QmRqn5F3J3uL8NRoCugfNJF8556cp1khZJAP1XAdVdL73S';
-
-const blobCommit = () => buildBlobCommit(SAMPLE_ADDRESS1, SAMPLE_ADDRESS2);
-
+/* 
 scenario1.runTape('create context', async (t, { alice }) => {
   const { Ok: contextAddress } = await createContext('myNewContext')(alice);
   t.equal(contextAddress, 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en');
@@ -235,10 +235,10 @@ scenario1.runTape(
       Err: { Internal: 'there was a conflict trying to merge' }
     });
   }
-); 
+); */
 
 scenario1.runTape('create document', async (t, { alice }) => {
-  const { Ok: context_address } = await alice.callSync(
+  const { Ok: contextAddress } = await alice.callSync(
     'documents',
     'create_document',
     {
@@ -246,5 +246,25 @@ scenario1.runTape('create document', async (t, { alice }) => {
       content: 'content'
     }
   );
-  t.equal(context_address, 'QmNTSi7M2MCtsj2qJETdT7kuZ8wymPDZdiur2mJx7VRasZ');
+  t.equal(contextAddress, 'QmNTSi7M2MCtsj2qJETdT7kuZ8wymPDZdiur2mJx7VRasZ');
+  const result = await alice.callSync('vc', 'get_created_contexts', {});
+  t.equal(
+    result.Ok[0].Ok.result.Single.meta.address,
+    'QmNTSi7M2MCtsj2qJETdT7kuZ8wymPDZdiur2mJx7VRasZ'
+  );
+
+  const currentCommitsHeads = getContextHeadCommits(contextAddress)(alice);
+  const commitInfo = getCommitInfo(currentCommitsHeads[0].Ok)(alice);
+
+  t.equal(
+    commitInfo.Ok.App[1],
+    '{"context_address":"QmNTSi7M2MCtsj2qJETdT7kuZ8wymPDZdiur2mJx7VRasZ","author_address":"alice-----------------------------------------------------------------------------AAAIuDJb4M","message":"first commit","object_address":"QmXYxA9R4TBEfRCFcmKjqtWE6jzPrAasL3hC9zu5Sgo98v","parent_commits_addresses":[]}'
+  );
+
+  const currentObjects = getContextCurrentContents(contextAddress)(alice);
+
+  t.equal(
+    currentObjects[0].Ok.App[1],
+    '{"data":"QmT2eRGdpZmxJxHSbkFhczaSgLukL8YqMqwoX85jb9X43Q","subcontent":{}}'
+  );
 });

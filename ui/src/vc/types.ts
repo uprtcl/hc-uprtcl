@@ -24,12 +24,12 @@ export interface Commit {
   parent_commits_addresses: Array<string>;
 }
 
-export interface Object {
+export interface CommitObject {
   data: string;
   subcontent: { [key: string]: string };
 }
 
-export function objectFromAddress(address: string): Object {
+export function objectFromAddress(address: string): CommitObject {
   return {
     data: address,
     subcontent: {}

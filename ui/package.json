@@ -8,7 +8,7 @@
   "repository": "Polymer/pwa-starter-kit",
   "scripts": {
     "start": "gulp serve",
-    "start:webpack": "tsc && webpack-dev-server --open --mode development",
+    "start:webpack": "concurrently \"tsc -w\" \"webpack-dev-server --open --mode development --hot\"",
     "build": "tsc && polymer build --auto-base-path && gulp prpl-server",
     "build:static": "tsc && polymer build",
     "serve": "prpl-server --root server/build",

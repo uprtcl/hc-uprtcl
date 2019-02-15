@@ -1,17 +1,16 @@
 import { getType } from 'typesafe-actions';
 import { AnyAction } from 'redux';
-import { getMyDocuments } from './actions';
 import { Document } from '../types';
 import { EntityState, createEntityAdapter } from '../../vc/utils/entity';
 import { createSelector } from 'reselect';
 import {
   selectVersionControl,
-  VersionControlState,
-  selectContexts,
-  selectCurrentObjects
-} from '../../vc/state/reducer';
-import { Object } from '../../vc/types';
+  selectObjectFromBranch
+} from '../../vc/state/selectors';
 import { RootState } from '../../store';
+import { getEntry } from '../../vc/state/actions';
+import { parseEntryResult } from '../../vc/utils/utils';
+import { VersionControlState } from '../../vc/state/reducer';
 
 export interface DocumentsState {
   documents: EntityState<Document>;
@@ -24,12 +23,14 @@ const initialState: DocumentsState = {
 };
 
 export function documentsReducer(state = initialState, action: AnyAction) {
-  console.log(action);
   switch (action.type) {
-    case getType(getMyDocuments.success):
+    case getType(getEntry.success):
       return {
         ...state,
-        documents: documentsAdapter.insertMany(action.payload, state.documents)
+        documents: documentsAdapter.upsertOne(
+          parseEntryResult(action.payload),
+          state.documents
+        )
       };
     default:
       return state;
@@ -38,12 +39,13 @@ export function documentsReducer(state = initialState, action: AnyAction) {
 
 export const selectDocuments = (state: RootState) => state.documents;
 
-export const selectMyDocuments = createSelector(
+export const selectDocument = (branchId: string) =>
   createSelector(
-    selectVersionControl,
-    selectCurrentObjects
-  ),
-  selectDocuments,
-  (objects: Object[], documents: DocumentsState) =>
-    objects.map(object => documentsAdapter.selectById(object.data)(documents.documents))
-);
+    [selectDocuments, selectVersionControl],
+    (documents: DocumentsState, versionControl: VersionControlState) => {
+      const object = selectObjectFromBranch(branchId)(versionControl);
+      return object
+        ? documentsAdapter.selectById(object.data)(documents.documents)
+        : null;
+    }
+  );

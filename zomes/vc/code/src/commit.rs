@@ -10,6 +10,7 @@ use hdk::{
   AGENT_ADDRESS,
 };
 use std::convert::TryFrom;
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntryOptions};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Commit {
@@ -72,16 +73,16 @@ pub fn definition() -> ValidatingEntryType {
 /**
  * Retrieves the metadata information of the commit with the given address
  */
-pub fn handle_get_commit_info(commit_address: Address) -> ZomeApiResult<Option<Entry>> {
-  hdk::get_entry(&commit_address)
+pub fn handle_get_commit_info(commit_address: Address) -> ZomeApiResult<GetEntryResult> {
+  hdk::get_entry_result(&commit_address, GetEntryOptions::default())
 }
 
 /**
  * Retrieves the contents of the commit with the given address
  */
-pub fn handle_get_commit_content(commit_address: Address) -> ZomeApiResult<Option<Entry>> {
+pub fn handle_get_commit_content(commit_address: Address) -> ZomeApiResult<GetEntryResult> {
   let commit = Commit::try_from(crate::utils::get_entry_content(&commit_address)?)?;
-  hdk::get_entry(&(commit.object_address))
+  hdk::get_entry_result(&(commit.object_address), GetEntryOptions::default())
   /*
   Useful when full commit contents should be retrieved, to iterate deep into the tree
 

@@ -155,6 +155,26 @@ const getContextHistory = function(contextAddress) {
   };
 };
 
+const getContextHeadCommits = function(contextAddress) {
+  return caller => {
+    const {
+      Ok: { addresses: branchAddresses }
+    } = getContextBranches(contextAddress)(caller);
+
+    return branchAddresses.map(address => getBranchHead(address)(caller));
+  };
+};
+
+const getContextCurrentContents = function(contextAddress) {
+  return caller => {
+    const headCommitsAddress = getContextHeadCommits(contextAddress)(caller);
+
+    return headCommitsAddress.map(commitAddress =>
+      getCommitContent(commitAddress.Ok)(caller)
+    );
+  };
+};
+
 /** Helper builders */
 
 const buildObject = function(dataAddress, subcontents = {}) {
@@ -197,5 +217,7 @@ module.exports = {
   chain,
   getContextHistory,
   getBranchHistory,
-  getCommitHistory
+  getCommitHistory,
+  getContextHeadCommits,
+  getContextCurrentContents
 };

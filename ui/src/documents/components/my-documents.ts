@@ -1,58 +1,94 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 import { connect } from 'pwa-helpers/connect-mixin.js';
 import { store, RootState } from '../../store';
-import { getMyDocuments, createDocument } from '../state/actions';
-import { Document } from '../types';
+import { createDocument, saveDocument } from '../state/actions';
 
-import './document-list';
 import './edit-document';
-import { selectMyDocuments } from '../state/reducer';
+import '../../vc/components/branch-selector';
+import '../../vc/components/created-contexts';
+import { selectDocument } from '../state/reducer';
+import { getBranchAndContents } from '../../vc/state/actions';
+import { Document } from '../types';
 
 @customElement('my-documents')
 export class MyDocuments extends connect(store)(LitElement) {
-  @property({ type: Object })
-  documents: Array<Document> = [];
+  @property({ type: String })
+  selectedContextId: string;
+  @property({ type: String })
+  selectedBranchId: string;
 
   @property({ type: String })
-  selectedDocumentId: string;
+  newDocumentName: string = '';
+  @property({ type: Object })
+  selectedDocument: Document;
 
   render() {
     return html`
       <div>
-        <button @click="${this.addNewDocument}">Add new document</button>
-        <document-list
-          documents="${this.documents}"
-          @document-selected="${e =>
-            (this.selectedDocumentId = e.detail.documentId)}"
-        ></document-list>
+        <div>
+          <input @keyup="${e => (this.newDocumentName = e.target.value)}" />
+          <button
+            @click="${this.addNewDocument}"
+            ?disabled=${this.newDocumentName.length === 0}
+          >
+            Add new document
+          </button>
+        </div>
+
+        <created-contexts
+          @context-selected=${e =>
+            (this.selectedContextId = e.detail.contextId)}
+        ></created-contexts>
 
         <div>
-          ${this.selectedDocumentId &&
+          ${this.selectedContextId &&
             html`
-              <edit-document
-                document="${this.getSelectedDocument()}"
-              ></edit-document>
+              <branch-selector
+                .contextId=${this.selectedContextId}
+                @branch-selected=${e => this.selectBranch(e.detail.branchId)}
+              ></branch-selector>
+
+              ${this.selectedBranchId &&
+                (this.selectedDocument
+                  ? html`
+                      <edit-document
+                        .document=${this.selectedDocument}
+                        @save-document=${this.saveDocument}
+                      ></edit-document>
+                    `
+                  : html`
+                      <span>Loading content...</span>
+                    `)}
             `}
         </div>
       </div>
     `;
   }
 
-  protected firstUpdated() {
-    store.dispatch(getMyDocuments.create({}));
+  getSelectedDocument() {
+    return selectDocument(this.selectedBranchId)(<RootState>store.getState());
   }
 
-  getSelectedDocument() {
-    return this.documents.find(
-      document => document.id === this.selectedDocumentId
+  selectBranch(branchId: string) {
+    this.selectedBranchId = branchId;
+    getBranchAndContents(store, branchId).then(
+      () => (this.selectedDocument = this.getSelectedDocument())
     );
   }
 
-  stateChanged(state: RootState) {
-    this.documents = selectMyDocuments(state);
+  addNewDocument() {
+    store.dispatch(
+      createDocument.create({ title: this.newDocumentName, content: '' })
+    );
   }
 
-  addNewDocument() {
-    store.dispatch(createDocument.create({ title: '', content: '' }));
+  saveDocument(saveEvent) {
+    store.dispatch(
+      saveDocument.create({
+        branch_address: this.selectedBranchId,
+        title: saveEvent.detail.title,
+        content: saveEvent.detail.content
+      })
+    );
   }
 }

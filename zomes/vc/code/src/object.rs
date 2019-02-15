@@ -8,6 +8,7 @@ use hdk::{
   },
 };
 use std::{collections::HashMap, convert::TryFrom};
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntryOptions};
 
 #[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Object {
@@ -56,6 +57,12 @@ pub fn definition() -> ValidatingEntryType {
 
     links: []
   )
+}
+
+/** Exposed zome functions */
+
+pub fn handle_get_entry(address: Address) -> ZomeApiResult<GetEntryResult> {
+  hdk::get_entry_result(&address, GetEntryOptions::default())
 }
 
 /** Helper functions */

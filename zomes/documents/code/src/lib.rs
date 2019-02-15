@@ -8,7 +8,9 @@ extern crate serde_json;
 #[macro_use]
 extern crate holochain_core_types_derive;
 
-use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
+use holochain_wasm_utils::api_serialization::{get_links::GetLinksResult,
+  get_entry::{GetEntryResult,GetEntryOptions}};
+
 use hdk::holochain_core_types::{
   cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
   json::JsonString,
@@ -33,13 +35,19 @@ define_zome! {
 
     get_document: {
       inputs: |address: Address|,
-      outputs: |result: ZomeApiResult<Option<Entry>>|,
+      outputs: |result: ZomeApiResult<GetEntryResult>|,
       handler: document::handle_get_document
+    }
+
+    save_document: {
+      inputs: |branch_address: Address, title: String, content: String|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: document::handle_save_document
     }
 
   ]
 
   capabilities: {
-    public (Public) [create_document, get_document, get_my_documents]
+    public (Public) [create_document, get_document, save_document]
   }
 }

@@ -1,23 +1,34 @@
 import { getType } from 'typesafe-actions';
 import { AnyAction } from 'redux';
-import { createSelector } from 'reselect';
 
-import { Context, Branch, Commit, Object } from '../types';
+import { Context, Branch, Commit, CommitObject } from '../types';
 import { EntityState, createEntityAdapter } from '../utils/entity';
-import { getContextInfo } from './actions';
-import { RootState } from '../../store';
+import {
+  getContextInfo,
+  getCreatedContexts,
+  getContextBranches,
+  getBranchInfo,
+  getCommitInfo,
+  SET_BRANCH_HEAD,
+  getCommitContent
+} from './actions';
+import {
+  parseEntriesResults,
+  parseEntry,
+  parseEntryResult
+} from '../utils/utils';
 
 export interface VersionControlState {
   contexts: EntityState<Context>;
   branches: EntityState<Branch>;
   commits: EntityState<Commit>;
-  objects: EntityState<Object>;
+  objects: EntityState<CommitObject>;
 }
 
 const contextsAdapter = createEntityAdapter<Context>();
 const branchesAdapter = createEntityAdapter<Branch>();
 const commitsAdapter = createEntityAdapter<Commit>();
-const objectsAdapter = createEntityAdapter<Object>();
+const objectsAdapter = createEntityAdapter<CommitObject>();
 
 const initialState: VersionControlState = {
   contexts: contextsAdapter.getInitialState(),
@@ -29,67 +40,61 @@ const initialState: VersionControlState = {
 export function versionControlReducer(state = initialState, action: AnyAction) {
   console.log(action);
   switch (action.type) {
-    case getType(getContextInfo.success):
+    case getType(getCreatedContexts.success):
       return {
         ...state,
-        context: contextsAdapter.upsertOne(
-          action.payload.Ok.App[1],
+        contexts: contextsAdapter.insertMany(
+          parseEntriesResults(action.payload),
           state.contexts
         )
       };
+    case getType(getContextInfo.success):
+      return {
+        ...state,
+        contexts: contextsAdapter.upsertOne(
+          parseEntryResult(action.payload),
+          state.contexts
+        )
+      };
+    case getType(getBranchInfo.success):
+      return {
+        ...state,
+        branches: branchesAdapter.upsertOne(
+          parseEntryResult(action.payload),
+          state.branches
+        )
+      };
+    case SET_BRANCH_HEAD:
+      return {
+        ...state,
+        branches: branchesAdapter.updateOne(
+          {
+            id: action.payload.branchId,
+            changes: {
+              branch_head: action.payload.commitId
+            }
+          },
+          state.branches
+        )
+      };
+    case getType(getCommitInfo.success):
+      return {
+        ...state,
+        commits: commitsAdapter.upsertOne(
+          parseEntryResult(action.payload),
+          state.commits
+        )
+      };
+    case getType(getCommitContent.success):
+      return {
+        ...state,
+        objects: objectsAdapter.upsertOne(
+          parseEntryResult(action.payload),
+          state.objects
+        )
+      };
+
     default:
       return state;
   }
 }
-
-export const selectVersionControl = (state: RootState) => state.versionControl;
-
-export const selectContexts = (state: VersionControlState) =>
-  state.contexts.ids.map(id => state.contexts.entities[id]);
-
-export const selectContextById = (contextId: string) => (
-  state: VersionControlState
-) => state.contexts.entities[contextId];
-
-export const selectContextBranches = (contextId: string) => (
-  state: VersionControlState
-) =>
-  state.branches.ids
-    .map(id => state.branches.entities[id])
-    .filter(branch => branch.context_address === contextId);
-
-export const selectBranchById = (branchId: string) => (
-  state: VersionControlState
-) => state.branches.entities[branchId];
-
-export const selectCommitById = (commitId: string) => (
-  state: VersionControlState
-) => state.commits.entities[commitId];
-
-export const selectBranchHead = (branchId: string) => (
-  state: VersionControlState
-) => state.commits.entities[selectBranchById(branchId)(state).branch_head];
-
-export const selectObjects = (state: VersionControlState) => state.objects;
-
-export const selectObjectFromBranch = (branchId: string) =>
-  createSelector(
-    selectBranchHead(branchId),
-    selectObjects,
-    (commit: Commit, objects: EntityState<Object>) =>
-      objects.entities[commit.object_address]
-  );
-
-export const selectObjectFromContext = (contextId: string) =>
-  createSelector(
-    selectContextBranches(contextId),
-    s => s,
-    (branches: Branch[], state: VersionControlState) =>
-      selectObjectFromBranch(branches[0].id)(state)
-  );
-
-export const selectCurrentObjects = createSelector(
-  [selectContexts, s => s],
-  (contexts: Context[], state: VersionControlState) =>
-    contexts.map(context => selectObjectFromContext(context.id)(state))
-);

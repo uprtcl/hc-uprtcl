@@ -47,6 +47,12 @@ define_zome! {
       handler: context::handle_create_context
     }
 
+    get_created_contexts: {
+      inputs: | |,
+      outputs: |result: ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>>|,
+      handler: context::handle_get_created_contexts
+    }
+
     get_context_info: {
       inputs: |context_address: Address|,
       outputs: |result: ZomeApiResult<GetEntryResult>|,
@@ -68,7 +74,7 @@ define_zome! {
 
     get_branch_info: {
       inputs: |branch_address: Address|,
-      outputs: |result: ZomeApiResult<Option<Entry>>|,
+      outputs: |result: ZomeApiResult<GetEntryResult>|,
       handler: branch::handle_get_branch_info
     }
 
@@ -93,13 +99,13 @@ define_zome! {
 
     get_commit_info: {
       inputs: |commit_address: Address|,
-      outputs: |result: ZomeApiResult<Option<Entry>>|,
+      outputs: |result: ZomeApiResult<GetEntryResult>|,
       handler: commit::handle_get_commit_info
     }
 
     get_commit_content: {
       inputs: |commit_address: Address|,
-      outputs: |result: ZomeApiResult<Option<Entry>>|,
+      outputs: |result: ZomeApiResult<GetEntryResult>|,
       handler: commit::handle_get_commit_content
     }
     
@@ -108,13 +114,20 @@ define_zome! {
       outputs: |result: ZomeApiResult<context::CreatedCommitResponse>|,
       handler: context::handle_create_context_and_commit
     }
-    
+
+    // Objects
+    get_entry: {
+      inputs: |address: Address|,
+      outputs: |result: ZomeApiResult<GetEntryResult>|,
+      handler: object::handle_get_entry
+    }
+
   ]
 
   capabilities: {
-    public (Public) [create_context, get_context_info, create_branch,
+    public (Public) [create_context, get_created_contexts, get_context_info, create_branch,
       get_context_branches, get_branch_info, get_branch_head, create_commit,
-      get_commit_info, get_commit_content, merge_branches, create_context_and_commit]
+      get_commit_info, get_commit_content, merge_branches, create_context_and_commit, get_entry]
   }
 
 }

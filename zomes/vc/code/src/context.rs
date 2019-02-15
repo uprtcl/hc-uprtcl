@@ -8,7 +8,7 @@ use hdk::{
   },
   AGENT_ADDRESS,
 };
-use holochain_wasm_utils::api_serialization::{get_entry::{GetEntryOptions,GetEntryResult},get_links::GetLinksResult};
+use holochain_wasm_utils::api_serialization::{get_entry::{StatusRequestKind,GetEntryOptions,GetEntryResult},get_links::{GetLinksOptions, LinksStatusRequestKind,GetLinksResult}};
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
@@ -84,8 +84,8 @@ pub fn handle_create_context(name: String) -> ZomeApiResult<Address> {
   Ok(context_address)
 }
 
-pub fn get_created_context() -> ZomeApiResult<Vec<ZomeApiResult<Entry>>> {
-  hdk::get_links_and_load(&AGENT_ADDRESS, "created_contexts")
+pub fn handle_get_created_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>>  {
+  hdk::get_links_result(&AGENT_ADDRESS, "created_contexts", GetLinksOptions::default(), GetEntryOptions::default())
 }
 
 /**

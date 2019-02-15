@@ -10,6 +10,12 @@ use hdk::{
 use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
 use serde_json::json;
 use std::convert::TryFrom;
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntryOptions};
+
+#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+struct AddressResponse {
+  pub Ok: Address,
+}
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Document {
@@ -80,7 +86,31 @@ pub fn handle_create_document(title: String, content: String) -> ZomeApiResult<A
   Ok(response.Ok.context_address)
 }
 
-pub fn handle_get_document(address: Address) -> ZomeApiResult<Option<Entry>> {
-  hdk::get_entry(&address)
+pub fn handle_get_document(address: Address) -> ZomeApiResult<GetEntryResult> {
+  hdk::get_entry_result(&address, GetEntryOptions::default())
 }
 
+pub fn handle_save_document(branch_address: Address, title: String, content: String) -> ZomeApiResult<Address> {
+  let document_entry = Entry::App(
+    "document".into(),
+    Document::new(title.clone(), content).into(),
+  );
+  let document_address = hdk::commit_entry(&document_entry)?;
+
+  let response_json = hdk::call(
+    hdk::THIS_INSTANCE,
+    "vc",
+    "test_token",
+    "create_commit",
+    json!({
+      "branch_address": branch_address,
+      "message": "commit",
+      "content": { "data": document_address, "subcontent": {}}
+    })
+    .into(),
+  )?;
+
+  let response = AddressResponse::try_from(response_json)?;
+
+  Ok(response.Ok)
+}
