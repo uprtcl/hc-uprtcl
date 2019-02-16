@@ -59,6 +59,12 @@ define_zome! {
       handler: context::handle_get_context_info
     }
 
+    get_context_history: {
+      inputs: |context_address: Address|,
+      outputs: |result: ZomeApiResult<Vec<GetEntryResult>>|,
+      handler: context::handle_get_context_history
+    }
+
     // Branches
     create_branch: {
       inputs: |commit_address: Address, name: String|,
@@ -124,10 +130,12 @@ define_zome! {
 
   ]
 
-  capabilities: {
-    public (Public) [create_context, get_created_contexts, get_context_info, create_branch,
+  traits: {
+    hc_public [
+      create_context, get_created_contexts, get_context_info, get_context_history, create_branch,
       get_context_branches, get_branch_info, get_branch_head, create_commit,
-      get_commit_info, get_commit_content, merge_branches, create_context_and_commit, get_entry]
+      get_commit_info, get_commit_content, merge_branches, create_context_and_commit, get_entry
+    ]
   }
 
 }

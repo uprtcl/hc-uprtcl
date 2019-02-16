@@ -101,6 +101,11 @@ export const mergeBranches = createHolochainAsyncAction<
   string
 >(INSTANCE_NAME, ZOME_NAME, 'merge_branches');
 
+export const getContextHistory = createHolochainAsyncAction<
+  { context_address: string },
+  string
+>(INSTANCE_NAME, ZOME_NAME, 'get_context_history');
+
 export function getCreatedContextsAndContents(store: Store) {
   return new Promise(resolve => {
     store
@@ -121,7 +126,9 @@ export function getContextBranchesInfo(store: Store, contextAddress: string) {
         addressesResult.addresses.forEach(branchAddress => {
           store
             .dispatch(getBranchInfo.create({ branch_address: branchAddress }))
-            .then(branchEntry => resolve());
+            .then(branchEntry =>
+              getBranchAndContents(store, branchAddress).then(() => resolve())
+            );
         })
       );
   });

@@ -1,5 +1,6 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 import { Document } from '../types';
+import { Button } from '@material/mwc-button';
 
 @customElement('edit-document')
 export class EditDocument extends LitElement {
@@ -10,9 +11,9 @@ export class EditDocument extends LitElement {
 
   render() {
     return html`
-      <div>
-        <h3>${this.document.title}</h3>
+      <div style="display: flex; flex-direction: column; flex: 1;">
         <textarea
+          style="height: 300px;"
           .value=${this.document.content}
           @keyup="${e => (this.documentContent = e.target.value)}"
         ></textarea>

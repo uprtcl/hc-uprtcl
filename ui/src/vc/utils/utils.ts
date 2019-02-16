@@ -9,4 +9,4 @@ export const parseEntries = (entryArray: Array<any>) =>
   entryArray.map(entry => parseEntry(entry));
   
 export const parseEntriesResults = (entryArray: Array<any>) =>
-  entryArray.map(entry => parseEntryResult(entry.Ok));
+  entryArray.map(entry => parseEntryResult(entry.Ok ? entry.Ok : entry));

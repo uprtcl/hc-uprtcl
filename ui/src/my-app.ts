@@ -6,9 +6,7 @@ import './documents/components/my-documents';
 export class MyApp extends LitElement {
   render() {
     return html`
-      <div>
-        <my-documents></my-documents>
-      </div>
+      <my-documents></my-documents>
     `;
   }
 }

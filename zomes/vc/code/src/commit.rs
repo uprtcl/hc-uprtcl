@@ -9,8 +9,8 @@ use hdk::{
   },
   AGENT_ADDRESS,
 };
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 use std::convert::TryFrom;
-use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntryOptions};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Commit {
@@ -149,4 +149,20 @@ pub fn merge_commits(
     merge_object_address,
     &vec![from_commit_address.to_owned(), to_commit_address.to_owned()],
   )
+}
+
+pub fn get_commit_history(commit_address: Address) -> ZomeApiResult<Vec<GetEntryResult>> {
+  let commit: Commit = Commit::try_from(crate::utils::get_entry_content(&commit_address)?)?;
+
+  let mut history: Vec<GetEntryResult> = commit
+    .parent_commits_addresses
+    .into_iter()
+    .flat_map(|parent_commit_address| {
+      let parent_history: Vec<GetEntryResult> = get_commit_history(parent_commit_address).unwrap();
+      parent_history.into_iter()
+    })
+    .collect();
+
+  history.push(handle_get_commit_info(commit_address)?);
+  Ok(history)
 }

@@ -10,7 +10,8 @@ import {
   getBranchInfo,
   getCommitInfo,
   SET_BRANCH_HEAD,
-  getCommitContent
+  getCommitContent,
+  getContextHistory
 } from './actions';
 import {
   parseEntriesResults,
@@ -85,12 +86,20 @@ export function versionControlReducer(state = initialState, action: AnyAction) {
           state.commits
         )
       };
-    case getType(getCommitContent.success):
+      case getType(getCommitContent.success):
       return {
         ...state,
         objects: objectsAdapter.upsertOne(
           parseEntryResult(action.payload),
           state.objects
+        )
+      };
+    case getType(getContextHistory.success):
+      return {
+        ...state,
+        commits: commitsAdapter.upsertMany(
+          parseEntriesResults(action.payload),
+          state.commits
         )
       };
 

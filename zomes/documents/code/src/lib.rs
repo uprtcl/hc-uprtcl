@@ -47,7 +47,7 @@ define_zome! {
 
   ]
 
-  capabilities: {
-    public (Public) [create_document, get_document, save_document]
+  traits: {
+    hc_public [create_document, get_document, save_document]
   }
 }

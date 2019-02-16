@@ -39,13 +39,9 @@ export function documentsReducer(state = initialState, action: AnyAction) {
 
 export const selectDocuments = (state: RootState) => state.documents;
 
-export const selectDocument = (branchId: string) =>
+export const selectDocument = (documentId: string) =>
   createSelector(
-    [selectDocuments, selectVersionControl],
-    (documents: DocumentsState, versionControl: VersionControlState) => {
-      const object = selectObjectFromBranch(branchId)(versionControl);
-      return object
-        ? documentsAdapter.selectById(object.data)(documents.documents)
-        : null;
-    }
+    selectDocuments,
+    (documents: DocumentsState) =>
+      documentsAdapter.selectById(documentId)(documents.documents)
   );

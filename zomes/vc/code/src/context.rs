@@ -8,7 +8,10 @@ use hdk::{
   },
   AGENT_ADDRESS,
 };
-use holochain_wasm_utils::api_serialization::{get_entry::{StatusRequestKind,GetEntryOptions,GetEntryResult},get_links::{GetLinksOptions, LinksStatusRequestKind,GetLinksResult}};
+use holochain_wasm_utils::api_serialization::{
+  get_entry::{GetEntryOptions, GetEntryResult, StatusRequestKind},
+  get_links::{GetLinksOptions, GetLinksResult, LinksStatusRequestKind},
+};
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
@@ -84,8 +87,13 @@ pub fn handle_create_context(name: String) -> ZomeApiResult<Address> {
   Ok(context_address)
 }
 
-pub fn handle_get_created_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>>  {
-  hdk::get_links_result(&AGENT_ADDRESS, "created_contexts", GetLinksOptions::default(), GetEntryOptions::default())
+pub fn handle_get_created_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
+  hdk::get_links_result(
+    &AGENT_ADDRESS,
+    "created_contexts",
+    GetLinksOptions::default(),
+    GetEntryOptions::default(),
+  )
 }
 
 /**
@@ -122,24 +130,47 @@ pub fn handle_get_context_branches(context_address: Address) -> ZomeApiResult<Ge
 pub struct CreatedCommitResponse {
   context_address: Address,
   branch_address: Address,
-  commit_address: Address
+  commit_address: Address,
 }
 
-pub fn handle_create_context_and_commit(name: String, message: String, content: crate::object::Object) -> ZomeApiResult<CreatedCommitResponse> {
+/**
+ * Creates a context, a branch and a commit and return the addresses
+ */
+pub fn handle_create_context_and_commit(
+  name: String,
+  message: String,
+  content: crate::object::Object,
+) -> ZomeApiResult<CreatedCommitResponse> {
   let context_address = create_context_entry(name)?;
 
   // Create main starting branch and link it to the newly created context
   let branch_address =
     crate::branch::create_new_empty_branch(&context_address, String::from("master"))?;
   link_branch_to_context(&context_address, &branch_address)?;
-  
-  let commit_address = crate::branch::handle_create_commit(branch_address.clone(), message, content)?;
-  
+
+  let commit_address =
+    crate::branch::handle_create_commit(branch_address.clone(), message, content)?;
+
   Ok(CreatedCommitResponse {
     context_address: context_address,
     branch_address: branch_address,
-    commit_address: commit_address
+    commit_address: commit_address,
   })
+}
+
+/**
+ * Returns the commit history from all the branches from the given context
+ */
+pub fn handle_get_context_history(context_address: Address) -> ZomeApiResult<Vec<GetEntryResult>> {
+  let context_branches = handle_get_context_branches(context_address)?;
+  Ok(context_branches
+    .addresses()
+    .into_iter()
+    .flat_map(|branch_address| {
+      let branch_history = crate::branch::get_branch_history(branch_address.to_owned()).unwrap();
+      branch_history.into_iter()
+    })
+    .collect())
 }
 
 /** Helper functions */

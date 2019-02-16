@@ -22,6 +22,7 @@
   "dependencies": {
     "@holochain/hc-redux-middleware": "^1.0.9",
     "@holochain/hc-web-client": "0.0.1",
+    "@material/mwc-button": "^0.3.6",
     "@polymer/app-layout": "^3.0.0",
     "@polymer/polymer": "^3.1.0",
     "@webcomponents/webcomponentsjs": "^2.2.4",
