@@ -127,9 +127,9 @@ pub fn handle_merge_branches(
  * Sets the given branch head pointing to the given commit head
  */
 pub fn set_branch_head(branch_address: &Address, commit_address: &Address) -> ZomeApiResult<()> {
-  let previous_head = handle_get_branch_head(branch_address.to_owned())?;
+  //let previous_head = handle_get_branch_head(branch_address.to_owned())?;
   
-  hdk::remove_link(branch_address, &previous_head, "branch_head")?;
+  //hdk::remove_link(branch_address, &previous_head, "branch_head")?;
   hdk::link_entries(branch_address, commit_address, "branch_head")
 }
 

@@ -26,10 +26,10 @@ export interface VersionControlState {
   objects: EntityState<CommitObject>;
 }
 
-const contextsAdapter = createEntityAdapter<Context>();
-const branchesAdapter = createEntityAdapter<Branch>();
-const commitsAdapter = createEntityAdapter<Commit>();
-const objectsAdapter = createEntityAdapter<CommitObject>();
+export const contextsAdapter = createEntityAdapter<Context>();
+export const branchesAdapter = createEntityAdapter<Branch>();
+export const commitsAdapter = createEntityAdapter<Commit>();
+export const objectsAdapter = createEntityAdapter<CommitObject>();
 
 const initialState: VersionControlState = {
   contexts: contextsAdapter.getInitialState(),
@@ -44,7 +44,7 @@ export function versionControlReducer(state = initialState, action: AnyAction) {
     case getType(getCreatedContexts.success):
       return {
         ...state,
-        contexts: contextsAdapter.insertMany(
+        contexts: contextsAdapter.upsertMany(
           parseEntriesResults(action.payload),
           state.contexts
         )

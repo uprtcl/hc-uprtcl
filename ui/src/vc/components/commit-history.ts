@@ -2,21 +2,8 @@ import { LitElement, html, customElement, property } from 'lit-element';
 import { Branch, Context, Commit } from '../types';
 import { connect } from 'pwa-helpers/connect-mixin';
 import { store, RootState } from '../../store';
-import {
-  selectContextBranches,
-  selectVersionControl,
-  selectObjectFromBranch,
-  selectContextById,
-  selectBranchHead,
-  selectContextHistory
-} from '../state/selectors';
-import {
-  getContextBranchesInfo,
-  getBranchAndContents,
-  getContextInfo,
-  createBranch,
-  getContextHistory
-} from '../state/actions';
+import { selectVersionControl, selectContextHistory } from '../state/selectors';
+import { getContextHistory } from '../state/actions';
 
 @customElement('commit-history')
 export class CommitHistory extends connect(store)(LitElement) {
@@ -41,6 +28,7 @@ export class CommitHistory extends connect(store)(LitElement) {
         : html`
             <table>
               <thead>
+                <th>Branch</th>
                 <th>Id</th>
                 <th>Timestamp</th>
                 <th>Author</th>
@@ -49,6 +37,7 @@ export class CommitHistory extends connect(store)(LitElement) {
               ${this.commitHistory.map(
                 commit => html`
                   <tr>
+                    <td>${this.getBranchesNamesFromCommit(commit.id)}</td>
                     <td>${commit.id}</td>
                     <td>${Date.now()}</td>
                     <td>${commit.author_address}</td>
@@ -93,5 +82,14 @@ export class CommitHistory extends connect(store)(LitElement) {
       }
     });
     this.dispatchEvent(event);
+  }
+
+  getBranchesNamesFromCommit(commitId: string) {
+    const branches = this.branches.filter(
+      branch => branch.branch_head === commitId
+    );
+    return branches.length > 0
+      ? branches.map(branch => branch.name).join(',')
+      : '';
   }
 }

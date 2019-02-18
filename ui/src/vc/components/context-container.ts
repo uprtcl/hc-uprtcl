@@ -12,9 +12,9 @@ import {
 } from '../state/selectors';
 import {
   getContextBranchesInfo,
-  getBranchAndContents,
   getContextInfo,
-  createBranch
+  createBranch,
+  getBranchHeadCommitContent
 } from '../state/actions';
 
 import './branch-selector';
@@ -30,6 +30,9 @@ export class ContextContainer extends connect(store)(LitElement) {
 
   @property({ type: Boolean })
   loading = true;
+
+  @property({ type: Boolean })
+  creatingBranch = false;
 
   @property({ type: Array })
   branches: Branch[];
@@ -63,6 +66,12 @@ export class ContextContainer extends connect(store)(LitElement) {
                 >
                   Create branch
                 </button>
+
+                ${this.creatingBranch
+                  ? html`
+                      <span>Creating branch...</span>
+                    `
+                  : html``}
               </div>
 
               <div style="display: flex; flex-direction: row">
@@ -81,6 +90,8 @@ export class ContextContainer extends connect(store)(LitElement) {
   }
 
   loadContext() {
+    this.loading = true;
+
     Promise.all([
       store.dispatch(
         getContextInfo.create({ context_address: this.contextId })
@@ -113,16 +124,16 @@ export class ContextContainer extends connect(store)(LitElement) {
     );
   }
 
-  getSelectedObject() {
-    return selectObjectFromBranch(this.selectedBranchId)(
+  getBranchObject(branchId: string) {
+    return selectObjectFromBranch(branchId)(
       selectVersionControl(<RootState>store.getState())
     );
   }
 
   selectBranch(branchId: string) {
     this.selectedBranchId = branchId;
-    getBranchAndContents(store, branchId).then(() =>
-      this.dispatchSelectedEntry(this.getSelectedObject().data)
+    getBranchHeadCommitContent(store, branchId).then(() =>
+      this.dispatchSelectedEntry(this.getBranchObject(branchId).data)
     );
 
     this.dispatchSelectedEntry(null);
@@ -134,6 +145,7 @@ export class ContextContainer extends connect(store)(LitElement) {
   }
 
   createBranch(event) {
+    this.creatingBranch = true;
     const commit: Commit = selectBranchHead(this.selectedBranchId)(
       selectVersionControl(<RootState>store.getState())
     );
@@ -144,7 +156,10 @@ export class ContextContainer extends connect(store)(LitElement) {
           name: this.newBranchName
         })
       )
-      .then(() => this.loadContext());
+      .then(() => {
+        this.creatingBranch = false;
+        this.loadContext();
+      });
   }
 
   dispatchSelectedEntry(entryId: string) {

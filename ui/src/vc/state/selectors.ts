@@ -1,6 +1,6 @@
 import { Branch, Context, Commit, CommitObject } from '../types';
 import { createSelector } from 'reselect';
-import { VersionControlState } from './reducer';
+import { VersionControlState, commitsAdapter } from './reducer';
 import { EntityState } from '../utils/entity';
 import { RootState } from '../../store';
 
@@ -30,7 +30,11 @@ export const selectCommitById = (commitId: string) => (
 
 export const selectBranchHead = (branchId: string) => (
   state: VersionControlState
-) => state.commits.entities[selectBranchById(branchId)(state).branch_head];
+) => commitsAdapter.selectById(selectBranchHeadId(branchId)(state))(state.commits);
+
+export const selectBranchHeadId = (branchId: string) => (
+  state: VersionControlState
+) => selectBranchById(branchId)(state).branch_head;
 
 export const selectObjects = (state: VersionControlState) => state.objects;
 

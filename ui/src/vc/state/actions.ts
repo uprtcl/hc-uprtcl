@@ -6,6 +6,11 @@ import {
   parseEntry,
   parseEntryResult
 } from '../utils/utils';
+import {
+  selectVersionControl,
+  selectBranchHead,
+  selectBranchHeadId
+} from './selectors';
 
 const INSTANCE_NAME = 'test-instance';
 const ZOME_NAME = 'vc';
@@ -123,29 +128,42 @@ export function getContextBranchesInfo(store: Store, contextAddress: string) {
     store
       .dispatch(getContextBranches.create({ context_address: contextAddress }))
       .then(addressesResult =>
-        addressesResult.addresses.forEach(branchAddress => {
-          store
-            .dispatch(getBranchInfo.create({ branch_address: branchAddress }))
-            .then(branchEntry =>
-              getBranchAndContents(store, branchAddress).then(() => resolve())
-            );
-        })
+        Promise.all(
+          addressesResult.addresses.map((branchAddress: string) =>
+            store
+              .dispatch(getBranchInfo.create({ branch_address: branchAddress }))
+              .then(branchEntry => getBranchHeadCommit(store, branchAddress))
+          )
+        ).then(() => resolve())
       );
   });
 }
 
-export function getBranchAndContents(store: Store, branchAddress: string) {
+function getBranchHeadCommit(store: Store, branchAddress: string) {
   return new Promise(resolve => {
     store
       .dispatch(getBranchHead.create({ branch_address: branchAddress }))
       .then(commitAddress => {
         store.dispatch(setBranchHead(branchAddress, commitAddress));
-        getCommitContents(store, commitAddress).then(() => resolve());
+        resolve();
       });
   });
 }
 
-export function getCommitContents(store: Store, commitAddress: string) {
+export function getBranchHeadCommitContent(
+  store: Store,
+  branchAddress: string
+) {
+  return new Promise(resolve => {
+    const branchHead = selectBranchHeadId(branchAddress)(
+      selectVersionControl(store.getState())
+    );
+
+    getCommitAndContents(store, branchHead).then(() => resolve());
+  });
+}
+
+export function getCommitAndContents(store: Store, commitAddress: string) {
   return new Promise(resolve => {
     store.dispatch(getCommitInfo.create({ commit_address: commitAddress }));
 

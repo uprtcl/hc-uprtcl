@@ -10,7 +10,6 @@ import '../../vc/components/created-contexts';
 import { selectDocument } from '../state/reducer';
 import { Document } from '../types';
 
-
 @customElement('my-documents')
 export class MyDocuments extends connect(store)(LitElement) {
   @property({ type: String })
@@ -21,7 +20,9 @@ export class MyDocuments extends connect(store)(LitElement) {
   @property({ type: Object })
   selectedDocument: Document;
 
-  @property({ type: Object })
+  @property({ type: Boolean })
+  creatingDocument = false;
+  @property({ type: Boolean })
   savingDocument = false;
 
   selectedBranchId: string;
@@ -57,12 +58,17 @@ export class MyDocuments extends connect(store)(LitElement) {
               Add new document
             </button>
           </div>
-
-          <created-contexts
-            style="margin: 12px;"
-            @context-selected=${e =>
-              (this.selectedContextId = e.detail.contextId)}
-          ></created-contexts>
+          ${this.creatingDocument
+            ? html`
+                <span>Creating document...</span>
+              `
+            : html`
+                <created-contexts
+                  style="margin: 12px;"
+                  @context-selected=${e =>
+                    (this.selectedContextId = e.detail.contextId)}
+                ></created-contexts>
+              `}
         </div>
 
         <div class="column" style="flex: 1; margin: 20px;">
@@ -103,9 +109,14 @@ export class MyDocuments extends connect(store)(LitElement) {
   }
 
   addNewDocument() {
-    store.dispatch(
-      createDocument.create({ title: this.newDocumentName, content: '' })
-    );
+    this.creatingDocument = true;
+    store
+      .dispatch(
+        createDocument.create({ title: this.newDocumentName, content: '' })
+      )
+      .then(() => {
+        this.creatingDocument = false;
+      });
   }
 
   saveDocument(saveEvent) {
