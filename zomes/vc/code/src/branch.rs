@@ -1,3 +1,4 @@
+use crate::object::Object;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},
@@ -6,9 +7,8 @@ use hdk::{
     json::JsonString,
   },
 };
-use crate::object::Object;
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 use std::convert::TryFrom;
-use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntryOptions};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Branch {
@@ -127,9 +127,15 @@ pub fn handle_merge_branches(
  * Sets the given branch head pointing to the given commit head
  */
 pub fn set_branch_head(branch_address: &Address, commit_address: &Address) -> ZomeApiResult<()> {
-  //let previous_head = handle_get_branch_head(branch_address.to_owned())?;
-  
-  //hdk::remove_link(branch_address, &previous_head, "branch_head")?;
+  let previous_head = hdk::get_links(&branch_address, "branch_head")?;
+  if previous_head.addresses().len() != 0 {
+    hdk::remove_link(
+      branch_address,
+      &previous_head.addresses().first().unwrap(),
+      "branch_head",
+    )?;
+  }
+
   hdk::link_entries(branch_address, commit_address, "branch_head")
 }
 
@@ -178,7 +184,6 @@ pub fn create_new_branch(
 
   Ok(branch_address)
 }
-
 
 pub fn get_branch_history(branch_address: Address) -> ZomeApiResult<Vec<GetEntryResult>> {
   let branch_head = handle_get_branch_head(branch_address)?;

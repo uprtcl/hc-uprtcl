@@ -200,6 +200,11 @@ const chain = async function(caller, ...actions) {
   };
 };
 
+const parseEntry = function(entry) {
+  let parsable = entry.Ok ? entry.Ok : entry;
+  return JSON.parse(parsable.result.Single.entry.App[1]);
+}
+
 module.exports = {
   createCommit,
   createNCommits,
@@ -219,5 +224,6 @@ module.exports = {
   getBranchHistory,
   getCommitHistory,
   getContextHeadCommits,
-  getContextCurrentContents
+  getContextCurrentContents,
+  parseEntry
 };

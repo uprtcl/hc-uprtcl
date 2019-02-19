@@ -34,13 +34,14 @@ const {
   getCommitHistory,
   getBranchInfo,
   getContextHeadCommits,
-  getContextCurrentContents
+  getContextCurrentContents,
+  parseEntry
 } = require('./utils');
 
 const SAMPLE_ADDRESS1 = 'QmdYFTXuTyuaXbyLAPHmemgkjsaVQ5tfpnLqY9on5JZmzR';
 const SAMPLE_ADDRESS2 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const SAMPLE_ADDRESS3 = 'QmRqn5F3J3uL8NRoCugfNJF8556cp1khZJAP1XAdVdL73S';
-/* 
+
 scenario1.runTape('create context', async (t, { alice }) => {
   const { Ok: contextAddress } = await createContext('myNewContext')(alice);
   t.equal(contextAddress, 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en');
@@ -49,7 +50,7 @@ scenario1.runTape('create context', async (t, { alice }) => {
     context_address: contextAddress
   });
 
-  const contextInfo = JSON.parse(result.Ok.result.Single.entry.App[1]);
+  const contextInfo = parseEntry(result);
 
   // check for equality of the actual and expected results
   t.equal(contextInfo.name, 'myNewContext');
@@ -92,13 +93,13 @@ scenario1.runTape(
     );
 
     const commitInfoJsonString = getCommitInfo(secondCommitAddress)(alice);
-    const commitInfo = JSON.parse(commitInfoJsonString.Ok.App[1]);
-
+    const commitInfo = parseEntry(commitInfoJsonString);
     t.equal(commitInfo.context_address, contextAddress);
+
     t.equal(commitInfo.parent_commits_addresses[0], firstCommitAddress);
 
     const commitJsonString = getCommitContent(secondCommitAddress)(alice);
-    const commitContent = JSON.parse(commitJsonString.Ok.App[1]);
+    const commitContent = parseEntry(commitJsonString);
 
     t.equal(commitContent.data, SAMPLE_ADDRESS1);
   }
@@ -119,7 +120,7 @@ scenario1.runTape(
     t.equal(developAddress, 'QmRqn5F3J3uL8NRoCugfNJF8556cp1khZJAP1XAdVdL73S');
 
     const developBranchJson = getBranchInfo(developAddress)(alice);
-    const developBranchInfo = JSON.parse(developBranchJson.Ok.App[1]);
+    const developBranchInfo = parseEntry(developBranchJson);
     t.equal(developBranchInfo.context_address, contextAddress);
 
     const {
@@ -168,17 +169,15 @@ scenario1.runTape(
     const { Ok: commitInfoJsonString } = getCommitInfo(mergedCommitAddress)(
       alice
     );
-    const commitInfo = JSON.parse(commitInfoJsonString.App[1]);
+    const commitInfo = parseEntry(commitInfoJsonString);
 
     t.deepEqual(commitInfo.parent_commits_addresses, [
       developCommit,
       commitAddress
     ]);
 
-    const { Ok: commitContentString } = getCommitContent(mergedCommitAddress)(
-      alice
-    );
-    const commitContent = JSON.parse(commitContentString.App[1]);
+    const commitContentString = getCommitContent(mergedCommitAddress)(alice);
+    const commitContent = parseEntry(commitContentString);
 
     t.deepEqual(commitContent, {
       data: null,
@@ -235,7 +234,7 @@ scenario1.runTape(
       Err: { Internal: 'there was a conflict trying to merge' }
     });
   }
-); */
+);
 
 scenario1.runTape('create document', async (t, { alice }) => {
   const { Ok: contextAddress } = await alice.callSync(
@@ -257,14 +256,14 @@ scenario1.runTape('create document', async (t, { alice }) => {
   const commitInfo = getCommitInfo(currentCommitsHeads[0].Ok)(alice);
 
   t.equal(
-    commitInfo.Ok.App[1],
+    commitInfo.Ok.result.Single.entry.App[1],
     '{"context_address":"QmNTSi7M2MCtsj2qJETdT7kuZ8wymPDZdiur2mJx7VRasZ","author_address":"alice-----------------------------------------------------------------------------AAAIuDJb4M","message":"first commit","object_address":"QmXYxA9R4TBEfRCFcmKjqtWE6jzPrAasL3hC9zu5Sgo98v","parent_commits_addresses":[]}'
   );
 
   const currentObjects = getContextCurrentContents(contextAddress)(alice);
 
   t.equal(
-    currentObjects[0].Ok.App[1],
+    currentObjects[0].Ok.result.Single.entry.App[1],
     '{"data":"QmT2eRGdpZmxJxHSbkFhczaSgLukL8YqMqwoX85jb9X43Q","subcontent":{}}'
   );
 });
