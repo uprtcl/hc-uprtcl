@@ -1,3 +1,5 @@
+import { EntityState } from './utils/entity';
+
 export interface Context {
   id: string;
   name: string;
@@ -35,3 +37,11 @@ export function objectFromAddress(address: string): CommitObject {
     subcontent: {}
   };
 }
+
+/** History helpers types */
+
+export type ChildrenCommit = Commit & { children_commits_addresses: string[] };
+
+export type ContextHistory = EntityState<ChildrenCommit> & {
+  originalCommitAddress: string;
+};

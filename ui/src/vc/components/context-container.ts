@@ -76,7 +76,6 @@ export class ContextContainer extends connect(store)(LitElement) {
 
               <div style="display: flex; flex-direction: row">
                 <commit-history
-                  style="width: 40%; overflow: auto;"
                   .context=${this.context}
                   .branches=${this.branches}
                 ></commit-history>
