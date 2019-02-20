@@ -21,6 +21,9 @@ export class CommitHistory extends connect(store)(LitElement) {
   @property({ type: Array })
   public branches: Branch[];
 
+  @property({ type: String })
+  public checkoutCommitId: string;
+
   @property({ type: Boolean })
   loading = true;
 
@@ -122,6 +125,12 @@ export class CommitHistory extends connect(store)(LitElement) {
       : '';
   }
 
+  checkoutCommit(commitId: string) {
+    this.dispatchEvent(
+      new CustomEvent('checkout-commit', { detail: { commitId: commitId } })
+    );
+  }
+
   drawHistory() {
     const gitgraph = new GitGraph({
       canvas: this.shadowRoot.getElementById('gitGraph'),
@@ -162,6 +171,10 @@ export class CommitHistory extends connect(store)(LitElement) {
         sha1: commit.id
       };
 
+      if (commitId === this.checkoutCommitId) {
+        commitOptions['color'] = 'white';
+      }
+
       if (commit.parent_commits_addresses.length <= 1) {
         branchHead.branch.commit(commitOptions);
       } else {
@@ -188,7 +201,6 @@ export class CommitHistory extends connect(store)(LitElement) {
           });
         }
       }
-
     }
   }
 }

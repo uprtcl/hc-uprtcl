@@ -7,7 +7,7 @@ import {
   ContextHistory
 } from '../types';
 import { createSelector } from 'reselect';
-import { VersionControlState, commitsAdapter } from './reducer';
+import { VersionControlState, commitsAdapter, objectsAdapter } from './reducer';
 import { EntityState } from '../utils/entity';
 import { RootState } from '../../store';
 
@@ -60,6 +60,14 @@ export const selectObjectFromContext = (contextId: string) =>
     s => s,
     (branches: Branch[], state: VersionControlState) =>
       branches.length > 0 ? selectObjectFromBranch(branches[0].id)(state) : null
+  );
+
+export const selectObjectFromCommit = (commitId: string) =>
+  createSelector(
+    selectCommitById(commitId),
+    selectObjects,
+    (commit: Commit, objects: EntityState<CommitObject>) =>
+      objectsAdapter.selectById(commit.object_address)(objects)
   );
 
 export const selectCurrentObjects = createSelector(

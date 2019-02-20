@@ -8,7 +8,9 @@ import {
   selectVersionControl,
   selectObjectFromBranch,
   selectContextById,
-  selectBranchHead
+  selectBranchHead,
+  selectObjectFromCommit,
+  selectBranchHeadId
 } from '../state/selectors';
 import {
   getContextBranchesInfo,
@@ -39,6 +41,9 @@ export class ContextContainer extends connect(store)(LitElement) {
 
   @property({ type: String })
   selectedBranchId: string;
+
+  @property({ type: String })
+  checkoutCommitId: string;
 
   newBranchName: string;
 
@@ -78,6 +83,9 @@ export class ContextContainer extends connect(store)(LitElement) {
                 <commit-history
                   .context=${this.context}
                   .branches=${this.branches}
+                  .checkoutCommitId=${this.checkoutCommitId}
+                  @checkout-commit=${e =>
+                    this.checkoutCommit(e.detail.commitId)}
                 ></commit-history>
                 <div style="flex: 1;">
                   <slot></slot>
@@ -123,16 +131,14 @@ export class ContextContainer extends connect(store)(LitElement) {
     );
   }
 
-  getBranchObject(branchId: string) {
-    return selectObjectFromBranch(branchId)(
-      selectVersionControl(<RootState>store.getState())
-    );
-  }
-
   selectBranch(branchId: string) {
     this.selectedBranchId = branchId;
     getBranchHeadCommitContent(store, branchId).then(() =>
-      this.dispatchSelectedEntry(this.getBranchObject(branchId).data)
+      this.checkoutCommit(
+        selectBranchHeadId(branchId)(
+          selectVersionControl(<RootState>store.getState())
+        )
+      )
     );
 
     this.dispatchSelectedEntry(null);
@@ -159,6 +165,14 @@ export class ContextContainer extends connect(store)(LitElement) {
         this.creatingBranch = false;
         this.loadContext();
       });
+  }
+
+  checkoutCommit(commitId: string) {
+    this.checkoutCommitId = commitId;
+    const object = selectObjectFromCommit(commitId)(
+      selectVersionControl(<RootState>store.getState())
+    );
+    this.dispatchSelectedEntry(object.data);
   }
 
   dispatchSelectedEntry(entryId: string) {
