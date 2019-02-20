@@ -80,10 +80,10 @@ export class CommitHistory extends connect(store)(LitElement) {
   }
 
   protected firstUpdated() {
-    this.loadContext();
+    this.loadContextHistory();
   }
 
-  loadContext() {
+  loadContextHistory() {
     this.loading = true;
     store
       .dispatch(getContextHistory.create({ context_address: this.context.id }))
@@ -97,7 +97,10 @@ export class CommitHistory extends connect(store)(LitElement) {
     // Don't forget this or your element won't render!
     super.update(changedProperties);
     if (changedProperties.get('contextId')) {
-      this.loadContext();
+      this.loadContextHistory();
+    }
+    if (changedProperties.get('checkoutCommitId')) {
+      this.drawHistory();
     }
   }
 
@@ -105,24 +108,6 @@ export class CommitHistory extends connect(store)(LitElement) {
     this.contextHistory = selectContextHistory(this.context.id)(
       selectVersionControl(state)
     );
-  }
-
-  dispatchSelectedEntry(entryId: string) {
-    const event = new CustomEvent('entry-selected', {
-      detail: {
-        entryId: entryId
-      }
-    });
-    this.dispatchEvent(event);
-  }
-
-  getBranchesNamesFromCommit(commitId: string) {
-    const branches = this.branches.filter(
-      branch => branch.branch_head === commitId
-    );
-    return branches.length > 0
-      ? branches.map(branch => branch.name).join(',')
-      : '';
   }
 
   checkoutCommit(commitId: string) {
@@ -138,7 +123,7 @@ export class CommitHistory extends connect(store)(LitElement) {
       orientation: 'vertical-reverse'
     });
 
-    const branchesHeads = this.branches.reduce(
+    const branchesHeads: { [key: string]: Branch } = this.branches.reduce(
       (branches, branch) => ({ ...branches, [branch.branch_head]: branch }),
       {}
     );
@@ -156,23 +141,25 @@ export class CommitHistory extends connect(store)(LitElement) {
       }
     ];
 
-    console.log('hi', this.contextHistory);
-    console.log('hi2', graphHeads);
-
     for (const commitId of this.contextHistory.ids) {
-      console.log('commit', commitId);
       const commit = this.contextHistory.entities[commitId];
-      console.log('branch', graphHeads);
       let branchHead = graphHeads.find(branch => branch.commitId === commitId);
 
-      const commitOptions = {
+      const commitOptions: GitGraph.BranchCommitOptions = {
         message: commit.message,
         author: commit.author_address,
-        sha1: commit.id
+        sha1: commit.id,
+        dotSize: 13,
+        tooltipDisplay: false,
+        onClick: () => this.checkoutCommit(commitId)
       };
 
       if (commitId === this.checkoutCommitId) {
-        commitOptions['color'] = 'white';
+        commitOptions.dotColor = 'red';
+      }
+
+      if (branchesHeads[commitId]) {
+        commitOptions.tag = branchesHeads[commitId].name;
       }
 
       if (commit.parent_commits_addresses.length <= 1) {

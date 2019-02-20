@@ -27,15 +27,10 @@ export interface Commit {
 }
 
 export interface CommitObject {
+  id: string;
+
   data: string;
   subcontent: { [key: string]: string };
-}
-
-export function objectFromAddress(address: string): CommitObject {
-  return {
-    data: address,
-    subcontent: {}
-  };
 }
 
 /** History helpers types */

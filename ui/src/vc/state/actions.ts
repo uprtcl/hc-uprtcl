@@ -1,6 +1,6 @@
 import { createHolochainAsyncAction } from '@holochain/hc-redux-middleware';
 import { CommitObject, Branch } from '../types';
-import { Store } from 'redux';
+import { ThunkAction } from 'redux-thunk';
 import {
   parseEntriesResults,
   parseEntry,
@@ -9,8 +9,12 @@ import {
 import {
   selectVersionControl,
   selectBranchHead,
-  selectBranchHeadId
+  selectBranchHeadId,
+  selectObjects
 } from './selectors';
+import { objectsAdapter } from './reducer';
+import { Action, Dispatch } from 'redux';
+import { RootState } from '../../store';
 
 const INSTANCE_NAME = 'test-instance';
 const ZOME_NAME = 'vc';
@@ -111,76 +115,84 @@ export const getContextHistory = createHolochainAsyncAction<
   string
 >(INSTANCE_NAME, ZOME_NAME, 'get_context_history');
 
-export function getCreatedContextsAndContents(store: Store) {
-  return new Promise(resolve => {
-    store
-      .dispatch(getCreatedContexts.create({}))
-      .then(response =>
+export function getCreatedContextsAndContents() {
+  return dispatch => {
+    dispatch(getCreatedContexts.create({})).then(response =>
+      Promise.all([
         parseEntriesResults(response).map(entry =>
-          getContextBranchesInfo(store, entry.id).then(() => resolve())
+          getContextBranchesInfo(entry.id)
         )
-      );
-  });
+      ])
+    );
+  };
 }
 
-export function getContextBranchesInfo(store: Store, contextAddress: string) {
-  return new Promise(resolve => {
-    store
-      .dispatch(getContextBranches.create({ context_address: contextAddress }))
-      .then(addressesResult =>
-        Promise.all(
-          addressesResult.addresses.map((branchAddress: string) =>
-            store
-              .dispatch(getBranchInfo.create({ branch_address: branchAddress }))
-              .then(branchEntry => getBranchHeadCommit(store, branchAddress))
-          )
-        ).then(() => resolve())
-      );
-  });
+export function getContextBranchesInfo(contextAddress: string) {
+  return dispatch =>
+    dispatch(
+      getContextBranches.create({ context_address: contextAddress })
+    ).then(addressesResult =>
+      Promise.all(
+        addressesResult.addresses.map((branchAddress: string) =>
+          dispatch(getBranchAndHead(branchAddress))
+        )
+      )
+    );
 }
 
-function getBranchHeadCommit(store: Store, branchAddress: string) {
-  return new Promise(resolve => {
-    store
-      .dispatch(getBranchHead.create({ branch_address: branchAddress }))
-      .then(commitAddress => {
-        store.dispatch(setBranchHead(branchAddress, commitAddress));
-        resolve();
-      });
-  });
+export function getBranchAndHead(branchAddress: string) {
+  return dispatch =>
+    dispatch(getBranchInfo.create({ branch_address: branchAddress })).then(
+      branchEntry => dispatch(getBranchHeadCommit(branchAddress))
+    );
 }
 
-export function getBranchHeadCommitContent(
-  store: Store,
-  branchAddress: string
-) {
-  return new Promise(resolve => {
+function getBranchHeadCommit(branchAddress: string) {
+  return (dispatch: Dispatch) => {
+    return dispatch(
+      getBranchHead.create({ branch_address: branchAddress })
+    ).then((commitAddress: string) =>
+      dispatch(setBranchHead(branchAddress, commitAddress))
+    );
+  };
+}
+
+export function getBranchHeadCommitContent(branchAddress: string) {
+  return (dispatch, getState) => {
     const branchHead = selectBranchHeadId(branchAddress)(
-      selectVersionControl(store.getState())
+      selectVersionControl(getState())
     );
 
-    getCommitAndContents(store, branchHead).then(() => resolve());
-  });
+    return dispatch(getCommitAndContents(branchHead));
+  };
 }
 
-export function getCommitAndContents(store: Store, commitAddress: string) {
-  return new Promise(resolve => {
-    store.dispatch(getCommitInfo.create({ commit_address: commitAddress }));
+export function getCommitAndContents(commitAddress: string) {
+  return dispatch => {
+    dispatch(getCommitInfo.create({ commit_address: commitAddress }));
 
-    store
-      .dispatch(getCommitContent.create({ commit_address: commitAddress }))
-      .then((commitObjectEntry: CommitObject) => {
-        const commitObject = parseEntryResult(commitObjectEntry);
-        const entriesAddresses = Object.keys(commitObject.subcontent).map(
-          key => commitObject.subcontent[key]
-        );
-        entriesAddresses.push(commitObject.data);
+    return dispatch(
+      getCommitContent.create({ commit_address: commitAddress })
+    ).then((commitObjectEntry: CommitObject) => {
+      const commitObject: CommitObject = parseEntryResult(commitObjectEntry);
 
-        Promise.all(
-          entriesAddresses.map(address =>
-            store.dispatch(getEntry.create({ address }))
-          )
-        ).then(() => resolve());
-      });
-  });
+      return dispatch(getObjectEntries(commitObject.id));
+    });
+  };
+}
+
+export function getObjectEntries(objectId: string) {
+  return (dispatch, getState) => {
+    const commitObject: CommitObject = objectsAdapter.selectById(objectId)(
+      selectObjects(selectVersionControl(getState()))
+    );
+    const entriesAddresses = Object.keys(commitObject.subcontent).map(
+      key => commitObject.subcontent[key]
+    );
+    entriesAddresses.push(commitObject.data);
+
+    return Promise.all(
+      entriesAddresses.map(address => dispatch(getEntry.create({ address })))
+    );
+  };
 }

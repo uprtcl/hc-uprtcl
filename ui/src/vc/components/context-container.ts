@@ -16,7 +16,8 @@ import {
   getContextBranchesInfo,
   getContextInfo,
   createBranch,
-  getBranchHeadCommitContent
+  getBranchHeadCommitContent,
+  getCommitAndContents
 } from '../state/actions';
 
 import './branch-selector';
@@ -95,6 +96,10 @@ export class ContextContainer extends connect(store)(LitElement) {
           `}
     `;
   }
+  
+  protected firstUpdated() {
+    this.loadContext();
+  }
 
   loadContext() {
     this.loading = true;
@@ -103,15 +108,11 @@ export class ContextContainer extends connect(store)(LitElement) {
       store.dispatch(
         getContextInfo.create({ context_address: this.contextId })
       ),
-      getContextBranchesInfo(store, this.contextId)
+      store.dispatch(getContextBranchesInfo(this.contextId))
     ]).then(() => {
       this.loading = false;
       this.selectBranch(this.branches[0].id);
     });
-  }
-
-  protected firstUpdated() {
-    this.loadContext();
   }
 
   update(changedProperties) {
@@ -133,15 +134,11 @@ export class ContextContainer extends connect(store)(LitElement) {
 
   selectBranch(branchId: string) {
     this.selectedBranchId = branchId;
-    getBranchHeadCommitContent(store, branchId).then(() =>
-      this.checkoutCommit(
-        selectBranchHeadId(branchId)(
-          selectVersionControl(<RootState>store.getState())
-        )
+    this.checkoutCommit(
+      selectBranchHeadId(branchId)(
+        selectVersionControl(<RootState>store.getState())
       )
     );
-
-    this.dispatchSelectedEntry(null);
 
     const event = new CustomEvent('branch-selected', {
       detail: { branchId: branchId }
@@ -169,10 +166,14 @@ export class ContextContainer extends connect(store)(LitElement) {
 
   checkoutCommit(commitId: string) {
     this.checkoutCommitId = commitId;
-    const object = selectObjectFromCommit(commitId)(
-      selectVersionControl(<RootState>store.getState())
-    );
-    this.dispatchSelectedEntry(object.data);
+    this.dispatchSelectedEntry(null);
+
+    store.dispatch(getCommitAndContents(commitId)).then(() => {
+      const object = selectObjectFromCommit(commitId)(
+        selectVersionControl(<RootState>store.getState())
+      );
+      this.dispatchSelectedEntry(object.data);
+    });
   }
 
   dispatchSelectedEntry(entryId: string) {
