@@ -178,10 +178,6 @@ export class CommitHistory extends connect(store)(LitElement) {
       if (commit.children_commits_addresses.length > 0) {
         branchHead.commitId = commit.children_commits_addresses[0];
 
-        if (branchesHeads[commitId]) {
-          branchHead.branch = branchHead.branch.branch('');
-        }
-
         for (var i = 1; i < commit.children_commits_addresses.length; i++) {
           const newGraphBranch = branchHead.branch.branch('');
           graphHeads.push({

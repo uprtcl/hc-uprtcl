@@ -52,7 +52,7 @@ export class MyDocuments extends connect(store)(LitElement) {
       <div class="row" style="flex: 1; margin: 12px;">
         <div class="column">
           <h1>My documents</h1>
-          <div class="row">
+          <div class="row" style="align-items: center;">
             <vaadin-text-field
               label="Document name"
               @keyup="${e => (this.newDocumentName = e.target.value)}"

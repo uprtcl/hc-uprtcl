@@ -45,7 +45,8 @@ export class ContextContainer extends connect(store)(LitElement) {
 
   @property({ type: String })
   checkoutCommitId: string;
-
+  
+  @property({ type: String })
   newBranchName: string;
 
   render() {
@@ -59,12 +60,7 @@ export class ContextContainer extends connect(store)(LitElement) {
             <h3>${this.context.name}</h3>
 
             <div style="display: flex; flex-direction: column">
-              <div style="display: flex; flex-direction: row">
-                <branch-selector
-                  .branches=${this.branches}
-                  @branch-selected="${e =>
-                    this.selectBranch(e.detail.branchId)}"
-                ></branch-selector>
+              <div style="display: flex; flex-direction: row; align-items: center;">
 
                 <vaadin-text-field
                   label="New branch name"
@@ -72,7 +68,7 @@ export class ContextContainer extends connect(store)(LitElement) {
                 ></vaadin-text-field>
                 <vaadin-button
                   theme="contained"
-                  ?disabled=${this.newBranchName != null}
+                  ?disabled=${!this.newBranchName}
                   @click=${this.createBranch}
                 >
                   Create branch
@@ -145,22 +141,15 @@ export class ContextContainer extends connect(store)(LitElement) {
         selectVersionControl(<RootState>store.getState())
       )
     );
-
-    const event = new CustomEvent('branch-selected', {
-      detail: { branchId: branchId }
-    });
-    this.dispatchEvent(event);
   }
 
   createBranch(event) {
     this.creatingBranch = true;
-    const commit: Commit = selectBranchHead(this.selectedBranchId)(
-      selectVersionControl(<RootState>store.getState())
-    );
+    
     store
       .dispatch(
         createBranch.create({
-          commit_address: commit.id,
+          commit_address: this.checkoutCommitId,
           name: this.newBranchName
         })
       )
@@ -178,6 +167,11 @@ export class ContextContainer extends connect(store)(LitElement) {
       const object = selectObjectFromCommit(commitId)(
         selectVersionControl(<RootState>store.getState())
       );
+      const checkoutBranch = this.branches.find(branch => branch.branch_head === commitId);
+      this.dispatchEvent(new CustomEvent('branch-selected', {
+        detail: { branchId: checkoutBranch.id }
+      }));
+  
       this.dispatchSelectedEntry(object.data);
     });
   }
