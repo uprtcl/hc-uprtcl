@@ -1,12 +1,13 @@
 import { LitElement, html, customElement, property } from 'lit-element';
-import { Branch, Context, Commit } from '../types';
 import { connect } from 'pwa-helpers/connect-mixin';
+import '@vaadin/vaadin-button/theme/material/vaadin-button.js';
+import '@vaadin/vaadin-text-field/theme/material/vaadin-text-field.js';
 
+import { Branch, Context, Commit } from '../types';
 import { store, RootState } from '../../store';
 import {
   selectContextBranches,
   selectVersionControl,
-  selectObjectFromBranch,
   selectContextById,
   selectBranchHead,
   selectObjectFromCommit,
@@ -16,7 +17,6 @@ import {
   getContextBranchesInfo,
   getContextInfo,
   createBranch,
-  getBranchHeadCommitContent,
   getCommitAndContents
 } from '../state/actions';
 
@@ -53,6 +53,7 @@ export class ContextContainer extends connect(store)(LitElement) {
       ${this.loading
         ? html`
             <span>Loading context information...</span>
+            <vaadin-progress-bar indeterminate value="0"></vaadin-progress-bar>
           `
         : html`
             <h3>${this.context.name}</h3>
@@ -65,17 +66,22 @@ export class ContextContainer extends connect(store)(LitElement) {
                     this.selectBranch(e.detail.branchId)}"
                 ></branch-selector>
 
-                <input @keyup=${e => (this.newBranchName = e.target.value)} />
-                <button
+                <vaadin-text-field
+                  label="New branch name"
+                  @keyup=${e => (this.newBranchName = e.target.value)}
+                ></vaadin-text-field>
+                <vaadin-button
+                  theme="contained"
                   ?disabled=${this.newBranchName != null}
                   @click=${this.createBranch}
                 >
                   Create branch
-                </button>
+                </vaadin-button>
 
                 ${this.creatingBranch
                   ? html`
                       <span>Creating branch...</span>
+                      <vaadin-progress-bar indeterminate value="0"></vaadin-progress-bar>
                     `
                   : html``}
               </div>
@@ -96,7 +102,7 @@ export class ContextContainer extends connect(store)(LitElement) {
           `}
     `;
   }
-  
+
   protected firstUpdated() {
     this.loadContext();
   }

@@ -1,6 +1,6 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 import { Document } from '../types';
-import { Button } from '@material/mwc-button';
+import '@vaadin/vaadin-button/theme/material/vaadin-button.js';
 
 @customElement('edit-document')
 export class EditDocument extends LitElement {
@@ -17,12 +17,13 @@ export class EditDocument extends LitElement {
           .value=${this.document.content}
           @keyup="${e => (this.documentContent = e.target.value)}"
         ></textarea>
-        <button
+        <vaadin-button
+          theme="contained"
           @click="${this.saveDocument}"
           ?disabled=${this.documentContent === null}
         >
           Save Changes
-        </button>
+        </vaadin-button>
       </div>
     `;
   }

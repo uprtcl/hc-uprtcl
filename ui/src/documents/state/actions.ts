@@ -29,14 +29,3 @@ export const saveDocument = createHolochainAsyncAction<
   { branch_address: string; title: string; content: string },
   string
 >('test-instance', 'documents', 'save_document');
-
-export function getMyDocuments(store: Store) {
-  getCreatedContextsAndContents(store);
-  /*
-  .then(() =>
-     selectCurrentObjects(selectVersionControl(store.getState())).map(object =>
-      store.dispatch(getDocument.create({ address: object.data }))
-    )
-    );
-*/
-}

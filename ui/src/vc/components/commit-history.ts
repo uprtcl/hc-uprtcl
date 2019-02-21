@@ -10,6 +10,7 @@ import { connect } from 'pwa-helpers/connect-mixin';
 import { store, RootState } from '../../store';
 import { selectVersionControl, selectContextHistory } from '../state/selectors';
 import { getContextHistory } from '../state/actions';
+import '@vaadin/vaadin-progress-bar/theme/material/vaadin-progress-bar.js';
 
 import 'gitgraph.js';
 
@@ -72,6 +73,7 @@ export class CommitHistory extends connect(store)(LitElement) {
       ${this.loading
         ? html`
             <span>Loading commit history...</span>
+            <vaadin-progress-bar indeterminate value="0"></vaadin-progress-bar>
           `
         : html`
             <canvas id="gitGraph"></canvas>

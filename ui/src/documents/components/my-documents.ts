@@ -1,5 +1,8 @@
 import { LitElement, html, customElement, property, css } from 'lit-element';
 import { connect } from 'pwa-helpers/connect-mixin.js';
+import '@vaadin/vaadin-button/theme/material/vaadin-button.js';
+import '@vaadin/vaadin-text-field/theme/material/vaadin-text-field.js';
+import '@vaadin/vaadin-progress-bar/theme/material/vaadin-progress-bar.js';
 
 import { store, RootState } from '../../store';
 import { createDocument, saveDocument } from '../state/actions';
@@ -50,17 +53,25 @@ export class MyDocuments extends connect(store)(LitElement) {
         <div class="column">
           <h1>My documents</h1>
           <div class="row">
-            <input @keyup="${e => (this.newDocumentName = e.target.value)}" />
-            <button
+            <vaadin-text-field
+              label="Document name"
+              @keyup="${e => (this.newDocumentName = e.target.value)}"
+            ></vaadin-text-field>
+            <vaadin-button
+              theme="contained"
               @click="${this.addNewDocument}"
               ?disabled=${this.newDocumentName.length === 0}
             >
               Add new document
-            </button>
+            </vaadin-button>
           </div>
           ${this.creatingDocument
             ? html`
                 <span>Creating document...</span>
+                <vaadin-progress-bar
+                  indeterminate
+                  value="0"
+                ></vaadin-progress-bar>
               `
             : html`
                 <created-contexts
@@ -93,7 +104,10 @@ export class MyDocuments extends connect(store)(LitElement) {
                       ></edit-document>
                     `
                   : html`
-                      <span>Loading content...</span>
+                      <vaadin-progress-bar
+                        indeterminate
+                        value="0"
+                      ></vaadin-progress-bar>
                     `}
               </context-container>
             `}

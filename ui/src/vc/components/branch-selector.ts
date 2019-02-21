@@ -1,5 +1,8 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 import { Branch } from '../types';
+import '@vaadin/vaadin-select/theme/material/vaadin-select.js';
+import '@vaadin/vaadin-list-box/theme/material/vaadin-list-box.js';
+import '@vaadin/vaadin-item/theme/material/vaadin-item.js';
 
 @customElement('branch-selector')
 export class BranchSelector extends LitElement {
@@ -8,14 +11,16 @@ export class BranchSelector extends LitElement {
 
   render() {
     return html`
-      <select @change="${this.branchSelected}">
-        ${this.branches.map(
-          branch =>
-            html`
-              <option value="${branch.id}">${branch.name}</option>
-            `
-        )}
-      </select>
+      <vaadin-select label="Select branch" @change="${this.branchSelected}">
+        <vaadin-list-box>
+          ${this.branches.map(
+            branch =>
+              html`
+                <vaadin-item value="${branch.id}">${branch.name}</vaadin-item>
+              `
+          )}
+        </vaadin-list-box>
+      </vaadin-select>
     `;
   }
 

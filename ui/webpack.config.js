@@ -17,17 +17,24 @@ module.exports = {
   devServer: {
     historyApiFallback: true
   },
-  mode: 'production',
+  mode: 'development',
   module: {
     rules: [
       {
         test: /\.js$/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: [['@babel/preset-env', { targets: { ie: '11' } }]],
-            plugins: ['@babel/plugin-syntax-dynamic-import']
-          }
+        exclude: /node_modules/,
+        loader: 'babel-loader',
+        options: {
+          plugins: ['@babel/plugin-syntax-dynamic-import'],
+          presets: [
+            [
+              '@babel/preset-env',
+              {
+                useBuiltIns: 'usage',
+                targets: '>1%, not dead, not ie 11'
+              }
+            ]
+          ]
         }
       }
     ]
@@ -37,6 +44,7 @@ module.exports = {
       'images/**',
       'node_modules/@webcomponents/webcomponentsjs/**',
       'node_modules/@holochain/**',
+      'node_modules/@vaadin/**',
       'node_modules/lit-element/**',
       'manifest.json'
     ]),

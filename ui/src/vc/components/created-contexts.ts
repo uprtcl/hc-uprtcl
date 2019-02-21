@@ -1,8 +1,10 @@
 import { LitElement, html, customElement, property } from 'lit-element';
-import { Context } from '../types';
-
 import { connect } from 'pwa-helpers/connect-mixin';
 
+import '@vaadin/vaadin-button/theme/material/vaadin-button.js';
+import '@vaadin/vaadin-progress-bar/theme/material/vaadin-progress-bar.js';
+
+import { Context } from '../types';
 import { store, RootState } from '../../store';
 import { getCreatedContexts } from '../state/actions';
 import { selectContexts, selectVersionControl } from '../state/selectors';
@@ -23,13 +25,20 @@ export class CreatedContexts extends connect(store)(LitElement) {
         ${!this.loading
           ? this.contexts.map(
               context => html`
-                <button @click="${e => this.contextSelected(context.id)}">
+                <vaadin-button
+                  theme="primary"
+                  @click="${e => this.contextSelected(context.id)}"
+                >
                   ${context.name}
-                </button>
+                </vaadin-button>
               `
             )
           : html`
               <span>Loading created contexts...</span>
+              <vaadin-progress-bar
+                indeterminate
+                value="0"
+              ></vaadin-progress-bar>
             `}
       </div>
     `;
