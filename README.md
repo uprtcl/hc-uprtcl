@@ -27,3 +27,5 @@ To run the UI:
 cd ui
 npm run start:webpack
 ```
+
+and go to http://localhost:8080
