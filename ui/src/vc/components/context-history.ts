@@ -1,11 +1,5 @@
 import { LitElement, html, customElement, property } from 'lit-element';
-import {
-  Branch,
-  Context,
-  Commit,
-  ContextHistory,
-  ChildrenCommit
-} from '../types';
+import { Branch, Context, ContextHistory } from '../types';
 import { connect } from 'pwa-helpers/connect-mixin';
 import { store, RootState } from '../../store';
 import { selectVersionControl, selectContextHistory } from '../state/selectors';
@@ -14,8 +8,8 @@ import '@vaadin/vaadin-progress-bar/theme/material/vaadin-progress-bar.js';
 
 import 'gitgraph.js';
 
-@customElement('commit-history')
-export class CommitHistory extends connect(store)(LitElement) {
+@customElement('context-history')
+export class ContextHistoryElement extends connect(store)(LitElement) {
   @property({ type: Object })
   public context: Context;
 
@@ -113,9 +107,11 @@ export class CommitHistory extends connect(store)(LitElement) {
   }
 
   checkoutCommit(commitId: string) {
-    this.dispatchEvent(
-      new CustomEvent('checkout-commit', { detail: { commitId: commitId } })
-    );
+    if (commitId != this.checkoutCommitId) {
+      this.dispatchEvent(
+        new CustomEvent('checkout-commit', { detail: { commitId: commitId } })
+      );
+    }
   }
 
   drawHistory() {
@@ -125,8 +121,14 @@ export class CommitHistory extends connect(store)(LitElement) {
       orientation: 'vertical-reverse'
     });
 
-    const branchesHeads: { [key: string]: Branch } = this.branches.reduce(
-      (branches, branch) => ({ ...branches, [branch.branch_head]: branch }),
+    const branchesHeads: { [key: string]: Branch[] } = this.branches.reduce(
+      (branches, branch) => {
+        if (!branches[branch.branch_head]) {
+          branches[branch.branch_head] = [];
+        }
+        branches[branch.branch_head].push(branch);
+        return branches;
+      },
       {}
     );
 
@@ -161,7 +163,9 @@ export class CommitHistory extends connect(store)(LitElement) {
       }
 
       if (branchesHeads[commitId]) {
-        commitOptions.tag = branchesHeads[commitId].name;
+        commitOptions.tag = branchesHeads[commitId]
+          .map(branch => branch.name)
+          .join(',');
       }
 
       if (commit.parent_commits_addresses.length <= 1) {

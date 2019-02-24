@@ -9,7 +9,6 @@ import {
   selectContextBranches,
   selectVersionControl,
   selectContextById,
-  selectBranchHead,
   selectObjectFromCommit,
   selectBranchHeadId
 } from '../state/selectors';
@@ -21,7 +20,7 @@ import {
 } from '../state/actions';
 
 import './branch-selector';
-import './commit-history';
+import './context-history';
 
 @customElement('context-container')
 export class ContextContainer extends connect(store)(LitElement) {
@@ -41,11 +40,11 @@ export class ContextContainer extends connect(store)(LitElement) {
   branches: Branch[];
 
   @property({ type: String })
-  selectedBranchId: string;
+  checkoutBranchId: string;
 
   @property({ type: String })
   checkoutCommitId: string;
-  
+
   @property({ type: String })
   newBranchName: string;
 
@@ -60,9 +59,18 @@ export class ContextContainer extends connect(store)(LitElement) {
             <h3>${this.context.name}</h3>
 
             <div style="display: flex; flex-direction: column">
-              <div style="display: flex; flex-direction: row; align-items: center;">
+              <div
+                style="display: flex; flex-direction: row; align-items: center;"
+              >
+                <branch-selector
+                  .branches=${this.branches}
+                  .selectedBranchId=${this.checkoutBranchId}
+                  @branch-selected=${e =>
+                    this.checkoutBranch(e.detail.branchId)}
+                ></branch-selector>
 
                 <vaadin-text-field
+                  style="margin-left: 12px;"
                   label="New branch name"
                   @keyup=${e => (this.newBranchName = e.target.value)}
                 ></vaadin-text-field>
@@ -77,19 +85,22 @@ export class ContextContainer extends connect(store)(LitElement) {
                 ${this.creatingBranch
                   ? html`
                       <span>Creating branch...</span>
-                      <vaadin-progress-bar indeterminate value="0"></vaadin-progress-bar>
+                      <vaadin-progress-bar
+                        indeterminate
+                        value="0"
+                      ></vaadin-progress-bar>
                     `
                   : html``}
               </div>
 
               <div style="display: flex; flex-direction: row">
-                <commit-history
+                <context-history
                   .context=${this.context}
                   .branches=${this.branches}
                   .checkoutCommitId=${this.checkoutCommitId}
                   @checkout-commit=${e =>
                     this.checkoutCommit(e.detail.commitId)}
-                ></commit-history>
+                ></context-history>
                 <div style="flex: 1;">
                   <slot></slot>
                 </div>
@@ -113,7 +124,7 @@ export class ContextContainer extends connect(store)(LitElement) {
       store.dispatch(getContextBranchesInfo(this.contextId))
     ]).then(() => {
       this.loading = false;
-      this.selectBranch(this.branches[0].id);
+      this.checkoutBranch(this.branches[0].id);
     });
   }
 
@@ -134,18 +145,48 @@ export class ContextContainer extends connect(store)(LitElement) {
     );
   }
 
-  selectBranch(branchId: string) {
-    this.selectedBranchId = branchId;
+  checkoutBranch(branchId: string) {
+    console.log('EING0');
+
     this.checkoutCommit(
       selectBranchHeadId(branchId)(
         selectVersionControl(<RootState>store.getState())
-      )
+      ),
+      branchId
+    );
+  }
+
+  checkoutCommit(commitId: string, branchId: string = null) {
+    console.log('EING');
+    this.checkoutCommitId = commitId;
+    if (!branchId) {
+      const branch = this.branches.find(
+        branch => branch.branch_head === commitId
+      );
+      if (branch) branchId = branch.id;
+    }
+    this.checkoutBranchId = branchId;
+
+    this.dispatchSelectedEntry(null);
+
+    store.dispatch(getCommitAndContents(commitId)).then(() => {
+      const object = selectObjectFromCommit(commitId)(
+        selectVersionControl(<RootState>store.getState())
+      );
+
+      this.dispatchSelectedEntry(object.data);
+    });
+
+    this.dispatchEvent(
+      new CustomEvent('branch-checkout', {
+        detail: { branchId: branchId }
+      })
     );
   }
 
   createBranch(event) {
     this.creatingBranch = true;
-    
+
     store
       .dispatch(
         createBranch.create({
@@ -157,23 +198,6 @@ export class ContextContainer extends connect(store)(LitElement) {
         this.creatingBranch = false;
         this.loadContext();
       });
-  }
-
-  checkoutCommit(commitId: string) {
-    this.checkoutCommitId = commitId;
-    this.dispatchSelectedEntry(null);
-
-    store.dispatch(getCommitAndContents(commitId)).then(() => {
-      const object = selectObjectFromCommit(commitId)(
-        selectVersionControl(<RootState>store.getState())
-      );
-      const checkoutBranch = this.branches.find(branch => branch.branch_head === commitId);
-      this.dispatchEvent(new CustomEvent('branch-selected', {
-        detail: { branchId: checkoutBranch.id }
-      }));
-  
-      this.dispatchSelectedEntry(object.data);
-    });
   }
 
   dispatchSelectedEntry(entryId: string) {

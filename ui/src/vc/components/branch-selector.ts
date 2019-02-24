@@ -9,25 +9,38 @@ export class BranchSelector extends LitElement {
   @property({ type: Array })
   public branches: Branch[];
 
+  @property({ type: String })
+  public selectedBranchId: string;
+
   render() {
     return html`
-      <vaadin-select label="Select branch" @change="${this.branchSelected}">
-        <vaadin-list-box>
-          ${this.branches.map(
-            branch =>
-              html`
-                <vaadin-item value="${branch.id}">${branch.name}</vaadin-item>
-              `
-          )}
-        </vaadin-list-box>
+      <vaadin-select
+        label="Select branch"
+        value="${this.selectedBranchId}"
+        @value-changed="${this.branchSelected}"
+      >
+        <template>
+          <vaadin-list-box>
+            ${this.branches.map(
+              branch =>
+                html`
+                  <vaadin-item value="${branch.id}">${branch.name}</vaadin-item>
+                `
+            )}
+          </vaadin-list-box>
+        </template>
       </vaadin-select>
     `;
   }
 
   branchSelected(changeEvent) {
-    const event = new CustomEvent('branch-selected', {
-      detail: { branchId: changeEvent.target.value }
-    });
-    this.dispatchEvent(event);
+    const branchId = changeEvent.target.value;
+    if (branchId && branchId !== 'null' && branchId !== this.selectedBranchId) {
+      this.dispatchEvent(
+        new CustomEvent('branch-selected', {
+          detail: { branchId: changeEvent.target.value }
+        })
+      );
+    }
   }
 }

@@ -28,7 +28,7 @@ export class MyDocuments extends connect(store)(LitElement) {
   @property({ type: Boolean })
   savingDocument = false;
 
-  selectedBranchId: string;
+  checkoutBranchId: string;
 
   getStyles() {
     return css`
@@ -52,7 +52,7 @@ export class MyDocuments extends connect(store)(LitElement) {
       <div class="row" style="flex: 1; margin: 12px;">
         <div class="column">
           <h1>My documents</h1>
-          <div class="row" style="align-items: center;">
+          <div class="column" style="align-items: center;">
             <vaadin-text-field
               label="Document name"
               @keyup="${e => (this.newDocumentName = e.target.value)}"
@@ -87,8 +87,8 @@ export class MyDocuments extends connect(store)(LitElement) {
             html`
               <context-container
                 .contextId=${this.selectedContextId}
-                @branch-selected=${e =>
-                  (this.selectedBranchId = e.detail.branchId)}
+                @branch-checkout=${e =>
+                  (this.checkoutBranchId = e.detail.branchId)}
                 @entry-selected=${e => this.selectDocument(e.detail.entryId)}
               >
                 ${this.selectedDocument
@@ -138,11 +138,16 @@ export class MyDocuments extends connect(store)(LitElement) {
     store
       .dispatch(
         saveDocument.create({
-          branch_address: this.selectedBranchId,
+          branch_address: this.checkoutBranchId,
           title: saveEvent.detail.title,
           content: saveEvent.detail.content
         })
       )
-      .then(() => (this.savingDocument = false));
+      .then(() => {
+        this.savingDocument = false;
+        const aux = this.selectedContextId;
+        this.selectedContextId = null;
+        setTimeout(() => (this.selectedContextId = aux));
+      });
   }
 }
