@@ -25,6 +25,7 @@ hc run --persist
 To run the UI:
 ```bash
 cd ui
+npm install
 npm run start:webpack
 ```
 
