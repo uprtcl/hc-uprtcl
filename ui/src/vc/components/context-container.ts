@@ -146,8 +146,6 @@ export class ContextContainer extends connect(store)(LitElement) {
   }
 
   checkoutBranch(branchId: string) {
-    console.log('EING0');
-
     this.checkoutCommit(
       selectBranchHeadId(branchId)(
         selectVersionControl(<RootState>store.getState())
@@ -157,7 +155,6 @@ export class ContextContainer extends connect(store)(LitElement) {
   }
 
   checkoutCommit(commitId: string, branchId: string = null) {
-    console.log('EING');
     this.checkoutCommitId = commitId;
     if (!branchId) {
       const branch = this.branches.find(

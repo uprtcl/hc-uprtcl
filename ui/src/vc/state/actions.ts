@@ -1,5 +1,5 @@
 import { createHolochainAsyncAction } from '@holochain/hc-redux-middleware';
-import { CommitObject, Branch } from '../types';
+import { CommitObject, Branch, Context } from '../types';
 import { ThunkAction } from 'redux-thunk';
 import {
   parseEntriesResults,
@@ -10,7 +10,9 @@ import {
   selectVersionControl,
   selectBranchHead,
   selectBranchHeadId,
-  selectObjects
+  selectObjects,
+  selectContextById,
+  selectObjectFromContext
 } from './selectors';
 import { objectsAdapter } from './reducer';
 import { Action, Dispatch } from 'redux';
@@ -114,6 +116,21 @@ export const getContextHistory = createHolochainAsyncAction<
   { context_address: string },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'get_context_history');
+
+export function getChildrenContexts(contextId: string) {
+  return (dispatch, getState) => {
+    const object: CommitObject = selectObjectFromContext(contextId)(
+      selectVersionControl(getState())
+    );
+    return Promise.all(
+      Object.keys(object.links).map(childContextAddress =>
+        dispatch(
+          getContextInfo.create({ context_address: childContextAddress })
+        )
+      )
+    );
+  };
+}
 
 export function getCreatedContextsAndContents() {
   return dispatch => {
