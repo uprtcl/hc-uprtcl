@@ -7,7 +7,6 @@ The complete set of contributors may be found at http://polymer.github.io/CONTRI
 Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
-
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const WorkboxWebpackPlugin = require('workbox-webpack-plugin');
@@ -46,29 +45,21 @@ module.exports = {
       'node_modules/@holochain/**',
       'node_modules/@vaadin/**',
       'node_modules/lit-element/**',
+      'node_modules/ipfs/**',
       'manifest.json'
     ]),
     new HtmlWebpackPlugin({
       chunksSortMode: 'none',
       template: 'index.html'
-    }),
-    new WorkboxWebpackPlugin.GenerateSW({
+    })
+    /*  
+    ,
+   new WorkboxWebpackPlugin.InjectManifest({
       include: ['index.html', 'manifest.json', /\.js$/],
       exclude: [/\/@webcomponents\/webcomponentsjs\//],
-      navigateFallback: 'index.html',
-      swDest: 'service-worker.js',
-      clientsClaim: true,
-      skipWaiting: true,
-      runtimeCaching: [
-        {
-          urlPattern: /\/@webcomponents\/webcomponentsjs\//,
-          handler: 'staleWhileRevalidate'
-        },
-        {
-          urlPattern: /^https:\/\/fonts.gstatic.com\//,
-          handler: 'staleWhileRevalidate'
-        }
-      ]
+      swSrc: './service-worker.js',
+      swDest: 'service-worker.js'
     })
+ */
   ]
 };
