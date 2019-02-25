@@ -13,14 +13,14 @@ use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntry
 #[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Object {
   data: Option<Address>,
-  subcontent: HashMap<String, Address>,
+  links: HashMap<String, Address>,
 }
 
 impl Object {
-  pub fn new(data: Option<Address>, subcontent: HashMap<String, Address>) -> Object {
+  pub fn new(data: Option<Address>, links: HashMap<String, Address>) -> Object {
     Object {
       data: data,
-      subcontent: subcontent,
+      links: links,
     }
   }
 
@@ -35,8 +35,8 @@ impl Object {
     self.data.to_owned()
   }
 
-  pub fn get_subcontent(&self) -> HashMap<String, Address> {
-    self.subcontent.to_owned()
+  pub fn get_links(&self) -> HashMap<String, Address> {
+    self.links.to_owned()
   }
 }
 
@@ -78,15 +78,15 @@ pub fn store_object(object: Object) -> ZomeApiResult<Address> {
 /* 
   Stores the contents of the commit in the DHT
   pub fn store_content_object(content: ContentObject) -> ZomeApiResult<Address> {
-  let mut subcontents: HashMap<String, Address> = HashMap::new();
+  let mut links: HashMap<String, Address> = HashMap::new();
 
-  for (key, subcontent_object) in content.subcontent.into_iter() {
-    subcontents.insert(key, store_content_object(subcontent_object)?);
+  for (key, links_object) in content.links.into_iter() {
+    links.insert(key, store_content_object(links_object)?);
   }
 
   let object_entry = Entry::App(
     "object".into(),
-    Object::new(content.data, subcontents).into(),
+    Object::new(content.data, links).into(),
   );
   crate::utils::store_entry_if_new(object_entry)
 }

@@ -62,16 +62,16 @@ fn build_merge_content(
   to_content: Object,
   ancestor_content: Object,
 ) -> ZomeApiResult<Object> {
-  // Iterate over all the keys of the three subcontent object
+  // Iterate over all the keys of the three links object
   let mut merge_keys: HashSet<String> = from_content
-    .get_subcontent()
+    .get_links()
     .keys()
     .cloned()
     .collect::<HashSet<String>>();
   merge_keys = merge_keys
     .union(
       &to_content
-        .get_subcontent()
+        .get_links()
         .keys()
         .cloned()
         .collect::<HashSet<String>>(),
@@ -81,7 +81,7 @@ fn build_merge_content(
   merge_keys = merge_keys
     .union(
       &ancestor_content
-        .get_subcontent()
+        .get_links()
         .keys()
         .cloned()
         .collect::<HashSet<String>>(),
@@ -94,9 +94,9 @@ fn build_merge_content(
   // For each key, call get_merge_result and include the result in the merge resulting contents
   for key in merge_keys.into_iter() {
     if let Some(result_address) = get_merge_result(
-      from_content.get_subcontent().get(&key),
-      to_content.get_subcontent().get(&key),
-      ancestor_content.get_subcontent().get(&key),
+      from_content.get_links().get(&key),
+      to_content.get_links().get(&key),
+      ancestor_content.get_links().get(&key),
     )? {
       merged_contents.insert(key, result_address.to_owned());
     }

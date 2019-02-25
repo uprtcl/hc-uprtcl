@@ -181,7 +181,7 @@ scenario1.runTape(
 
     t.deepEqual(commitContent, {
       data: null,
-      subcontent: {
+      links: {
         file3: SAMPLE_ADDRESS2,
         file2: SAMPLE_ADDRESS2,
         file1: SAMPLE_ADDRESS2
@@ -264,6 +264,6 @@ scenario1.runTape('create document', async (t, { alice }) => {
 
   t.equal(
     currentObjects[0].Ok.result.Single.entry.App[1],
-    '{"data":"QmT2eRGdpZmxJxHSbkFhczaSgLukL8YqMqwoX85jb9X43Q","subcontent":{}}'
+    '{"data":"QmT2eRGdpZmxJxHSbkFhczaSgLukL8YqMqwoX85jb9X43Q","links":{}}'
   );
 });

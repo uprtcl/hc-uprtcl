@@ -76,7 +76,7 @@ pub fn handle_create_document(title: String, content: String) -> ZomeApiResult<A
     json!({
       "name": title,
       "message": "first commit",
-      "content": { "data": document_address, "subcontent": {}}
+      "content": { "data": document_address, "links": {}}
     })
     .into(),
   )?;
@@ -105,7 +105,7 @@ pub fn handle_save_document(branch_address: Address, title: String, content: Str
     json!({
       "branch_address": branch_address,
       "message": "commit",
-      "content": { "data": document_address, "subcontent": {}}
+      "content": { "data": document_address, "links": {}}
     })
     .into(),
   )?;

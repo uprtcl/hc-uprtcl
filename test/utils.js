@@ -177,10 +177,10 @@ const getContextCurrentContents = function(contextAddress) {
 
 /** Helper builders */
 
-const buildObject = function(dataAddress, subcontents = {}) {
+const buildObject = function(dataAddress, links = {}) {
   return {
     data: dataAddress,
-    subcontent: subcontents
+    links: links
   };
 };
 

@@ -186,8 +186,8 @@ export function getObjectEntries(objectId: string) {
     const commitObject: CommitObject = objectsAdapter.selectById(objectId)(
       selectObjects(selectVersionControl(getState()))
     );
-    const entriesAddresses = Object.keys(commitObject.subcontent).map(
-      key => commitObject.subcontent[key]
+    const entriesAddresses = Object.keys(commitObject.links).map(
+      key => commitObject.links[key]
     );
     entriesAddresses.push(commitObject.data);
 
