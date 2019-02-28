@@ -28,6 +28,10 @@ export class ContextHistoryElement extends connect(store)(LitElement) {
   render() {
     return html`
       <style>
+        #gitGraph {
+          margin: -60px;
+        }
+
         .gitgraph-tooltip {
           position: absolute;
           margin-top: -15px;

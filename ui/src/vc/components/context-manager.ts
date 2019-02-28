@@ -19,11 +19,11 @@ import {
   getCommitAndContents
 } from '../state/actions';
 
-import './branch-selector';
+import './branch-manager';
 import './context-history';
 
-@customElement('context-container')
-export class ContextContainer extends connect(store)(LitElement) {
+@customElement('context-manager')
+export class ContextManager extends connect(store)(LitElement) {
   @property({ type: String })
   public contextId: string;
 
@@ -45,9 +45,6 @@ export class ContextContainer extends connect(store)(LitElement) {
   @property({ type: String })
   checkoutCommitId: string;
 
-  @property({ type: String })
-  newBranchName: string;
-
   render() {
     return html`
       ${this.loading
@@ -59,52 +56,29 @@ export class ContextContainer extends connect(store)(LitElement) {
             <h3>${this.context.name}</h3>
 
             <div style="display: flex; flex-direction: column">
-              <div
-                style="display: flex; flex-direction: row; align-items: center;"
-              >
-                <branch-selector
-                  .branches=${this.branches}
-                  .selectedBranchId=${this.checkoutBranchId}
-                  @branch-selected=${e =>
-                    this.checkoutBranch(e.detail.branchId)}
-                ></branch-selector>
+              <branch-manager
+                .branches=${this.branches}
+                .selectedBranchId=${this.checkoutBranchId}
+                @branch-selected=${e => this.checkoutBranch(e.detail.branchId)}
+                @create-branch=${e => this.createBranch(e.detail.branchName)}
+              ></branch-manager>
 
-                <vaadin-text-field
-                  style="margin-left: 12px;"
-                  label="New branch name"
-                  @keyup=${e => (this.newBranchName = e.target.value)}
-                ></vaadin-text-field>
-                <vaadin-button
-                  theme="contained"
-                  ?disabled=${!this.newBranchName}
-                  @click=${this.createBranch}
-                >
-                  Create branch
-                </vaadin-button>
+              ${this.creatingBranch
+                ? html`
+                    <span>Creating branch...</span>
+                    <vaadin-progress-bar
+                      indeterminate
+                      value="0"
+                    ></vaadin-progress-bar>
+                  `
+                : html``}
 
-                ${this.creatingBranch
-                  ? html`
-                      <span>Creating branch...</span>
-                      <vaadin-progress-bar
-                        indeterminate
-                        value="0"
-                      ></vaadin-progress-bar>
-                    `
-                  : html``}
-              </div>
-
-              <div style="display: flex; flex-direction: row">
-                <context-history
-                  .context=${this.context}
-                  .branches=${this.branches}
-                  .checkoutCommitId=${this.checkoutCommitId}
-                  @checkout-commit=${e =>
-                    this.checkoutCommit(e.detail.commitId)}
-                ></context-history>
-                <div style="flex: 1;">
-                  <slot></slot>
-                </div>
-              </div>
+              <context-history
+                .context=${this.context}
+                .branches=${this.branches}
+                .checkoutCommitId=${this.checkoutCommitId}
+                @checkout-commit=${e => this.checkoutCommit(e.detail.commitId)}
+              ></context-history>
             </div>
           `}
     `;
@@ -181,14 +155,14 @@ export class ContextContainer extends connect(store)(LitElement) {
     );
   }
 
-  createBranch(event) {
+  createBranch(branchName: string) {
     this.creatingBranch = true;
 
     store
       .dispatch(
         createBranch.create({
           commit_address: this.checkoutCommitId,
-          name: this.newBranchName
+          name: branchName
         })
       )
       .then(() => {

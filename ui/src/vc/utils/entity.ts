@@ -5,6 +5,25 @@ export interface EntityState<T> {
   ids: Array<string>;
 }
 
+export interface EntityAdapter<T> {
+  getInitialState: () => EntityState<T>;
+  insertOne: (entity: T, entityState: EntityState<T>) => EntityState<T>;
+  insertMany: (entities: T[], entityState: EntityState<T>) => EntityState<T>;
+  updateOne: (update: Update<T>, entityState: EntityState<T>) => EntityState<T>;
+  updateMany: (
+    updates: Array<Update<T>>,
+    entityState: EntityState<T>
+  ) => EntityState<T>;
+  upsertOne: (entity: T, entityState: EntityState<T>) => EntityState<T>;
+  upsertMany: (entities: T[], entityState: EntityState<T>) => EntityState<T>;
+  removeOne: (id: string, entityState: EntityState<T>) => EntityState<T>;
+  removeMany: (ids: string[], entityState: EntityState<T>) => EntityState<T>;
+  selectIds: (entityState: EntityState<T>) => string[];
+  selectEntities: (entityState: EntityState<T>) => { [key: string]: T };
+  selectAll: (entityState: EntityState<T>) => Array<T>;
+  selectById: (id: string) => (entityState: EntityState<T>) => T;
+}
+
 export interface Update<T> {
   id: string;
   changes: Partial<T>;
@@ -73,12 +92,20 @@ function upsertMany<T>(
   return entityState;
 }
 
-function removeEntity<T>(
-  entityState: EntityState<T>,
-  id: string
-): EntityState<T> {
+function removeOne<T>(entityState: EntityState<T>, id: string): EntityState<T> {
   delete entityState.entities[id];
   entityState.ids.splice(entityState.ids.indexOf(id), 1);
+  return entityState;
+}
+
+function removeMany<T>(
+  entityState: EntityState<T>,
+  ids: string[]
+): EntityState<T> {
+  ids.forEach(id => {
+    entityState = removeOne(entityState, id);
+  });
+
   return entityState;
 }
 
@@ -93,20 +120,24 @@ function updateOne<T>(
   return entityState;
 }
 
-export function getSelectors<T>() {
-  return {
-    selectIds: (entityState: EntityState<T>) => entityState.ids,
-    selectEntities: (entityState: EntityState<T>) => entityState.entities,
-    selectAll: (entityState: EntityState<T>) =>
-      entityState.ids.map(id => entityState.entities[id]),
-    selectById: (id: string) => (entityState: EntityState<T>) =>
-      entityState.entities[id]
-  };
+function updateMany<T>(
+  entityState: EntityState<T>,
+  updates: Array<Update<T>>
+): EntityState<T> {
+  updates.forEach(update => {
+    entityState = updateOne(entityState, update);
+  });
+
+  return entityState;
 }
 
+/**
+ * Creates an adapter for the generic interface
+ * @param idSelector
+ */
 export function createEntityAdapter<T>(
   idSelector: IdSelector<T> = defaultIdSelector
-) {
+): EntityAdapter<T> {
   return {
     // Initial state
     getInitialState,
@@ -115,14 +146,18 @@ export function createEntityAdapter<T>(
       insertOne(entityState, idSelector, entity),
     insertMany: (entities: T[], entityState: EntityState<T>) =>
       insertMany(entityState, idSelector, entities),
-    upsertMany: (entities: T[], entityState: EntityState<T>) =>
-      upsertMany(entityState, idSelector, entities),
-    upsertOne: (entity: T, entityState: EntityState<T>) =>
-      upsertOne(entityState, idSelector, entity),
     updateOne: (update: Update<T>, entityState: EntityState<T>) =>
       updateOne(entityState, update),
+    updateMany: (updates: Array<Update<T>>, entityState: EntityState<T>) =>
+      updateMany(entityState, updates),
+    upsertOne: (entity: T, entityState: EntityState<T>) =>
+      upsertOne(entityState, idSelector, entity),
+    upsertMany: (entities: T[], entityState: EntityState<T>) =>
+      upsertMany(entityState, idSelector, entities),
     removeOne: (id: string, entityState: EntityState<T>) =>
-      removeEntity(entityState, id),
+      removeOne(entityState, id),
+    removeMany: (ids: string[], entityState: EntityState<T>) =>
+      removeMany(entityState, ids),
     // Selectors
     selectIds: (entityState: EntityState<T>) => entityState.ids,
     selectEntities: (entityState: EntityState<T>) => entityState.entities,

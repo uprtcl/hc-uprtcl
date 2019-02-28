@@ -4,7 +4,8 @@ import { ThunkAction } from 'redux-thunk';
 import {
   parseEntriesResults,
   parseEntry,
-  parseEntryResult
+  parseEntryResult,
+  getIfNotCached
 } from '../utils/utils';
 import {
   selectVersionControl,
@@ -14,7 +15,7 @@ import {
   selectContextById,
   selectObjectFromContext
 } from './selectors';
-import { objectsAdapter } from './reducer';
+import { objectsAdapter, commitsAdapter } from './reducer';
 import { Action, Dispatch } from 'redux';
 import { RootState } from '../../store';
 
@@ -116,6 +117,18 @@ export const getContextHistory = createHolochainAsyncAction<
   { context_address: string },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'get_context_history');
+
+export function getCachedCommitInfo(commitAddress: string) {
+  return dispatch =>
+    dispatch(
+      getIfNotCached(
+        commitAddress,
+        (rootState: RootState) => selectVersionControl(rootState).commits,
+        commitsAdapter,
+        getCommitInfo.create({ commit_address: commitAddress })
+      )
+    );
+}
 
 export function getChildrenContexts(contextId: string) {
   return (dispatch, getState) => {

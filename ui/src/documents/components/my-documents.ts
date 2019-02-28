@@ -8,7 +8,7 @@ import { store, RootState } from '../../store';
 import { createDocument, saveDocument } from '../state/actions';
 
 import './edit-document';
-import '../../vc/components/context-container';
+import '../../vc/components/context-manager';
 import '../../vc/components/created-contexts';
 import { selectDocument } from '../state/reducer';
 import { Document } from '../types';
@@ -82,34 +82,34 @@ export class MyDocuments extends connect(store)(LitElement) {
               `}
         </div>
 
-        <div class="column" style="flex: 1; margin: 20px;">
+        <div class="row" style="flex: 1; margin: 20px;">
           ${this.selectedContextId &&
             html`
-              <context-container
+              <context-manager
                 .contextId=${this.selectedContextId}
                 @branch-checkout=${e =>
                   (this.checkoutBranchId = e.detail.branchId)}
                 @entry-selected=${e => this.selectDocument(e.detail.entryId)}
-              >
-                ${this.selectedDocument
-                  ? html`
-                      ${this.savingDocument
-                        ? html`
-                            <span>Saving document...</span>
-                          `
-                        : html``}
-                      <edit-document
-                        .document=${this.selectedDocument}
-                        @save-document=${this.saveDocument}
-                      ></edit-document>
-                    `
-                  : html`
-                      <vaadin-progress-bar
-                        indeterminate
-                        value="0"
-                      ></vaadin-progress-bar>
-                    `}
-              </context-container>
+              ></context-manager>
+
+              ${this.selectedDocument
+                ? html`
+                    ${this.savingDocument
+                      ? html`
+                          <span>Saving document...</span>
+                        `
+                      : html``}
+                    <edit-document
+                      .document=${this.selectedDocument}
+                      @save-document=${this.saveDocument}
+                    ></edit-document>
+                  `
+                : html`
+                    <vaadin-progress-bar
+                      indeterminate
+                      value="0"
+                    ></vaadin-progress-bar>
+                  `}
             `}
         </div>
       </div>
