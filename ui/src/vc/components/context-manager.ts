@@ -92,9 +92,7 @@ export class ContextManager extends connect(store)(LitElement) {
     this.loading = true;
 
     Promise.all([
-      store.dispatch(
-        getContextInfo.create({ context_address: this.contextId })
-      ),
+      store.dispatch(getContextInfo(this.contextId)),
       store.dispatch(getContextBranchesInfo(this.contextId))
     ]).then(() => {
       this.loading = false;

@@ -5,7 +5,7 @@ use hdk::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
-  AGENT_ADDRESS,
+  AGENT_ADDRESS, PUBLIC_TOKEN
 };
 use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
 use serde_json::json;
@@ -71,7 +71,7 @@ pub fn handle_create_document(title: String, content: String) -> ZomeApiResult<A
   let response_json = hdk::call(
     hdk::THIS_INSTANCE,
     "vc",
-    "test_token",
+    Address::from(PUBLIC_TOKEN.to_string()),
     "create_context_and_commit",
     json!({
       "name": title,
@@ -100,7 +100,7 @@ pub fn handle_save_document(branch_address: Address, title: String, content: Str
   let response_json = hdk::call(
     hdk::THIS_INSTANCE,
     "vc",
-    "test_token",
+    Address::from(PUBLIC_TOKEN.to_string()),
     "create_commit",
     json!({
       "branch_address": branch_address,

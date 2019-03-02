@@ -23,7 +23,7 @@ export class EditDocument extends LitElement {
         ${this.editing
           ? html`
               <textarea
-                style="height: 300px;"
+                style="height: 600px; width: 100%;"
                 .value=${this.document.content}
                 @keyup="${e => (this.documentContent = e.target.value)}"
               ></textarea>
@@ -57,9 +57,7 @@ export class EditDocument extends LitElement {
 
               <marked-element>
                 <div slot="markdown-html"></div>
-                <script type="text/markdown">
-                  ${this.document.content}
-                </script>
+                <script type="text/markdown">${this.document.content}</script>
               </marked-element>
             `}
       </div>

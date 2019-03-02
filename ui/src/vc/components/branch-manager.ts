@@ -32,23 +32,19 @@ export class BranchManager extends LitElement {
                 `
             )}
           </vaadin-list-box>
-
-          <hr style="margin: 0;">
-
-          <vaadin-text-field
-            style="margin-left: 8px;"
-            label="New branch"
-            @keyup=${e => (this.newBranchName = e.target.value)}
-          ></vaadin-text-field>
-          <vaadin-button
-            theme="icon"
-            ?disabled=${!this.newBranchName}
-            @click=${this.createBranch}
-          >
-            <iron-icon icon="vaadin:new"></iron-icon>
-          </vaadin-button>
         </template>
       </vaadin-select>
+
+      <div style="display: flex; flex-direction: row;">
+        <vaadin-text-field
+          style="margin-left: 8px;"
+          placeholder="Create new branch"
+          @keyup=${e => (this.newBranchName = e.target.value)}
+        ></vaadin-text-field>
+        <vaadin-button theme="icon" @click=${e => this.createBranch()}>
+          <iron-icon icon="vaadin:plus"></iron-icon>
+        </vaadin-button>
+      </div>
     `;
   }
 
@@ -63,11 +59,12 @@ export class BranchManager extends LitElement {
     }
   }
 
-  createBranch(branchName: string) {
+  createBranch() {
+    console.log('yeah');
     this.dispatchEvent(
       new CustomEvent('create-branch', {
         detail: {
-          branchName: branchName
+          branchName: this.newBranchName
         }
       })
     );

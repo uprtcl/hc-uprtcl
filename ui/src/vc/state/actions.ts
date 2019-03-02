@@ -4,20 +4,17 @@ import { ThunkAction } from 'redux-thunk';
 import {
   parseEntriesResults,
   parseEntry,
-  parseEntryResult,
-  getIfNotCached
+  parseEntryResult
 } from '../utils/utils';
 import {
   selectVersionControl,
-  selectBranchHead,
   selectBranchHeadId,
   selectObjects,
-  selectContextById,
   selectObjectFromContext
 } from './selectors';
-import { objectsAdapter, commitsAdapter } from './reducer';
-import { Action, Dispatch } from 'redux';
-import { RootState } from '../../store';
+import { adapters } from './reducer';
+import { Dispatch } from 'redux';
+import { EntityState } from '../utils/entity';
 
 const INSTANCE_NAME = 'test-instance';
 const ZOME_NAME = 'vc';
@@ -62,11 +59,6 @@ export const getCreatedContexts = createHolochainAsyncAction<{}, any>(
   'get_created_contexts'
 );
 
-export const getContextInfo = createHolochainAsyncAction<
-  { context_address: string },
-  any
->(INSTANCE_NAME, ZOME_NAME, 'get_context_info');
-
 export const createBranch = createHolochainAsyncAction<
   { commit_address: string; name: string },
   string
@@ -77,11 +69,6 @@ export const getContextBranches = createHolochainAsyncAction<
   any
 >(INSTANCE_NAME, ZOME_NAME, 'get_context_branches');
 
-export const getBranchInfo = createHolochainAsyncAction<
-  { branch_address: string },
-  any
->(INSTANCE_NAME, ZOME_NAME, 'get_branch_info');
-
 export const getBranchHead = createHolochainAsyncAction<
   { branch_address: string },
   string
@@ -91,16 +78,6 @@ export const createCommit = createHolochainAsyncAction<
   { branch_address: string; message: string; content: any },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'create_commit');
-
-export const getCommitInfo = createHolochainAsyncAction<
-  { commit_address: string },
-  any
->(INSTANCE_NAME, ZOME_NAME, 'get_commit_info');
-
-export const getCommitContent = createHolochainAsyncAction<
-  { commit_address: string },
-  any
->(INSTANCE_NAME, ZOME_NAME, 'get_commit_content');
 
 export const getEntry = createHolochainAsyncAction<{ address: string }, any>(
   INSTANCE_NAME,
@@ -118,16 +95,48 @@ export const getContextHistory = createHolochainAsyncAction<
   string
 >(INSTANCE_NAME, ZOME_NAME, 'get_context_history');
 
-export function getCachedCommitInfo(commitAddress: string) {
-  return dispatch =>
-    dispatch(
-      getIfNotCached(
-        commitAddress,
-        (rootState: RootState) => selectVersionControl(rootState).commits,
-        commitsAdapter,
-        getCommitInfo.create({ commit_address: commitAddress })
-      )
+export function getContextInfo(contextAddress: string) {
+  return dispatch => dispatch(getCachedEntry(contextAddress, 'context'));
+}
+
+export function getBranchInfo(branchAddress: string) {
+  return dispatch => dispatch(getCachedEntry(branchAddress, 'branch'));
+}
+
+export function getCommitInfo(commitAddress: string) {
+  return dispatch => dispatch(getCachedEntry(commitAddress, 'commit'));
+}
+
+export function getCommitContent(commitAddress: string) {
+  return (dispatch, getState) => {
+    const commit = adapters.commit.selectById(commitAddress)(
+      selectVersionControl(getState()).commit
     );
+    if (!commit) {
+      return dispatch(getCommitInfo(commitAddress)).then(commit =>
+        dispatch(getCachedEntry(commit.object_address, 'object'))
+      );
+    } else {
+      return dispatch(getCachedEntry(commit.object_address, 'object'));
+    }
+  };
+}
+
+export function getCachedEntry<T>(entryAddress: string, entityType: string) {
+  return (dispatch, getState) => {
+    const entities: EntityState<T> = selectVersionControl(getState())[
+      entityType
+    ];
+
+    const entity = adapters[entityType].selectById(entryAddress)(entities);
+    if (!entity) {
+      return dispatch(getEntry.create({ address: entryAddress })).then(
+        entry => parseEntryResult(entry).entry
+      );
+    } else {
+      return Promise.resolve(entity);
+    }
+  };
 }
 
 export function getChildrenContexts(contextId: string) {
@@ -137,9 +146,7 @@ export function getChildrenContexts(contextId: string) {
     );
     return Promise.all(
       Object.keys(object.links).map(childContextAddress =>
-        dispatch(
-          getContextInfo.create({ context_address: childContextAddress })
-        )
+        dispatch(getContextInfo(childContextAddress))
       )
     );
   };
@@ -149,8 +156,8 @@ export function getCreatedContextsAndContents() {
   return dispatch => {
     dispatch(getCreatedContexts.create({})).then(response =>
       Promise.all([
-        parseEntriesResults(response).map(entry =>
-          getContextBranchesInfo(entry.id)
+        parseEntriesResults(response).map(result =>
+          getContextBranchesInfo(result.entry.id)
         )
       ])
     );
@@ -172,8 +179,8 @@ export function getContextBranchesInfo(contextAddress: string) {
 
 export function getBranchAndHead(branchAddress: string) {
   return dispatch =>
-    dispatch(getBranchInfo.create({ branch_address: branchAddress })).then(
-      branchEntry => dispatch(getBranchHeadCommit(branchAddress))
+    dispatch(getBranchInfo(branchAddress)).then(branchEntry =>
+      dispatch(getBranchHeadCommit(branchAddress))
     );
 }
 
@@ -198,22 +205,16 @@ export function getBranchHeadCommitContent(branchAddress: string) {
 }
 
 export function getCommitAndContents(commitAddress: string) {
-  return dispatch => {
-    dispatch(getCommitInfo.create({ commit_address: commitAddress }));
-
-    return dispatch(
-      getCommitContent.create({ commit_address: commitAddress })
-    ).then((commitObjectEntry: CommitObject) => {
-      const commitObject: CommitObject = parseEntryResult(commitObjectEntry);
-
-      return dispatch(getObjectEntries(commitObject.id));
-    });
-  };
+  return dispatch =>
+    dispatch(getCommitContent(commitAddress)).then(
+      (commitObject: CommitObject) =>
+        dispatch(getObjectEntries(commitObject.id))
+    );
 }
 
 export function getObjectEntries(objectId: string) {
   return (dispatch, getState) => {
-    const commitObject: CommitObject = objectsAdapter.selectById(objectId)(
+    const commitObject: CommitObject = adapters.object.selectById(objectId)(
       selectObjects(selectVersionControl(getState()))
     );
     const entriesAddresses = Object.keys(commitObject.links).map(

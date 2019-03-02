@@ -1,14 +1,5 @@
 import { createHolochainAsyncAction } from '@holochain/hc-redux-middleware';
-import { Document } from '../types';
-import {
-  getCreatedContexts,
-  getCreatedContextsAndContents
-} from '../../vc/state/actions';
-import { Store } from 'redux';
-import {
-  selectCurrentObjects,
-  selectVersionControl
-} from '../../vc/state/selectors';
+import { getCachedEntry } from '../../vc/state/actions';
 
 export interface AddressMessage {
   address: string;
@@ -19,11 +10,9 @@ export const createDocument = createHolochainAsyncAction<
   string
 >('test-instance', 'documents', 'create_document');
 
-export const getDocument = createHolochainAsyncAction<AddressMessage, Document>(
-  'test-instance',
-  'documents',
-  'get_document'
-);
+export function getDocument(documentAddress: string) {
+  return dispatch => dispatch(getCachedEntry(documentAddress, 'documents'));
+}
 
 export const saveDocument = createHolochainAsyncAction<
   { branch_address: string; title: string; content: string },

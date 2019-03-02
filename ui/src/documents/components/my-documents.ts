@@ -86,6 +86,7 @@ export class MyDocuments extends connect(store)(LitElement) {
           ${this.selectedContextId &&
             html`
               <context-manager
+                style="margin-right: 20px;"
                 .contextId=${this.selectedContextId}
                 @branch-checkout=${e =>
                   (this.checkoutBranchId = e.detail.branchId)}
@@ -100,6 +101,7 @@ export class MyDocuments extends connect(store)(LitElement) {
                         `
                       : html``}
                     <edit-document
+                      style="flex-grow: 1;"
                       .document=${this.selectedDocument}
                       @save-document=${this.saveDocument}
                     ></edit-document>

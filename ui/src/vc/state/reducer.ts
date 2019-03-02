@@ -11,7 +11,8 @@ import {
   getCommitInfo,
   SET_BRANCH_HEAD,
   getCommitContent,
-  getContextHistory
+  getContextHistory,
+  getEntry
 } from './actions';
 import {
   parseEntriesResults,
@@ -20,22 +21,24 @@ import {
 } from '../utils/utils';
 
 export interface VersionControlState {
-  contexts: EntityState<Context>;
-  branches: EntityState<Branch>;
-  commits: EntityState<Commit>;
-  objects: EntityState<CommitObject>;
+  context: EntityState<Context>;
+  branch: EntityState<Branch>;
+  commit: EntityState<Commit>;
+  object: EntityState<CommitObject>;
 }
 
-export const contextsAdapter = createEntityAdapter<Context>();
-export const branchesAdapter = createEntityAdapter<Branch>();
-export const commitsAdapter = createEntityAdapter<Commit>();
-export const objectsAdapter = createEntityAdapter<CommitObject>();
+export const adapters = {
+  context: createEntityAdapter<Context>(),
+  branch: createEntityAdapter<Branch>(),
+  commit: createEntityAdapter<Commit>(),
+  object: createEntityAdapter<CommitObject>()
+};
 
 const initialState: VersionControlState = {
-  contexts: contextsAdapter.getInitialState(),
-  branches: branchesAdapter.getInitialState(),
-  commits: commitsAdapter.getInitialState(),
-  objects: objectsAdapter.getInitialState()
+  context: adapters.context.getInitialState(),
+  branch: adapters.branch.getInitialState(),
+  commit: adapters.commit.getInitialState(),
+  object: adapters.object.getInitialState()
 };
 
 export function versionControlReducer(state = initialState, action: AnyAction) {
@@ -44,62 +47,40 @@ export function versionControlReducer(state = initialState, action: AnyAction) {
     case getType(getCreatedContexts.success):
       return {
         ...state,
-        contexts: contextsAdapter.upsertMany(
-          parseEntriesResults(action.payload),
-          state.contexts
+        context: adapters.context.upsertMany(
+          parseEntriesResults(action.payload).map(result => result.entry),
+          state.context
         )
       };
-    case getType(getContextInfo.success):
+    case getType(getEntry.success):
+      const result = parseEntryResult(action.payload);
+      if (!state[result.type]) return state;
       return {
         ...state,
-        contexts: contextsAdapter.upsertOne(
-          parseEntryResult(action.payload),
-          state.contexts
-        )
-      };
-    case getType(getBranchInfo.success):
-      return {
-        ...state,
-        branches: branchesAdapter.upsertOne(
-          parseEntryResult(action.payload),
-          state.branches
+        [result.type]: adapters[result.type].upsertOne(
+          result.entry,
+          state[result.type]
         )
       };
     case SET_BRANCH_HEAD:
       return {
         ...state,
-        branches: branchesAdapter.updateOne(
+        branch: adapters.branch.updateOne(
           {
             id: action.payload.branchId,
             changes: {
               branch_head: action.payload.commitId
             }
           },
-          state.branches
-        )
-      };
-    case getType(getCommitInfo.success):
-      return {
-        ...state,
-        commits: commitsAdapter.upsertOne(
-          parseEntryResult(action.payload),
-          state.commits
-        )
-      };
-      case getType(getCommitContent.success):
-      return {
-        ...state,
-        objects: objectsAdapter.upsertOne(
-          parseEntryResult(action.payload),
-          state.objects
+          state.branch
         )
       };
     case getType(getContextHistory.success):
       return {
         ...state,
-        commits: commitsAdapter.upsertMany(
-          parseEntriesResults(action.payload),
-          state.commits
+        commit: adapters.commit.upsertMany(
+          parseEntriesResults(action.payload).map(result => result.entry),
+          state.commit
         )
       };
 

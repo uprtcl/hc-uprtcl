@@ -25,12 +25,11 @@ const initialState: DocumentsState = {
 export function documentsReducer(state = initialState, action: AnyAction) {
   switch (action.type) {
     case getType(getEntry.success):
+      const result = parseEntryResult(action.payload);
+      if (result.type !== 'document') return state;
       return {
         ...state,
-        documents: documentsAdapter.upsertOne(
-          parseEntryResult(action.payload),
-          state.documents
-        )
+        documents: documentsAdapter.upsertOne(result.entry, state.documents)
       };
     default:
       return state;

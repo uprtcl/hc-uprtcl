@@ -7,44 +7,44 @@ import {
   ContextHistory
 } from '../types';
 import { createSelector } from 'reselect';
-import { VersionControlState, commitsAdapter, objectsAdapter } from './reducer';
+import { VersionControlState, adapters } from './reducer';
 import { EntityState } from '../utils/entity';
 import { RootState } from '../../store';
 
 export const selectVersionControl = (state: RootState) => state.versionControl;
 
 export const selectContexts = (state: VersionControlState) =>
-  state.contexts.ids.map(id => state.contexts.entities[id]);
+  state.context.ids.map(id => state.context.entities[id]);
 
 export const selectContextById = (contextId: string) => (
   state: VersionControlState
-) => state.contexts.entities[contextId];
+) => state.context.entities[contextId];
 
 export const selectContextBranches = (contextId: string) => (
   state: VersionControlState
 ) =>
-  state.branches.ids
-    .map(id => state.branches.entities[id])
+  state.branch.ids
+    .map(id => state.branch.entities[id])
     .filter(branch => branch.context_address === contextId);
 
 export const selectBranchById = (branchId: string) => (
   state: VersionControlState
-) => state.branches.entities[branchId];
+) => state.branch.entities[branchId];
 
 export const selectCommitById = (commitId: string) => (
   state: VersionControlState
-) => state.commits.entities[commitId];
+) => state.commit.entities[commitId];
 
 export const selectBranchHead = (branchId: string) => (
   state: VersionControlState
 ) =>
-  commitsAdapter.selectById(selectBranchHeadId(branchId)(state))(state.commits);
+  adapters.commit.selectById(selectBranchHeadId(branchId)(state))(state.commit);
 
 export const selectBranchHeadId = (branchId: string) => (
   state: VersionControlState
 ) => selectBranchById(branchId)(state).branch_head;
 
-export const selectObjects = (state: VersionControlState) => state.objects;
+export const selectObjects = (state: VersionControlState) => state.object;
 
 export const selectObjectFromBranch = (branchId: string) =>
   createSelector(
@@ -67,7 +67,7 @@ export const selectObjectFromCommit = (commitId: string) =>
     selectCommitById(commitId),
     selectObjects,
     (commit: Commit, objects: EntityState<CommitObject>) =>
-      objectsAdapter.selectById(commit.object_address)(objects)
+      adapters.object.selectById(commit.object_address)(objects)
   );
 
 export const selectCurrentObjects = createSelector(
