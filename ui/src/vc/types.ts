@@ -30,7 +30,7 @@ export interface CommitObject {
   id: string;
 
   data: string;
-  links: { [key: string]: string };
+  links: Array<{ name: string; address: string }>;
 }
 
 /** History helpers types */
