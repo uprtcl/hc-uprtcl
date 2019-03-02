@@ -1,5 +1,5 @@
 use crate::commit::Commit;
-use crate::object::Object;
+use crate::object::{Link, Object};
 use hdk::{
   error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::{
@@ -62,44 +62,80 @@ fn build_merge_content(
   to_content: Object,
   ancestor_content: Object,
 ) -> ZomeApiResult<Object> {
-  // Iterate over all the keys of the three links object
-  let mut merge_keys: HashSet<String> = from_content
-    .get_links()
-    .keys()
-    .cloned()
-    .collect::<HashSet<String>>();
+  #[derive(Eq, PartialEq, Serialize, Deserialize, Debug)]
+  struct MergeLink {
+    position: usize,
+    address: Address,
+  }
+
+  let mut from_links: HashMap<String, MergeLink> = HashMap::new();
+  let mut to_links: HashMap<String, MergeLink> = HashMap::new();
+  let mut ancestor_links: HashMap<String, MergeLink> = HashMap::new();
+
+  // Iterate over all the keys of the three links objects
+  for i in 0..from_content.get_links().len() {
+    let link: &Link = from_content.get_links().get(i).unwrap();
+    let merge_link = MergeLink {
+      position: i,
+      address: link.address.clone(),
+    };
+    from_links.insert(link.name.clone(), merge_link);
+  }
+
+  for i in 0..to_content.get_links().len() {
+    let link: &Link = to_content.get_links().get(i).unwrap();
+    let merge_link = MergeLink {
+      position: i,
+      address: link.address.clone(),
+    };
+    to_links.insert(link.name.clone(), merge_link);
+  }
+
+  for i in 0..ancestor_content.get_links().len() {
+    let link: &Link = ancestor_content.get_links().get(i).unwrap();
+    let merge_link = MergeLink {
+      position: i,
+      address: link.address.clone(),
+    };
+    ancestor_links.insert(link.name.clone(), merge_link);
+  }
+
+  let mut merge_keys: HashSet<String> = from_links.keys().cloned().collect::<HashSet<String>>();
   merge_keys = merge_keys
-    .union(
-      &to_content
-        .get_links()
-        .keys()
-        .cloned()
-        .collect::<HashSet<String>>(),
-    )
+    .union(&to_links.keys().cloned().collect::<HashSet<String>>())
     .cloned()
     .collect();
   merge_keys = merge_keys
-    .union(
-      &ancestor_content
-        .get_links()
-        .keys()
-        .cloned()
-        .collect::<HashSet<String>>(),
-    )
+    .union(&ancestor_links.keys().cloned().collect::<HashSet<String>>())
     .cloned()
     .collect();
 
-  let mut merged_contents: HashMap<String, Address> = HashMap::new();
+  let mut merged_contents: HashMap<String, &MergeLink> = HashMap::new();
 
   // For each key, call get_merge_result and include the result in the merge resulting contents
   for key in merge_keys.into_iter() {
-    if let Some(result_address) = get_merge_result(
-      from_content.get_links().get(&key),
-      to_content.get_links().get(&key),
-      ancestor_content.get_links().get(&key),
+    if let Some(result) = get_merge_result(
+      from_links.get(&key),
+      to_links.get(&key),
+      ancestor_links.get(&key),
     )? {
-      merged_contents.insert(key, result_address.to_owned());
+      merged_contents.insert(key, result);
     }
+  }
+
+  let mut keys: Vec<String> = merged_contents.keys().cloned().collect::<Vec<String>>();
+  keys.sort_by(|a, b| {
+    merged_contents
+      .get(a)
+      .unwrap()
+      .position
+      .cmp(&merged_contents.get(b).unwrap().position)
+  });
+
+  let mut merged_links: Vec<Link> = Vec::new();
+  for key in keys {
+    let link = Link::new(&key, &merged_contents.get(&key).unwrap().address);
+    merged_links.push(link);
   }
 
   let merged_data = get_merge_result(
@@ -107,7 +143,7 @@ fn build_merge_content(
     to_content.get_data(),
     ancestor_content.get_data(),
   )?;
-  Ok(Object::new(merged_data, merged_contents))
+  Ok(Object::new(merged_data, merged_links))
 }
 
 /**

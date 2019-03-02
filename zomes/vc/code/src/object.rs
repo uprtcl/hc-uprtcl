@@ -7,17 +7,32 @@ use hdk::{
     json::JsonString,
   },
 };
-use std::{collections::HashMap, convert::TryFrom};
-use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntryOptions};
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
+use std::convert::TryFrom;
+
+#[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson)]
+pub struct Link {
+  pub name: String,
+  pub address: Address,
+}
+
+impl Link {
+  pub fn new(name: &String, address: &Address) -> Link {
+    Link {
+      name: name.clone(),
+      address: address.clone(),
+    }
+  }
+}
 
 #[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Object {
   data: Option<Address>,
-  links: HashMap<String, Address>,
+  links: Vec<Link>,
 }
 
 impl Object {
-  pub fn new(data: Option<Address>, links: HashMap<String, Address>) -> Object {
+  pub fn new(data: Option<Address>, links: Vec<Link>) -> Object {
     Object {
       data: data,
       links: links,
@@ -30,13 +45,13 @@ impl Object {
       Err(err) => Err(ZomeApiError::from(err)),
     }
   }
-  
+
   pub fn get_data(&self) -> Option<Address> {
     self.data.to_owned()
   }
 
-  pub fn get_links(&self) -> HashMap<String, Address> {
-    self.links.to_owned()
+  pub fn get_links(&self) -> &Vec<Link> {
+    &self.links
   }
 }
 
@@ -75,7 +90,7 @@ pub fn store_object(object: Object) -> ZomeApiResult<Address> {
   crate::utils::store_entry_if_new(object_entry)
 }
 
-/* 
+/*
   Stores the contents of the commit in the DHT
   pub fn store_content_object(content: ContentObject) -> ZomeApiResult<Address> {
   let mut links: HashMap<String, Address> = HashMap::new();
