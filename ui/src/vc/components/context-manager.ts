@@ -3,38 +3,30 @@ import { connect } from 'pwa-helpers/connect-mixin';
 import '@vaadin/vaadin-button/theme/material/vaadin-button.js';
 import '@vaadin/vaadin-text-field/theme/material/vaadin-text-field.js';
 
-import { Branch, Context, Commit } from '../types';
+import { Branch, Context, Commit, EntryResult } from '../types';
 import { store, RootState } from '../../store';
-import {
-  selectContextBranches,
-  selectVersionControl,
-  selectContextById,
-  selectObjectFromCommit,
-  selectBranchHeadId
-} from '../state/selectors';
-import {
-  getContextBranchesInfo,
-  getContextInfo,
-  createBranch,
-  getCommitAndContents
-} from '../state/actions';
 
 import './branch-manager';
 import './context-history';
+import { getCheckoutAndContent } from '../state/checkout/actions';
+import { selectCheckoutById } from '../state/checkout/selectors';
+import { selectVersionControl, VersionControlState } from '../state/reducer';
+import {
+  selectContextBranches,
+  selectContextById
+} from '../state/context/selectors';
+import { selectBranchHeadId } from '../state/branch/selectors';
+import { getCommitAndContent } from '../state/commit/actions';
+import { selectObjectFromCommit } from '../state/commit/selectors';
+import { createBranch } from '../state/branch/actions';
 
 @customElement('context-manager')
 export class ContextManager extends connect(store)(LitElement) {
   @property({ type: String })
-  public contextId: string;
+  public initialCheckoutId: string;
 
   @property({ type: Object })
   context: Context;
-
-  @property({ type: Boolean })
-  loading = true;
-
-  @property({ type: Boolean })
-  creatingBranch = false;
 
   @property({ type: Array })
   branches: Branch[];
@@ -44,6 +36,12 @@ export class ContextManager extends connect(store)(LitElement) {
 
   @property({ type: String })
   checkoutCommitId: string;
+
+  @property({ type: Boolean })
+  loading = true;
+
+  @property({ type: Boolean })
+  creatingBranch = false;
 
   render() {
     return html`
@@ -85,35 +83,66 @@ export class ContextManager extends connect(store)(LitElement) {
   }
 
   protected firstUpdated() {
-    this.loadContext();
+    this.loadCheckout();
   }
 
-  loadContext() {
+  loadCheckout() {
     this.loading = true;
 
-    Promise.all([
-      store.dispatch(getContextInfo(this.contextId)),
-      store.dispatch(getContextBranchesInfo(this.contextId))
-    ]).then(() => {
+    store.dispatch(getCheckoutAndContent(this.initialCheckoutId)).then(() => {
+      this.entryLoaded();
       this.loading = false;
-      this.checkoutBranch(this.branches[0].id);
     });
   }
 
   update(changedProperties) {
     // Don't forget this or your element won't render!
     super.update(changedProperties);
-    if (changedProperties.get('contextId')) {
-      this.loadContext();
+    if (changedProperties.get('initialCheckoutId')) {
+      this.loadCheckout();
     }
   }
 
-  stateChanged(state: RootState) {
-    this.context = selectContextById(this.contextId)(
-      selectVersionControl(state)
-    );
-    this.branches = selectContextBranches(this.contextId)(
-      selectVersionControl(state)
+  entryLoaded() {
+    const state: VersionControlState = selectVersionControl(<RootState>(
+      store.getState()
+    ));
+    const checkoutEntryResult: EntryResult = selectCheckoutById(
+      this.initialCheckoutId
+    )(state);
+
+    if (!checkoutEntryResult) return;
+
+    let contextId;
+    let checkoutFn;
+    switch (checkoutEntryResult.type) {
+      case 'context':
+        checkoutFn = (id: string) => this.checkoutContext(id);
+        contextId = checkoutEntryResult.entry.id;
+        break;
+      case 'branch':
+        checkoutFn = (id: string) => this.checkoutBranch(id);
+        contextId = checkoutEntryResult.entry.context_address;
+        break;
+      case 'commit':
+        checkoutFn = (id: string) => this.checkoutCommit(id);
+        contextId = checkoutEntryResult.entry.context_address;
+        break;
+
+      default:
+        break;
+    }
+
+    this.context = selectContextById(contextId)(state);
+    this.branches = selectContextBranches(contextId)(state);
+    checkoutFn(checkoutEntryResult.entry.id);
+  }
+
+  checkoutContext(contextId: string) {
+    this.checkoutBranch(
+      selectContextBranches(contextId)(
+        selectVersionControl(<RootState>store.getState())
+      )[0].id
     );
   }
 
@@ -138,7 +167,7 @@ export class ContextManager extends connect(store)(LitElement) {
 
     this.dispatchSelectedEntry(null);
 
-    store.dispatch(getCommitAndContents(commitId)).then(() => {
+    store.dispatch(getCommitAndContent(commitId)).then(() => {
       const object = selectObjectFromCommit(commitId)(
         selectVersionControl(<RootState>store.getState())
       );
@@ -165,7 +194,7 @@ export class ContextManager extends connect(store)(LitElement) {
       )
       .then(() => {
         this.creatingBranch = false;
-        this.loadContext();
+        this.loadCheckout();
       });
   }
 

@@ -4,8 +4,8 @@ import '@vaadin/vaadin-button/theme/material/vaadin-button.js';
 import '@vaadin/vaadin-icons/vaadin-icons.js';
 import '@polymer/marked-element/marked-element.js';
 
-@customElement('edit-document')
-export class EditDocument extends LitElement {
+@customElement('document-content')
+export class DocumentContent extends LitElement {
   @property({ type: Object })
   public document: Document;
 

@@ -7,11 +7,10 @@ import '@vaadin/vaadin-progress-bar/theme/material/vaadin-progress-bar.js';
 import { store, RootState } from '../../store';
 import { createDocument, saveDocument } from '../state/actions';
 
-import './edit-document';
+import './document-container';
 import '../../vc/components/context-manager';
 import '../../vc/components/created-contexts';
-import { selectDocument } from '../state/reducer';
-import { Document } from '../types';
+import { sharedStyles } from '../../vc/styles/styles';
 
 @customElement('my-documents')
 export class MyDocuments extends connect(store)(LitElement) {
@@ -20,35 +19,13 @@ export class MyDocuments extends connect(store)(LitElement) {
 
   @property({ type: String })
   newDocumentName: string = '';
-  @property({ type: Object })
-  selectedDocument: Document;
 
   @property({ type: Boolean })
   creatingDocument = false;
-  @property({ type: Boolean })
-  savingDocument = false;
-
-  checkoutBranchId: string;
-
-  getStyles() {
-    return css`
-      .row {
-        display: flex;
-        flex-direction: row;
-      }
-      .column {
-        display: flex;
-        flex-direction: column;
-      }
-    `;
-  }
 
   render() {
     return html`
-      <style>
-        ${this.getStyles()}
-      </style>
-
+      ${sharedStyles}
       <div class="row" style="flex: 1; margin: 12px;">
         <div class="column">
           <h1>My documents</h1>
@@ -77,51 +54,23 @@ export class MyDocuments extends connect(store)(LitElement) {
                 <created-contexts
                   style="margin: 12px;"
                   @context-selected=${e =>
-                    (this.selectedContextId = e.detail.contextId)}
+                    (this.selectedContextId =
+                      'Qmd4GqMgWwPW7FX7ognraRuaN7SgcFP4ocPjr4WeuB3uqH')}
                 ></created-contexts>
               `}
         </div>
 
         <div class="row" style="flex: 1; margin: 20px;">
-          ${this.selectedContextId &&
-            html`
-              <context-manager
-                style="margin-right: 20px;"
-                .contextId=${this.selectedContextId}
-                @branch-checkout=${e =>
-                  (this.checkoutBranchId = e.detail.branchId)}
-                @entry-selected=${e => this.selectDocument(e.detail.entryId)}
-              ></context-manager>
-
-              ${this.selectedDocument
-                ? html`
-                    ${this.savingDocument
-                      ? html`
-                          <span>Saving document...</span>
-                        `
-                      : html``}
-                    <edit-document
-                      style="flex-grow: 1;"
-                      .document=${this.selectedDocument}
-                      @save-document=${this.saveDocument}
-                    ></edit-document>
-                  `
-                : html`
-                    <vaadin-progress-bar
-                      indeterminate
-                      value="0"
-                    ></vaadin-progress-bar>
-                  `}
-            `}
+          ${this.selectedContextId
+            ? html`
+                <document-container
+                  .checkoutId=${this.selectedContextId}
+                ></document-container>
+              `
+            : html``}
         </div>
       </div>
     `;
-  }
-
-  selectDocument(documentId: string) {
-    this.selectedDocument = selectDocument(documentId)(<RootState>(
-      store.getState()
-    ));
   }
 
   addNewDocument() {
@@ -132,24 +81,6 @@ export class MyDocuments extends connect(store)(LitElement) {
       )
       .then(() => {
         this.creatingDocument = false;
-      });
-  }
-
-  saveDocument(saveEvent) {
-    this.savingDocument = true;
-    store
-      .dispatch(
-        saveDocument.create({
-          branch_address: this.checkoutBranchId,
-          title: saveEvent.detail.title,
-          content: saveEvent.detail.content
-        })
-      )
-      .then(() => {
-        this.savingDocument = false;
-        const aux = this.selectedContextId;
-        this.selectedContextId = null;
-        setTimeout(() => (this.selectedContextId = aux));
       });
   }
 }

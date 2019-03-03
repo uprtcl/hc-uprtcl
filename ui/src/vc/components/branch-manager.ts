@@ -60,7 +60,6 @@ export class BranchManager extends LitElement {
   }
 
   createBranch() {
-    console.log('yeah');
     this.dispatchEvent(
       new CustomEvent('create-branch', {
         detail: {

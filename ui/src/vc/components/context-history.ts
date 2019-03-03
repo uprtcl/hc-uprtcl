@@ -2,11 +2,12 @@ import { LitElement, html, customElement, property } from 'lit-element';
 import { Branch, Context, ContextHistory } from '../types';
 import { connect } from 'pwa-helpers/connect-mixin';
 import { store, RootState } from '../../store';
-import { selectVersionControl, selectContextHistory } from '../state/selectors';
-import { getContextHistory } from '../state/actions';
 import '@vaadin/vaadin-progress-bar/theme/material/vaadin-progress-bar.js';
 
 import 'gitgraph.js';
+import { getContextHistory } from '../state/context/actions';
+import { selectContextHistory } from '../state/selectors/history';
+import { selectVersionControl } from '../state/reducer';
 
 @customElement('context-history')
 export class ContextHistoryElement extends connect(store)(LitElement) {

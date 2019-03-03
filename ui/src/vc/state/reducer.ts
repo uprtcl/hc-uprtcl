@@ -4,21 +4,13 @@ import { AnyAction } from 'redux';
 import { Context, Branch, Commit, CommitObject } from '../types';
 import { EntityState, createEntityAdapter } from '../utils/entity';
 import {
-  getContextInfo,
-  getCreatedContexts,
-  getContextBranches,
-  getBranchInfo,
-  getCommitInfo,
-  SET_BRANCH_HEAD,
-  getCommitContent,
-  getContextHistory,
-  getEntry
-} from './actions';
-import {
   parseEntriesResults,
-  parseEntry,
   parseEntryResult
 } from '../utils/utils';
+import { RootState } from '../../store';
+import { getEntry } from './actions/common.actions';
+import { SET_BRANCH_HEAD } from './branch/actions';
+import { getContextHistory, getCreatedContexts } from './context/actions';
 
 export interface VersionControlState {
   context: EntityState<Context>;
@@ -88,3 +80,5 @@ export function versionControlReducer(state = initialState, action: AnyAction) {
       return state;
   }
 }
+
+export const selectVersionControl = (state: RootState) => state.versionControl;

@@ -6,8 +6,9 @@ import '@vaadin/vaadin-progress-bar/theme/material/vaadin-progress-bar.js';
 
 import { Context } from '../types';
 import { store, RootState } from '../../store';
-import { getCreatedContexts } from '../state/actions';
-import { selectContexts, selectVersionControl } from '../state/selectors';
+import { getCreatedContexts } from '../state/context/actions';
+import { selectContexts } from '../state/context/selectors';
+import { selectVersionControl } from '../state/reducer';
 
 @customElement('created-contexts')
 export class CreatedContexts extends connect(store)(LitElement) {

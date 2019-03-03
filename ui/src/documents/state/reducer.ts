@@ -3,14 +3,9 @@ import { AnyAction } from 'redux';
 import { Document } from '../types';
 import { EntityState, createEntityAdapter } from '../../vc/utils/entity';
 import { createSelector } from 'reselect';
-import {
-  selectVersionControl,
-  selectObjectFromBranch
-} from '../../vc/state/selectors';
 import { RootState } from '../../store';
-import { getEntry } from '../../vc/state/actions';
+import { getEntry } from '../../vc/state/actions/common.actions';
 import { parseEntryResult } from '../../vc/utils/utils';
-import { VersionControlState } from '../../vc/state/reducer';
 
 export interface DocumentsState {
   documents: EntityState<Document>;

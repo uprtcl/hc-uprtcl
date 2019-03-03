@@ -40,3 +40,8 @@ export type ChildrenCommit = Commit & { children_commits_addresses: string[] };
 export type ContextHistory = EntityState<ChildrenCommit> & {
   originalCommitAddress: string;
 };
+
+export interface EntryResult<T = any> {
+  entry: T;
+  type: string;
+}
