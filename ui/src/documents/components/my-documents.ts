@@ -26,6 +26,12 @@ export class MyDocuments extends connect(store)(LitElement) {
   render() {
     return html`
       ${sharedStyles}
+      <style>
+        document-container {
+          flex-grow: 1;
+        }
+      </style>
+
       <div class="row" style="flex: 1; margin: 12px;">
         <div class="column">
           <h1>My documents</h1>
@@ -55,7 +61,7 @@ export class MyDocuments extends connect(store)(LitElement) {
                   style="margin: 12px;"
                   @context-selected=${e =>
                     (this.selectedContextId =
-                      'Qmd4GqMgWwPW7FX7ognraRuaN7SgcFP4ocPjr4WeuB3uqH')}
+                      e.detail.contextId)}
                 ></created-contexts>
               `}
         </div>

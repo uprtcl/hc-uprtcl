@@ -31,5 +31,8 @@ export const selectEntryIdFromCheckout = (checkoutId: string) => (
     default:
       return null;
   }
+  console.log(checkoutId);
+  console.log(existingEntry);
+  console.log(object);
   return object ? object.data : null;
 };

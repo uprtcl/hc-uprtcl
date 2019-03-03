@@ -3,6 +3,7 @@ import { Document } from '../types';
 import '@vaadin/vaadin-button/theme/material/vaadin-button.js';
 import '@vaadin/vaadin-icons/vaadin-icons.js';
 import '@polymer/marked-element/marked-element.js';
+import { sharedStyles } from '../../vc/styles/styles';
 
 @customElement('document-content')
 export class DocumentContent extends LitElement {
@@ -19,46 +20,53 @@ export class DocumentContent extends LitElement {
 
   render() {
     return html`
-      <div style="display: flex; flex-direction: column; flex: 1;">
+      ${sharedStyles}
+
+      <div class="row">
         ${this.editing
           ? html`
-              <textarea
-                style="height: 600px; width: 100%;"
-                .value=${this.document.content}
-                @keyup="${e => (this.documentContent = e.target.value)}"
-              ></textarea>
-              <div style="display: flex; flex-direction: row;">
-                <vaadin-button
-                  @click="${e => (this.editing = false)}"
-                  style="flex: 1;"
-                  ?disabled=${this.saving}
-                >
-                  Cancel
-                </vaadin-button>
-                <vaadin-button
-                  theme="contained"
-                  @click="${this.saveDocument}"
-                  ?disabled=${this.documentContent === null}
-                  style="flex: 1;"
-                  ?disabled=${this.saving}
-                >
-                  Save Changes
-                </vaadin-button>
+              <div class="column fill">
+                <textarea
+                  style="height: 400px; width: 100%;"
+                  .value=${this.document.content}
+                  @keyup="${e => (this.documentContent = e.target.value)}"
+                ></textarea>
+                <div class="row">
+                  <vaadin-button
+                    @click="${e => (this.editing = false)}"
+                    style="flex: 1;"
+                    ?disabled=${this.saving}
+                  >
+                    Cancel
+                  </vaadin-button>
+                  <vaadin-button
+                    theme="contained"
+                    @click="${this.saveDocument}"
+                    ?disabled=${this.documentContent === null}
+                    style="flex: 1;"
+                    ?disabled=${this.saving}
+                  >
+                    Save Changes
+                  </vaadin-button>
+                </div>
               </div>
             `
           : html`
-              <vaadin-button
-                style="position: absolute; right: 0;"
-                theme="icon"
-                @click=${e => (this.editing = true)}
-              >
-                <iron-icon icon="vaadin:edit"></iron-icon>
-              </vaadin-button>
-
-              <marked-element>
+              <marked-element class="fill">
                 <div slot="markdown-html"></div>
-                <script type="text/markdown">${this.document.content}</script>
+                <script type="text/markdown">
+                  ${this.document.content}
+                </script>
               </marked-element>
+
+              <div>
+                <vaadin-button
+                  theme="icon"
+                  @click=${e => (this.editing = true)}
+                >
+                  <iron-icon icon="vaadin:edit"></iron-icon>
+                </vaadin-button>
+              </div>
             `}
       </div>
     `;

@@ -10,5 +10,8 @@ export const sharedStyles = html`
       display: flex;
       flex-direction: column;
     }
+    .fill {
+      flex-grow: 1;
+    }
   </style>
 `;

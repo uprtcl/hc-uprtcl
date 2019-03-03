@@ -11,7 +11,10 @@ import { selectDocument } from '../state/reducer';
 import { Document } from '../types';
 import { sharedStyles } from '../../vc/styles/styles';
 import { saveDocument } from '../state/actions';
-import { getCheckout } from '../../vc/state/checkout/actions';
+import {
+  getCheckout,
+  getCheckoutAndContent
+} from '../../vc/state/checkout/actions';
 import { selectEntryIdFromCheckout } from '../../vc/state/checkout/selectors';
 import { selectVersionControl } from '../../vc/state/reducer';
 
@@ -26,23 +29,19 @@ export class DocumentContainer extends connect(store)(LitElement) {
   @property({ type: Boolean })
   savingDocument = false;
 
+  @property({ type: Boolean })
+  showContextManager = false;
+
   checkoutBranchId: string;
 
   render() {
     return html`
       ${sharedStyles}
 
-      <div class="row">
-        <context-manager
-          style="margin-right: 20px;"
-          .initialCheckoutId=${this.checkoutId}
-          @branch-checkout=${e => (this.checkoutBranchId = e.detail.branchId)}
-          @entry-selected=${e => this.selectDocument(e.detail.entryId)}
-        ></context-manager>
-
+      <div class="row fill">
         ${this.selectedDocument
           ? html`
-              <div class="column">
+              <div class="column fill">
                 ${this.savingDocument
                   ? html`
                       <span>Saving document...</span>
@@ -65,6 +64,26 @@ export class DocumentContainer extends connect(store)(LitElement) {
                 value="0"
               ></vaadin-progress-bar>
             `}
+        <div>
+          <vaadin-button
+            theme="icon"
+            @click=${e => (this.showContextManager = !this.showContextManager)}
+          >
+            <iron-icon icon="vaadin:tree-table"></iron-icon>
+          </vaadin-button>
+        </div>
+
+        ${this.showContextManager
+          ? html`
+              <context-manager
+                style="margin-right: 20px;"
+                .initialCheckoutId=${this.checkoutId}
+                @branch-checkout=${e =>
+                  (this.checkoutBranchId = e.detail.branchId)}
+                @entry-selected=${e => this.selectDocument(e.detail.entryId)}
+              ></context-manager>
+            `
+          : html``}
       </div>
     `;
   }
@@ -85,11 +104,15 @@ export class DocumentContainer extends connect(store)(LitElement) {
     store
       .dispatch(getCheckout(this.checkoutId))
       .then(() =>
-        this.selectDocument(
-          selectEntryIdFromCheckout(this.checkoutId)(
-            selectVersionControl(<RootState>store.getState())
+        store
+          .dispatch(getCheckoutAndContent(this.checkoutId))
+          .then(() =>
+            this.selectDocument(
+              selectEntryIdFromCheckout(this.checkoutId)(
+                selectVersionControl(<RootState>store.getState())
+              )
+            )
           )
-        )
       );
   }
 
@@ -97,6 +120,7 @@ export class DocumentContainer extends connect(store)(LitElement) {
     this.selectedDocument = selectDocument(documentId)(<RootState>(
       store.getState()
     ));
+    console.log(this.selectedDocument);
   }
 
   saveDocument(saveEvent) {

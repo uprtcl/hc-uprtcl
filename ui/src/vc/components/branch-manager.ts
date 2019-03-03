@@ -50,7 +50,12 @@ export class BranchManager extends LitElement {
 
   branchSelected(changeEvent) {
     const branchId = changeEvent.target.value;
-    if (branchId && branchId !== 'null' && branchId !== this.selectedBranchId) {
+    if (
+      branchId &&
+      branchId !== 'null' &&
+      branchId !== 'undefined' &&
+      branchId !== this.selectedBranchId
+    ) {
       this.dispatchEvent(
         new CustomEvent('branch-selected', {
           detail: { branchId: changeEvent.target.value }

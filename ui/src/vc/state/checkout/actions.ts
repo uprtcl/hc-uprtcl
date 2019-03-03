@@ -1,7 +1,7 @@
 import { getCachedEntry } from '../actions/cached.actions';
 import { EntryResult } from '../../types';
 import { getContextContent, getContextAndContent } from '../context/actions';
-import { getBranchContent, getBranchAndContent } from '../branch/actions';
+import { getBranchAndContent } from '../branch/actions';
 import { getCommitContent } from '../commit/actions';
 
 export function getCheckoutAndContent(checkoutId: string) {
@@ -11,15 +11,29 @@ export function getCheckoutAndContent(checkoutId: string) {
         case 'context':
           return dispatch(getContextContent(checkoutId));
         case 'branch':
-          return Promise.all([
-            dispatch(getContextAndContent(entryResult.entry.context_address)),
-            dispatch(getBranchAndContent(checkoutId))
-          ]);
+          return dispatch(getBranchAndContent(checkoutId));
         case 'commit':
-          return Promise.all([
-            dispatch(getContextAndContent(entryResult.entry.context_address)),
-            dispatch(getCommitContent(checkoutId))
-          ]);
+          return dispatch(getCommitContent(checkoutId));
+        default:
+          break;
+      }
+    });
+}
+
+export function getCheckoutAndContext(checkoutId: string) {
+  return dispatch =>
+    dispatch(getCheckout(checkoutId)).then((entryResult: EntryResult) => {
+      switch (entryResult.type) {
+        case 'context':
+          return dispatch(getContextContent(checkoutId));
+        case 'branch':
+          return dispatch(
+            getContextAndContent(entryResult.entry.context_address)
+          );
+        case 'commit':
+          return dispatch(
+            getContextAndContent(entryResult.entry.context_address)
+          );
         default:
           break;
       }
