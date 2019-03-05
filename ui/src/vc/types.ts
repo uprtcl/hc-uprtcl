@@ -26,11 +26,16 @@ export interface Commit {
   parent_commits_addresses: Array<string>;
 }
 
+export interface Link {
+  name: string;
+  address: string;
+}
+
 export interface CommitObject {
   id: string;
 
   data: string;
-  links: Array<{ name: string; address: string }>;
+  links: Array<Link>;
 }
 
 /** History helpers types */

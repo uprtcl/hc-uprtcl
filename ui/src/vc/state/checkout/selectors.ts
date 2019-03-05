@@ -9,7 +9,7 @@ export const selectCheckoutById = (checkoutId: string) => (
   state: VersionControlState
 ) => selectExistingEntry(checkoutId, ['context', 'branch', 'commit'])(state);
 
-export const selectEntryIdFromCheckout = (checkoutId: string) => (
+export const selectObjectFromCheckout = (checkoutId: string) => (
   state: VersionControlState
 ) => {
   const existingEntry: EntryResult = selectCheckoutById(checkoutId)(state);
@@ -31,8 +31,12 @@ export const selectEntryIdFromCheckout = (checkoutId: string) => (
     default:
       return null;
   }
-  console.log(checkoutId);
-  console.log(existingEntry);
-  console.log(object);
+  return object;
+};
+
+export const selectEntryIdFromCheckout = (checkoutId: string) => (
+  state: VersionControlState
+) => {
+  const object = selectObjectFromCheckout(checkoutId)(state);
   return object ? object.data : null;
 };

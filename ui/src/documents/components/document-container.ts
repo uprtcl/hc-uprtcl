@@ -1,143 +1,62 @@
-import { LitElement, html, customElement, property } from 'lit-element';
+import { html, customElement, property, TemplateResult } from 'lit-element';
 import '@vaadin/vaadin-button/theme/material/vaadin-button.js';
+import '@vaadin/vaadin-details/theme/material/vaadin-details.js';
 import '@vaadin/vaadin-icons/vaadin-icons.js';
 import '@polymer/marked-element/marked-element.js';
-import { connect } from 'pwa-helpers/connect-mixin.js';
-
-import './document-content';
+import * as _ from 'lodash';
 
 import { store, RootState } from '../../store';
 import { selectDocument } from '../state/reducer';
 import { Document } from '../types';
-import { sharedStyles } from '../../vc/styles/styles';
 import { saveDocument } from '../state/actions';
-import {
-  getCheckout,
-  getCheckoutAndContent
-} from '../../vc/state/checkout/actions';
-import { selectEntryIdFromCheckout } from '../../vc/state/checkout/selectors';
-import { selectVersionControl } from '../../vc/state/reducer';
+import { ContextContainer } from '../../vc/components/context-container';
 
 @customElement('document-container')
-export class DocumentContainer extends connect(store)(LitElement) {
-  @property({ type: String })
-  public checkoutId: string;
-
+export class DocumentContainer extends ContextContainer {
   @property({ type: Object })
-  selectedDocument: Document;
+  document: Document;
 
-  @property({ type: Boolean })
-  savingDocument = false;
+  documentContent: string;
 
-  @property({ type: Boolean })
-  showContextManager = false;
-
-  checkoutBranchId: string;
-
-  render() {
+  renderContent(documentId: string) {
+    this.document = selectDocument(documentId)(<RootState>store.getState());
     return html`
-      ${sharedStyles}
-
-      <div class="row fill">
-        ${this.selectedDocument
-          ? html`
-              <div class="column fill">
-                ${this.savingDocument
-                  ? html`
-                      <span>Saving document...</span>
-                      <vaadin-progress-bar
-                        indeterminate
-                        value="0"
-                      ></vaadin-progress-bar>
-                    `
-                  : html``}
-                <document-content
-                  style="flex-grow: 1;"
-                  .document=${this.selectedDocument}
-                  @save-document=${this.saveDocument}
-                ></document-content>
-              </div>
-            `
-          : html`
-              <vaadin-progress-bar
-                indeterminate
-                value="0"
-              ></vaadin-progress-bar>
-            `}
-        <div>
-          <vaadin-button
-            theme="icon"
-            @click=${e => (this.showContextManager = !this.showContextManager)}
-          >
-            <iron-icon icon="vaadin:tree-table"></iron-icon>
-          </vaadin-button>
-        </div>
-
-        ${this.showContextManager
-          ? html`
-              <context-manager
-                style="margin-right: 20px;"
-                .initialCheckoutId=${this.checkoutId}
-                @branch-checkout=${e =>
-                  (this.checkoutBranchId = e.detail.branchId)}
-                @entry-selected=${e => this.selectDocument(e.detail.entryId)}
-              ></context-manager>
-            `
-          : html``}
-      </div>
+      ${this.editing
+        ? html`
+            <textarea
+              style="height: 300px; width: 100%;"
+              .value=${this.document.content}
+              @keyup="${e => (this.documentContent = e.target.value)}"
+            ></textarea>
+          `
+        : html`
+            <marked-element class="fill">
+              <div slot="markdown-html"></div>
+              <script type="text/markdown">
+                ${this.document.content}
+              </script>
+            </marked-element>
+          `}
     `;
   }
 
-  protected firstUpdated() {
-    this.loadCheckout();
+  saveContent() {
+    return store.dispatch(
+      saveDocument.create({
+        branch_address: this.checkoutBranchId,
+        title: this.document.title,
+        content: this.documentContent
+      })
+    );
   }
 
-  update(changedProperties) {
-    // Don't forget this or your element won't render!
-    super.update(changedProperties);
-    if (changedProperties.get('checkoutId')) {
-      this.loadCheckout();
-    }
-  }
-
-  loadCheckout() {
-    store
-      .dispatch(getCheckout(this.checkoutId))
-      .then(() =>
-        store
-          .dispatch(getCheckoutAndContent(this.checkoutId))
-          .then(() =>
-            this.selectDocument(
-              selectEntryIdFromCheckout(this.checkoutId)(
-                selectVersionControl(<RootState>store.getState())
-              )
-            )
-          )
-      );
-  }
-
-  selectDocument(documentId: string) {
-    this.selectedDocument = selectDocument(documentId)(<RootState>(
-      store.getState()
-    ));
-    console.log(this.selectedDocument);
-  }
-
-  saveDocument(saveEvent) {
-    this.savingDocument = true;
-    store
-      .dispatch(
-        saveDocument.create({
-          branch_address: this.checkoutBranchId,
-          title: saveEvent.detail.title,
-          content: saveEvent.detail.content
-        })
-      )
-      .then(() => {
-        this.savingDocument = false;
-        const aux = this.checkoutId;
-        this.checkoutId = null;
-        setTimeout(() => (this.checkoutId = aux));
-      });
+  renderChild(childAddress: string): TemplateResult {
+    return html`
+      <document-container
+        .checkoutId=${childAddress}
+        .editing=${this.editing}
+        .rootContainer=${false}
+      ></document-container>
+    `;
   }
 }

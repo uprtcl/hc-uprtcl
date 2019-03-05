@@ -3,7 +3,7 @@ import { createHolochainAsyncAction } from '@holochain/hc-redux-middleware';
 import { CommitObject } from '../../types';
 import { getCachedEntry } from '../actions/cached.actions';
 import { parseEntriesResults } from '../../utils/utils';
-import { getBranchInfo } from '../branch/actions';
+import { getBranchInfo, getBranchContent, getBranchAndContent } from '../branch/actions';
 
 /** Holochain actions */
 
@@ -49,7 +49,7 @@ export function getContextContent(contextAddress: string) {
     ).then(addressesResult =>
       Promise.all(
         addressesResult.addresses.map((branchAddress: string) =>
-          dispatch(getBranchInfo(branchAddress))
+          dispatch(getBranchAndContent(branchAddress))
         )
       )
     );
