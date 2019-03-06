@@ -8,8 +8,13 @@ import * as _ from 'lodash';
 import { store, RootState } from '../../store';
 import { selectDocument } from '../state/reducer';
 import { Document } from '../types';
-import { saveDocument } from '../state/actions';
+import {
+  saveDocument,
+  saveDocumentAndCommit,
+  getDocument
+} from '../state/actions';
 import { ContextContainer } from '../../vc/components/context-container';
+import { Link } from '../../vc/types';
 
 @customElement('document-container')
 export class DocumentContainer extends ContextContainer {
@@ -18,13 +23,12 @@ export class DocumentContainer extends ContextContainer {
 
   documentContent: string;
 
-  renderContent(documentId: string) {
-    this.document = selectDocument(documentId)(<RootState>store.getState());
+  renderContent() {
     return html`
       ${this.editing
         ? html`
             <textarea
-              style="height: 300px; width: 100%;"
+              style="height: 100px; width: 100%;"
               .value=${this.document.content}
               @keyup="${e => (this.documentContent = e.target.value)}"
             ></textarea>
@@ -40,22 +44,34 @@ export class DocumentContainer extends ContextContainer {
     `;
   }
 
-  saveContent() {
+  loadContent(entryId) {
+    return store
+      .dispatch(getDocument(entryId))
+      .then(
+        () =>
+          (this.document = selectDocument(entryId)(<RootState>store.getState()))
+      );
+  }
+
+  saveContent(checkoutBranchId: string, links: Link[]) {
     return store.dispatch(
-      saveDocument.create({
-        branch_address: this.checkoutBranchId,
-        title: this.document.title,
-        content: this.documentContent
-      })
+      saveDocumentAndCommit(
+        checkoutBranchId,
+        '',
+        this.document.title,
+        this.documentContent,
+        links
+      )
     );
   }
 
-  renderChild(childAddress: string): TemplateResult {
+  renderChild(link: Link): TemplateResult {
     return html`
       <document-container
-        .checkoutId=${childAddress}
+        .checkoutId=${link.address}
         .editing=${this.editing}
         .rootContainer=${false}
+        @entry-selected=${e => (link.address = e.target.entryId)}
       ></document-container>
     `;
   }

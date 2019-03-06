@@ -34,6 +34,20 @@ export const selectObjectFromCheckout = (checkoutId: string) => (
   return object;
 };
 
+export const selectContextIdFromCheckout = (checkoutId: string) => (
+  state: VersionControlState
+) => {
+  const existingEntry: EntryResult = selectCheckoutById(checkoutId)(state);
+  switch (existingEntry.type) {
+    case 'context':
+      return existingEntry.entry.id;
+    case 'branch':
+    case 'commit':
+      return existingEntry.entry.context_address;
+  }
+  return null;
+};
+
 export const selectEntryIdFromCheckout = (checkoutId: string) => (
   state: VersionControlState
 ) => {

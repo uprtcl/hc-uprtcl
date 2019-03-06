@@ -10,7 +10,7 @@ import {
 import { RootState } from '../../store';
 import { getEntry } from './actions/common.actions';
 import { SET_BRANCH_HEAD } from './branch/actions';
-import { getContextHistory, getCreatedContexts } from './context/actions';
+import { getContextHistory, getCreatedContexts, getAllContexts } from './context/actions';
 
 export interface VersionControlState {
   context: EntityState<Context>;
@@ -37,6 +37,7 @@ export function versionControlReducer(state = initialState, action: AnyAction) {
   console.log(action);
   switch (action.type) {
     case getType(getCreatedContexts.success):
+    case getType(getAllContexts.success):
       return {
         ...state,
         context: adapters.context.upsertMany(

@@ -6,11 +6,16 @@ import '@polymer/marked-element/marked-element.js';
 import { connect } from 'pwa-helpers/connect-mixin.js';
 import * as _ from 'lodash';
 
+import './context-selector';
+
 import { store, RootState } from '../../store';
-import { CommitObject, Link } from '../types';
+import { CommitObject, Link, Context } from '../types';
 import { sharedStyles } from '../styles/styles';
 import { getCheckout, getCheckoutAndContent } from '../state/checkout/actions';
-import { selectObjectFromCheckout } from '../state/checkout/selectors';
+import {
+  selectObjectFromCheckout,
+  selectContextIdFromCheckout
+} from '../state/checkout/selectors';
 import { selectVersionControl } from '../state/reducer';
 
 export abstract class ContextContainer extends connect(store)(LitElement) {
@@ -31,101 +36,124 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   selectedEntryId: string;
 
   @property({ type: Boolean })
+  loading = true;
+
+  @property({ type: Boolean })
   commiting = false;
 
   @property({ type: Boolean })
   showContextManager = false;
 
   checkoutBranchId: string;
+  contextId: string;
 
-  abstract renderContent(entryId: string): TemplateResult;
-  abstract renderChild(childAddress: string): TemplateResult;
-  abstract saveContent(): Promise<any>;
+  abstract loadContent(entryId: string): Promise<any>;
+  abstract renderContent(): TemplateResult;
+  abstract renderChild(link: Link): TemplateResult;
+  abstract saveContent(checkoutBranchId: string, links: Link[]): Promise<any>;
+
+  loadingIf(condition: any, content: () => TemplateResult): TemplateResult {
+    return html`
+      ${condition
+        ? html`
+            <vaadin-progress-bar indeterminate value="0"></vaadin-progress-bar>
+          `
+        : content()}
+    `;
+  }
 
   render() {
     return html`
       ${sharedStyles}
+      ${this.loadingIf(
+        this.loading,
+        () =>
+          html`
+            <div class="column fill">
+              <div class="row fill">
+                ${this.loadingIf(this.selectedEntryId, this.renderContent)}
+                ${this.renderToolbar()}
+                ${this.showContextManager
+                  ? html`
+                      <context-manager
+                        style="margin-right: 20px;"
+                        .initialCheckoutId=${this.checkoutId}
+                        @branch-checkout=${e =>
+                          (this.checkoutBranchId = e.detail.branchId)}
+                        @entry-selected=${e =>
+                          this.selectEntry(e.detail.entryId)}
+                      ></context-manager>
+                    `
+                  : html``}
+              </div>
 
-      <div class="column fill">
-        <div class="row fill">
-          ${this.selectedEntryId
-            ? this.renderContent(this.selectedEntryId)
-            : html`
-                <vaadin-progress-bar
-                  indeterminate
-                  value="0"
-                ></vaadin-progress-bar>
-              `}
-          <div class="row" style="align-items: start;">
-            ${this.rootContainer
-              ? html`
-                  ${this.editing
-                    ? html`
-                        <div class="column">
-                          <vaadin-button
-                            theme="icon"
-                            @click="${this.commitObject}"
-                            ?disabled=${this.commiting}
-                          >
-                            <iron-icon icon="vaadin:disc"></iron-icon>
-                          </vaadin-button>
-                          <vaadin-button
-                            theme="icon"
-                            @click="${e => this.toggleEditing()}"
-                            ?disabled=${this.commiting}
-                          >
-                            <iron-icon icon="vaadin:close"></iron-icon>
-                          </vaadin-button>
-                        </div>
-                      `
-                    : html`
-                        <vaadin-button
-                          theme="icon"
-                          @click=${e => this.toggleEditing()}
-                        >
-                          <iron-icon icon="vaadin:edit"></iron-icon>
-                        </vaadin-button>
-                      `}
-                `
-              : html``}
+              ${this.renderChildren()}
+            </div>
+          `
+      )}
+    `;
+  }
 
-            <vaadin-button
-              theme="icon"
-              @click=${e =>
-                (this.showContextManager = !this.showContextManager)}
-            >
-              <iron-icon icon="vaadin:file-tree"></iron-icon>
-            </vaadin-button>
-          </div>
+  renderToolbar(): TemplateResult {
+    return html`
+      <div class="row" style="align-items: start;">
+        ${this.rootContainer
+          ? html`
+              ${this.editing
+                ? html`
+                    <div class="column">
+                      <vaadin-button
+                        theme="icon"
+                        @click="${this.commitObject}"
+                        ?disabled=${this.commiting}
+                      >
+                        <iron-icon icon="vaadin:disc"></iron-icon>
+                      </vaadin-button>
+                      <vaadin-button
+                        theme="icon"
+                        @click="${e => this.toggleEditing()}"
+                        ?disabled=${this.commiting}
+                      >
+                        <iron-icon icon="vaadin:close"></iron-icon>
+                      </vaadin-button>
+                    </div>
+                  `
+                : html`
+                    <vaadin-button
+                      theme="icon"
+                      @click=${e => this.toggleEditing()}
+                    >
+                      <iron-icon icon="vaadin:edit"></iron-icon>
+                    </vaadin-button>
+                  `}
+            `
+          : html``}
 
-          ${this.showContextManager
-            ? html`
-                <context-manager
-                  style="margin-right: 20px;"
-                  .initialCheckoutId=${this.checkoutId}
-                  @branch-checkout=${e =>
-                    (this.checkoutBranchId = e.detail.branchId)}
-                  @entry-selected=${e =>
-                    (this.selectedEntryId = e.detail.entryId)}
-                ></context-manager>
-              `
-            : html``}
-        </div>
+        <vaadin-button
+          theme="icon"
+          @click=${e => (this.showContextManager = !this.showContextManager)}
+        >
+          <iron-icon icon="vaadin:file-tree"></iron-icon>
+        </vaadin-button>
+      </div>
+    `;
+  }
 
-        <div class="column">
-          ${this.commitObject
-            ? this.commitObject.links.map((link, index) =>
-                this.renderChildLink(link, index)
-              )
-            : html``}
-          ${this.editing
-            ? html`
-                <vaadin-button @click="${e => this.createEmptyChild()}">
-                  Add child
-                </vaadin-button>
-              `
-            : html``}
-        </div>
+  renderChildren(): TemplateResult {
+    return html`
+      <div class="column">
+        ${this.commitObject
+          ? this.commitObject.links.map((link, index) =>
+              this.renderChildLink(link, index)
+            )
+          : html``}
+        ${this.editing
+          ? html`
+              <vaadin-button @click="${e => this.createEmptyChild()}">
+                Add child
+              </vaadin-button>
+            `
+          : html``}
       </div>
     `;
   }
@@ -144,21 +172,20 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
                     <iron-icon icon="vaadin:close"></iron-icon>
                   </vaadin-button>
 
-                  <vaadin-text-field
-                    .value=${link.name}
-                    @keyup=${e => (link.name = e.target.value)}
-                  ></vaadin-text-field>
+                  <context-selector
+                    .filterIds=${[this.contextId]}
+                    @context-selected=${e => {
+                      link.address = e.detail.contextId;
+                      this.requestUpdate();
+                    }}
+                  ></context-selector>
                 </div>
               `
             : html`
                 ${link.name}
               `}
         </div>
-        ${link.address
-          ? this.renderChild(link.address)
-          : html`
-              hello
-            `}
+        ${link.address ? this.renderChild(link) : html``}
       </vaadin-details>
     `;
   }
@@ -186,12 +213,32 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   }
 
   loadCheckout() {
+    this.loading = true;
     store.dispatch(getCheckout(this.checkoutId)).then(() =>
       store.dispatch(getCheckoutAndContent(this.checkoutId)).then(() => {
+        const state: RootState = <RootState>store.getState();
         this.commitObject = selectObjectFromCheckout(this.checkoutId)(
-          selectVersionControl(<RootState>store.getState())
+          selectVersionControl(state)
         );
         this.selectedEntryId = this.commitObject.data;
+        this.contextId = selectContextIdFromCheckout(this.checkoutId)(
+          selectVersionControl(state)
+        );
+
+        this.loadContent(this.selectedEntryId).then(
+          () => (this.loading = false)
+        );
+      })
+    );
+  }
+
+  selectEntry(entryId: string) {
+    this.selectedEntryId = entryId;
+    this.dispatchEvent(
+      new CustomEvent('entry-selected', {
+        detail: {
+          entryId: entryId
+        }
       })
     );
   }
@@ -204,11 +251,13 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   commitChanges() {
     this.commiting = true;
 
-    this.saveContent().then(() => {
-      this.commiting = false;
-      const aux = this.checkoutId;
-      this.checkoutId = null;
-      setTimeout(() => (this.checkoutId = aux));
-    });
+    this.saveContent(this.checkoutBranchId, this.commitObject.links).then(
+      () => {
+        this.commiting = false;
+        const aux = this.checkoutId;
+        this.checkoutId = null;
+        setTimeout(() => (this.checkoutId = aux));
+      }
+    );
   }
 }

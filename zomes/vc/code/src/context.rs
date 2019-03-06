@@ -4,7 +4,7 @@ use hdk::{
   error::ZomeApiResult,
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
-    json::JsonString,
+    hash::HashString, json::JsonString,
   },
   AGENT_ADDRESS,
 };
@@ -57,6 +57,16 @@ pub fn definition() -> ValidatingEntryType {
           Ok(())
         }
       ),
+      from!(
+        "%agent_id",
+        tag: "all_contexts",
+        validation_package: || {
+          hdk::ValidationPackageDefinition::ChainFull
+        },
+        validation: |_source: Address, _target: Address, _validation_data: hdk::ValidationData | {
+          Ok(())
+        }
+      ),
       to!(
         "branch",
         tag: "active_branches",
@@ -91,6 +101,15 @@ pub fn handle_get_created_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntry
   hdk::get_links_result(
     &AGENT_ADDRESS,
     "created_contexts",
+    GetLinksOptions::default(),
+    GetEntryOptions::default(),
+  )
+}
+
+pub fn handle_get_all_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
+  hdk::get_links_result(
+    &HashString::from(hdk::THIS_INSTANCE),
+    "all_contexts",
     GetLinksOptions::default(),
     GetEntryOptions::default(),
   )
@@ -163,14 +182,16 @@ pub fn handle_create_context_and_commit(
  */
 pub fn handle_get_context_history(context_address: Address) -> ZomeApiResult<Vec<GetEntryResult>> {
   let context_branches = handle_get_context_branches(context_address)?;
-  Ok(context_branches
-    .addresses()
-    .into_iter()
-    .flat_map(|branch_address| {
-      let branch_history = crate::branch::get_branch_history(branch_address.to_owned()).unwrap();
-      branch_history.into_iter()
-    })
-    .collect())
+  Ok(
+    context_branches
+      .addresses()
+      .into_iter()
+      .flat_map(|branch_address| {
+        let branch_history = crate::branch::get_branch_history(branch_address.to_owned()).unwrap();
+        branch_history.into_iter()
+      })
+      .collect(),
+  )
 }
 
 /** Helper functions */
@@ -184,6 +205,11 @@ pub fn create_context_entry(name: String) -> ZomeApiResult<Address> {
   let context_address = hdk::commit_entry(&context_entry)?;
 
   hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts")?;
+  hdk::link_entries(
+    &HashString::from(hdk::THIS_INSTANCE),
+    &context_address,
+    "all_contexts",
+  )?;
 
   Ok(context_address)
 }

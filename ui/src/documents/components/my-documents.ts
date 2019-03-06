@@ -4,13 +4,13 @@ import '@vaadin/vaadin-button/theme/material/vaadin-button.js';
 import '@vaadin/vaadin-text-field/theme/material/vaadin-text-field.js';
 import '@vaadin/vaadin-progress-bar/theme/material/vaadin-progress-bar.js';
 
-import { store, RootState } from '../../store';
-import { createDocument, saveDocument } from '../state/actions';
+import { store } from '../../store';
 
 import './document-container';
 import '../../vc/components/context-manager';
 import '../../vc/components/created-contexts';
 import { sharedStyles } from '../../vc/styles/styles';
+import { saveDocument } from '../state/actions';
 
 @customElement('my-documents')
 export class MyDocuments extends connect(store)(LitElement) {
@@ -83,7 +83,7 @@ export class MyDocuments extends connect(store)(LitElement) {
     this.creatingDocument = true;
     store
       .dispatch(
-        createDocument.create({ title: this.newDocumentName, content: '' })
+        saveDocument.create({ title: this.newDocumentName, content: '' })
       )
       .then(() => {
         this.creatingDocument = false;

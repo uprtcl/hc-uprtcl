@@ -8,14 +8,13 @@ extern crate serde_json;
 #[macro_use]
 extern crate holochain_core_types_derive;
 
-use holochain_wasm_utils::api_serialization::{get_links::GetLinksResult,
-  get_entry::{GetEntryResult,GetEntryOptions}};
+use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
 
 use hdk::holochain_core_types::{
-  cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
+  cas::content::Address, error::HolochainError,
   json::JsonString,
 };
-use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
+use hdk::error::ZomeApiResult;
 
 pub mod document;
 
@@ -27,11 +26,6 @@ define_zome! {
   genesis: || { Ok(()) }
 
   functions: [
-    create_document: {
-      inputs: |title: String, content: String|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: document::handle_create_document
-    }
 
     get_document: {
       inputs: |address: Address|,
@@ -40,7 +34,7 @@ define_zome! {
     }
 
     save_document: {
-      inputs: |branch_address: Address, title: String, content: String|,
+      inputs: |title: String, content: String|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: document::handle_save_document
     }
@@ -48,6 +42,6 @@ define_zome! {
   ]
 
   traits: {
-    hc_public [create_document, get_document, save_document]
+    hc_public [get_document, save_document]
   }
 }

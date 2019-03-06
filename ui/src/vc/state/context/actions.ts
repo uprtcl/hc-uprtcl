@@ -23,6 +23,12 @@ export const getCreatedContexts = createHolochainAsyncAction<{}, any>(
   'get_created_contexts'
 );
 
+export const getAllContexts = createHolochainAsyncAction<{}, any>(
+  INSTANCE_NAME,
+  ZOME_NAME,
+  'get_all_contexts'
+);
+
 export const getContextBranches = createHolochainAsyncAction<
   { context_address: string },
   any
