@@ -51,8 +51,6 @@ export class ContextManager extends connect(store)(LitElement) {
             <vaadin-progress-bar indeterminate value="0"></vaadin-progress-bar>
           `
         : html`
-            <h3>${this.context.name}</h3>
-
             <div style="display: flex; flex-direction: column">
               <branch-manager
                 .branches=${this.branches}
@@ -167,8 +165,6 @@ export class ContextManager extends connect(store)(LitElement) {
     this.checkoutBranchId = branchId;
 
     if (dispatch) {
-      this.dispatchSelectedEntry(null);
-
       store.dispatch(getCommitAndContent(commitId)).then(() => {
         const object = selectObjectFromCommit(commitId)(
           selectVersionControl(<RootState>store.getState())

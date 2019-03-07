@@ -229,14 +229,16 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
         );
 
         this.contextId = selectContextIdFromCheckout(this.checkoutId)(state);
+        console.log(this.commitObject);
         this.selectEntry(this.commitObject.data);
       })
     );
   }
 
   selectEntry(entryId: string) {
-    this.loading = true;
     this.selectedEntryId = null;
+
+    console.log(entryId);
 
     this.loadContent(entryId).then(() => {
       this.selectedEntryId = entryId;
@@ -257,13 +259,13 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   }
 
   commitChanges() {
-    this.commiting = true;
+    this.loading = true;
 
     this.saveContent(this.checkoutBranchId, this.commitObject.links).then(
       () => {
         this.editing = false;
-        this.commiting = false;
-        this.checkoutId = this.checkoutBranchId;
+        this.loading = false;
+        this.loadCheckout();
       }
     );
   }
