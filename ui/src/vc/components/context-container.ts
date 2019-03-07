@@ -229,7 +229,6 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
         );
 
         this.contextId = selectContextIdFromCheckout(this.checkoutId)(state);
-        console.log(this.commitObject);
         this.selectEntry(this.commitObject.data);
       })
     );
@@ -237,8 +236,6 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
 
   selectEntry(entryId: string) {
     this.selectedEntryId = null;
-
-    console.log(entryId);
 
     this.loadContent(entryId).then(() => {
       this.selectedEntryId = entryId;
