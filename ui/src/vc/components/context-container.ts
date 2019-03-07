@@ -237,17 +237,19 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   selectEntry(entryId: string) {
     this.selectedEntryId = null;
 
-    this.loadContent(entryId).then(() => {
-      this.selectedEntryId = entryId;
-      this.dispatchEvent(
-        new CustomEvent('entry-selected', {
-          detail: {
-            entryId: entryId
-          }
-        })
-      );
-      this.loading = false;
-    });
+    if (entryId) {
+      this.loadContent(entryId).then(() => {
+        this.selectedEntryId = entryId;
+        this.dispatchEvent(
+          new CustomEvent('entry-selected', {
+            detail: {
+              entryId: entryId
+            }
+          })
+        );
+        this.loading = false;
+      });
+    }
   }
 
   createEmptyChild() {

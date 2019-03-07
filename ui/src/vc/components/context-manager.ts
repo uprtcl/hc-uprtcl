@@ -13,7 +13,8 @@ import { selectCheckoutById } from '../state/checkout/selectors';
 import { selectVersionControl, VersionControlState } from '../state/reducer';
 import {
   selectContextBranches,
-  selectContextById
+  selectContextById,
+  selectDefaultBranch
 } from '../state/context/selectors';
 import { selectBranchHeadId } from '../state/branch/selectors';
 import { getCommitAndContent } from '../state/commit/actions';
@@ -138,9 +139,9 @@ export class ContextManager extends connect(store)(LitElement) {
   checkoutContext(dispatch: boolean, contextId: string) {
     this.checkoutBranch(
       dispatch,
-      selectContextBranches(contextId)(
+      selectDefaultBranch(contextId)(
         selectVersionControl(<RootState>store.getState())
-      )[0].id
+      ).id
     );
   }
 
@@ -165,6 +166,8 @@ export class ContextManager extends connect(store)(LitElement) {
     this.checkoutBranchId = branchId;
 
     if (dispatch) {
+      this.dispatchSelectedEntry(null);
+
       store.dispatch(getCommitAndContent(commitId)).then(() => {
         const object = selectObjectFromCommit(commitId)(
           selectVersionControl(<RootState>store.getState())
