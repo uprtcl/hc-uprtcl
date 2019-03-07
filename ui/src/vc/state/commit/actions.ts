@@ -4,11 +4,29 @@ import { adapters, selectVersionControl } from '../reducer';
 import { getCachedEntry } from '../actions/cached.actions';
 import { getObjectEntries } from '../object/actions';
 import { CommitObject } from '../../types';
+import { setBranchHead } from '../branch/actions';
 
 export const createCommit = createHolochainAsyncAction<
   { branch_address: string; message: string; content: any },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'create_commit');
+
+export function createCommitInBranch(
+  branchAddress: string,
+  message: string,
+  content: any
+) {
+  return dispatch =>
+    dispatch(
+      createCommit.create({
+        branch_address: branchAddress,
+        message: message,
+        content: content
+      })
+    ).then(commitAddress =>
+      dispatch(setBranchHead(branchAddress, commitAddress))
+    );
+}
 
 export function getCommitInfo(commitAddress: string) {
   return dispatch =>

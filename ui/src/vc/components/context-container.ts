@@ -14,9 +14,10 @@ import { sharedStyles } from '../styles/styles';
 import { getCheckout, getCheckoutAndContent } from '../state/checkout/actions';
 import {
   selectObjectFromCheckout,
-  selectContextIdFromCheckout
+  selectContextIdFromCheckout,
+  selectBranchIdFromCheckout
 } from '../state/checkout/selectors';
-import { selectVersionControl } from '../state/reducer';
+import { selectVersionControl, VersionControlState } from '../state/reducer';
 
 export abstract class ContextContainer extends connect(store)(LitElement) {
   @property({ type: String })
@@ -48,7 +49,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   contextId: string;
 
   abstract loadContent(entryId: string): Promise<any>;
-  abstract renderContent(): TemplateResult;
+  abstract renderContent(editing: boolean): TemplateResult;
   abstract renderChild(link: Link): TemplateResult;
   abstract saveContent(checkoutBranchId: string, links: Link[]): Promise<any>;
 
@@ -71,7 +72,9 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
           html`
             <div class="column fill">
               <div class="row fill">
-                ${this.loadingIf(this.selectedEntryId, this.renderContent)}
+                ${this.loadingIf(!this.selectedEntryId, () =>
+                  this.renderContent(this.editing)
+                )}
                 ${this.renderToolbar()}
                 ${this.showContextManager
                   ? html`
@@ -104,7 +107,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
                     <div class="column">
                       <vaadin-button
                         theme="icon"
-                        @click="${this.commitObject}"
+                        @click="${e => this.commitChanges()}"
                         ?disabled=${this.commiting}
                       >
                         <iron-icon icon="vaadin:disc"></iron-icon>
@@ -214,16 +217,18 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
 
   loadCheckout() {
     this.loading = true;
+
     store.dispatch(getCheckout(this.checkoutId)).then(() =>
       store.dispatch(getCheckoutAndContent(this.checkoutId)).then(() => {
-        const state: RootState = <RootState>store.getState();
-        this.commitObject = selectObjectFromCheckout(this.checkoutId)(
-          selectVersionControl(state)
+        const state: VersionControlState = selectVersionControl(<RootState>(
+          store.getState()
+        ));
+        this.commitObject = selectObjectFromCheckout(this.checkoutId)(state);
+        this.checkoutBranchId = selectBranchIdFromCheckout(this.checkoutId)(
+          state
         );
 
-        this.contextId = selectContextIdFromCheckout(this.checkoutId)(
-          selectVersionControl(state)
-        );
+        this.contextId = selectContextIdFromCheckout(this.checkoutId)(state);
         this.selectEntry(this.commitObject.data);
       })
     );
@@ -232,8 +237,8 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   selectEntry(entryId: string) {
     this.loading = true;
     this.selectedEntryId = null;
-    
-    this.loadContent(this.selectedEntryId).then(() => {
+
+    this.loadContent(entryId).then(() => {
       this.selectedEntryId = entryId;
       this.dispatchEvent(
         new CustomEvent('entry-selected', {
@@ -256,10 +261,9 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
 
     this.saveContent(this.checkoutBranchId, this.commitObject.links).then(
       () => {
+        this.editing = false;
         this.commiting = false;
-        const aux = this.checkoutId;
-        this.checkoutId = null;
-        setTimeout(() => (this.checkoutId = aux));
+        this.checkoutId = this.checkoutBranchId;
       }
     );
   }

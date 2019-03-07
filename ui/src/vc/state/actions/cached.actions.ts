@@ -18,6 +18,8 @@ export function getCachedEntry(
   entityAdapters: { [key: string]: EntityAdapter<any> } = adapters
 ) {
   return (dispatch, getState): Promise<EntryResult> => {
+    if (!entryAddress) return Promise.reject();
+    
     const entryResult = selectExistingEntry(
       entryAddress,
       entityTypes,

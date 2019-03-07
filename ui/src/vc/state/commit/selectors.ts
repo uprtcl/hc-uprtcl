@@ -3,7 +3,8 @@ import { createSelector } from 'reselect';
 import { EntityState } from '../../utils/entity';
 import { Commit, CommitObject } from '../../types';
 import { selectObjects } from '../object/selectors';
-import { selectContextById } from '../context/selectors';
+import { selectContextById, selectContextBranches } from '../context/selectors';
+import { stat } from 'mz/fs';
 
 export const selectCommitById = (commitId: string) => (
   state: VersionControlState
@@ -17,7 +18,15 @@ export const selectObjectFromCommit = (commitId: string) =>
       adapters.object.selectById(commit.object_address)(objects)
   );
 
-export const selectContextFromCommit = (commitId: string) => (
+export const selectContextIdFromCommit = (commitId: string) => (
   state: VersionControlState
-) =>
-  selectContextById(selectCommitById(commitId)(state).context_address)(state);
+) => selectCommitById(commitId)(state).context_address;
+
+export const selectBranchFromCommit = (commitId: string) => (
+  state: VersionControlState
+) => {
+  const contextId = selectContextIdFromCommit(commitId)(state);
+  return selectContextBranches(contextId)(state).find(
+    branch => branch.branch_head === commitId
+  );
+};

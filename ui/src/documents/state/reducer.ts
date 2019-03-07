@@ -20,7 +20,6 @@ const initialState: DocumentsState = {
 export function documentsReducer(state = initialState, action: AnyAction) {
   switch (action.type) {
     case getType(getEntry.success):
-      console.log(action.payload);
       const result = parseEntryResult(action.payload);
       if (result.type !== 'document') return state;
       return {

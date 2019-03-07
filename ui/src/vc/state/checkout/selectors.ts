@@ -1,9 +1,15 @@
 import { VersionControlState, adapters } from '../reducer';
 import { selectExistingEntry } from '../selectors/common';
-import { EntryResult, CommitObject } from '../../types';
-import { selectContextBranches } from '../context/selectors';
+import { EntryResult, CommitObject, Branch } from '../../types';
+import {
+  selectContextBranches,
+  selectDefaultBranch
+} from '../context/selectors';
 import { selectObjectFromBranch } from '../branch/selectors';
-import { selectObjectFromCommit } from '../commit/selectors';
+import {
+  selectObjectFromCommit,
+  selectBranchFromCommit
+} from '../commit/selectors';
 
 export const selectCheckoutById = (checkoutId: string) => (
   state: VersionControlState
@@ -19,22 +25,15 @@ export const selectObjectFromCheckout = (checkoutId: string) => (
   let object: CommitObject;
   switch (existingEntry.type) {
     case 'context':
-      const branches = selectContextBranches(existingEntry.entry.id)(state);
-      object =
-        branches.length > 0
-          ? selectObjectFromBranch(branches[0].id)(state)
-          : null;
-      break;
+      const branch = selectDefaultBranch(existingEntry.entry.id)(state);
+      return selectObjectFromBranch(branch.id)(state);
     case 'branch':
-      object = selectObjectFromBranch(existingEntry.entry.id)(state);
-      break;
+      return selectObjectFromBranch(existingEntry.entry.id)(state);
     case 'commit':
-      object = selectObjectFromCommit(existingEntry.entry.id)(state);
-      break;
+      return selectObjectFromCommit(existingEntry.entry.id)(state);
     default:
       return null;
   }
-  return object;
 };
 
 export const selectContextIdFromCheckout = (checkoutId: string) => (
@@ -49,6 +48,25 @@ export const selectContextIdFromCheckout = (checkoutId: string) => (
       return existingEntry.entry.context_address;
   }
   return null;
+};
+
+export const selectBranchIdFromCheckout = (checkoutId: string) => (
+  state: VersionControlState
+) => {
+  const existingEntry: EntryResult = selectCheckoutById(checkoutId)(state);
+  let branch: Branch;
+  switch (existingEntry.type) {
+    case 'context':
+      branch = selectDefaultBranch(existingEntry.entry.id)(state);
+      break;
+    case 'branch':
+      branch = existingEntry.entry;
+      break;
+    case 'commit':
+      branch = selectBranchFromCommit(existingEntry.entry.id)(state);
+      break;
+  }
+  return branch ? branch.id : null;
 };
 
 export const selectEntryIdFromCheckout = (checkoutId: string) => (

@@ -23,9 +23,9 @@ export class DocumentContainer extends ContextContainer {
 
   documentContent: string;
 
-  renderContent() {
+  renderContent(editing: boolean) {
     return html`
-      ${this.editing
+      ${editing
         ? html`
             <textarea
               style="height: 100px; width: 100%;"
@@ -36,8 +36,7 @@ export class DocumentContainer extends ContextContainer {
         : html`
             <marked-element class="fill">
               <div slot="markdown-html"></div>
-              <script type="text/markdown">
-                ${this.document.content}
+              <script type="text/markdown">${this.document.content}
               </script>
             </marked-element>
           `}

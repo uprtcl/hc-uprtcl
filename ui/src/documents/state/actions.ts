@@ -2,7 +2,10 @@ import { createHolochainAsyncAction } from '@holochain/hc-redux-middleware';
 import { selectDocuments, documentsAdapter } from './reducer';
 import { getCachedEntry } from '../../vc/state/actions/cached.actions';
 import { createContextAndCommit } from '../../vc/state/context/actions';
-import { createCommit } from '../../vc/state/commit/actions';
+import {
+  createCommit,
+  createCommitInBranch
+} from '../../vc/state/commit/actions';
 import { Link } from '../../vc/types';
 
 export interface AddressMessage {
@@ -49,14 +52,11 @@ export function saveDocumentAndCommit(
 ) {
   return dispatch =>
     dispatch(saveDocument.create({ title, content })).then(address =>
-      createCommit.create({
-        branch_address: branchId,
-        message: commitMessage,
-        content: {
-          id: null,
+      dispatch(
+        createCommitInBranch(branchId, commitMessage, {
           data: address,
           links
-        }
-      })
+        })
+      )
     );
 }
