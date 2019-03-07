@@ -108,7 +108,7 @@ pub fn handle_get_created_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntry
 
 pub fn handle_get_all_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
   hdk::get_links_result(
-    &HashString::from(hdk::THIS_INSTANCE),
+    &AGENT_ADDRESS, // TODO: change for DNA address
     "all_contexts",
     GetLinksOptions::default(),
     GetEntryOptions::default(),
@@ -206,7 +206,7 @@ pub fn create_context_entry(name: String) -> ZomeApiResult<Address> {
 
   hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts")?;
   hdk::link_entries(
-    &HashString::from(hdk::THIS_INSTANCE),
+    &AGENT_ADDRESS, // TODO: change for DNA address
     &context_address,
     "all_contexts",
   )?;

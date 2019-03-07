@@ -1,4 +1,4 @@
-import { VersionControlState } from '../reducer';
+import { VersionControlState, adapters } from '../reducer';
 import { selectExistingEntry } from '../selectors/common';
 import { EntryResult, CommitObject } from '../../types';
 import { selectContextBranches } from '../context/selectors';
@@ -7,7 +7,10 @@ import { selectObjectFromCommit } from '../commit/selectors';
 
 export const selectCheckoutById = (checkoutId: string) => (
   state: VersionControlState
-) => selectExistingEntry(checkoutId, ['context', 'branch', 'commit'])(state);
+) =>
+  selectExistingEntry(checkoutId, ['context', 'branch', 'commit'], adapters)(
+    state
+  );
 
 export const selectObjectFromCheckout = (checkoutId: string) => (
   state: VersionControlState

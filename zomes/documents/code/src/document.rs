@@ -13,11 +13,6 @@ use std::convert::TryFrom;
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntryOptions};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
-struct AddressResponse {
-  pub Ok: Address,
-}
-
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct Document {
   title: String,
   content: String,
@@ -57,7 +52,7 @@ pub fn handle_get_document(address: Address) -> ZomeApiResult<GetEntryResult> {
 pub fn handle_save_document(title: String, content: String) -> ZomeApiResult<Address> {
   let document_entry = Entry::App(
     "document".into(),
-    Document::new(title.clone(), content).into(),
+    Document::new(title, content).into(),
   );
   hdk::commit_entry(&document_entry)
 }

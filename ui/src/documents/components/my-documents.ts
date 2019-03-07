@@ -10,7 +10,7 @@ import './document-container';
 import '../../vc/components/context-manager';
 import '../../vc/components/created-contexts';
 import { sharedStyles } from '../../vc/styles/styles';
-import { saveDocument } from '../state/actions';
+import { saveDocument, createDocument } from '../state/actions';
 
 @customElement('my-documents')
 export class MyDocuments extends connect(store)(LitElement) {
@@ -60,8 +60,7 @@ export class MyDocuments extends connect(store)(LitElement) {
                 <created-contexts
                   style="margin: 12px;"
                   @context-selected=${e =>
-                    (this.selectedContextId =
-                      e.detail.contextId)}
+                    (this.selectedContextId = e.detail.contextId)}
                 ></created-contexts>
               `}
         </div>
@@ -81,12 +80,8 @@ export class MyDocuments extends connect(store)(LitElement) {
 
   addNewDocument() {
     this.creatingDocument = true;
-    store
-      .dispatch(
-        saveDocument.create({ title: this.newDocumentName, content: '' })
-      )
-      .then(() => {
-        this.creatingDocument = false;
-      });
+    store.dispatch(createDocument(this.newDocumentName, '')).then(() => {
+      this.creatingDocument = false;
+    });
   }
 }

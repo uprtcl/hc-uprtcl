@@ -1,5 +1,5 @@
 import { createHolochainAsyncAction } from '@holochain/hc-redux-middleware';
-import { selectDocuments } from './reducer';
+import { selectDocuments, documentsAdapter } from './reducer';
 import { getCachedEntry } from '../../vc/state/actions/cached.actions';
 import { createContextAndCommit } from '../../vc/state/context/actions';
 import { createCommit } from '../../vc/state/commit/actions';
@@ -11,7 +11,11 @@ export interface AddressMessage {
 
 export function getDocument(documentAddress: string) {
   return dispatch =>
-    dispatch(getCachedEntry(documentAddress, ['documents'], selectDocuments));
+    dispatch(
+      getCachedEntry(documentAddress, ['documents'], selectDocuments, {
+        documents: documentsAdapter
+      })
+    );
 }
 
 export const saveDocument = createHolochainAsyncAction<

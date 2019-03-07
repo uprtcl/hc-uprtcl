@@ -1,8 +1,9 @@
-import { selectVersionControl } from '../reducer';
+import { selectVersionControl, adapters } from '../reducer';
 import { getEntry } from './common.actions';
 import { parseEntryResult } from '../../utils/utils';
 import { EntryResult } from '../../types';
 import { selectExistingEntry } from '../selectors/common';
+import { EntityState, EntityAdapter } from '../../utils/entity';
 
 /**
  * Tries to find the given entry in the given entityTypes, and executes getEntry if it doesn't exist
@@ -13,12 +14,15 @@ import { selectExistingEntry } from '../selectors/common';
 export function getCachedEntry(
   entryAddress: string,
   entityTypes: string[],
-  selectState: (state) => any = selectVersionControl
+  selectState: (state) => any = selectVersionControl,
+  entityAdapters: { [key: string]: EntityAdapter<any> } = adapters
 ) {
   return (dispatch, getState): Promise<EntryResult> => {
-    const entryResult = selectExistingEntry(entryAddress, entityTypes)(
-      selectState(getState())
-    );
+    const entryResult = selectExistingEntry(
+      entryAddress,
+      entityTypes,
+      entityAdapters
+    )(selectState(getState()));
     if (!entryResult) {
       return dispatch(getEntry.create({ address: entryAddress })).then(entry =>
         parseEntryResult(entry)

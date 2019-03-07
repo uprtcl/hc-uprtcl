@@ -220,27 +220,30 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
         this.commitObject = selectObjectFromCheckout(this.checkoutId)(
           selectVersionControl(state)
         );
-        this.selectedEntryId = this.commitObject.data;
+
         this.contextId = selectContextIdFromCheckout(this.checkoutId)(
           selectVersionControl(state)
         );
-
-        this.loadContent(this.selectedEntryId).then(
-          () => (this.loading = false)
-        );
+        this.selectEntry(this.commitObject.data);
       })
     );
   }
 
   selectEntry(entryId: string) {
-    this.selectedEntryId = entryId;
-    this.dispatchEvent(
-      new CustomEvent('entry-selected', {
-        detail: {
-          entryId: entryId
-        }
-      })
-    );
+    this.loading = true;
+    this.selectedEntryId = null;
+    
+    this.loadContent(this.selectedEntryId).then(() => {
+      this.selectedEntryId = entryId;
+      this.dispatchEvent(
+        new CustomEvent('entry-selected', {
+          detail: {
+            entryId: entryId
+          }
+        })
+      );
+      this.loading = false;
+    });
   }
 
   createEmptyChild() {
