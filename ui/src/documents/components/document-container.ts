@@ -44,12 +44,10 @@ export class DocumentContainer extends ContextContainer {
   }
 
   loadContent(entryId) {
-    return store
-      .dispatch(getDocument(entryId))
-      .then(
-        () =>
-          (this.document = selectDocument(entryId)(<RootState>store.getState()))
-      );
+    return store.dispatch(getDocument(entryId)).then(() => {
+      this.document = selectDocument(entryId)(<RootState>store.getState());
+      this.documentContent = this.document.content;
+    });
   }
 
   saveContent(checkoutBranchId: string, links: Link[]) {

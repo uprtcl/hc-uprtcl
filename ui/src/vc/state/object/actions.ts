@@ -8,9 +8,7 @@ export function getObjectEntries(objectId: string) {
     const commitObject: CommitObject = adapters.object.selectById(objectId)(
       selectObjects(selectVersionControl(getState()))
     );
-    const entriesAddresses = Object.keys(commitObject.links).map(
-      key => commitObject.links[key]
-    );
+    const entriesAddresses = commitObject.links.map(link => link.address);
     entriesAddresses.push(commitObject.data);
 
     return Promise.all(

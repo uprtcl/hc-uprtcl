@@ -45,14 +45,16 @@ export class ContextSelector extends connect(store)(LitElement) {
   }
 
   contextSelected(contextName: string) {
-    this.dispatchEvent(
-      new CustomEvent('context-selected', {
-        detail: {
-          contextId: contextName
-            ? this.contexts.find(c => c.name === contextName).id
-            : null
-        }
-      })
-    );
+    if (contextName) {
+      this.dispatchEvent(
+        new CustomEvent('context-selected', {
+          detail: {
+            contextId: contextName
+              ? this.contexts.find(c => c.name === contextName).id
+              : null
+          }
+        })
+      );
+    }
   }
 }
