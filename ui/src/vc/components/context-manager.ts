@@ -26,14 +26,14 @@ export class ContextManager extends connect(store)(LitElement) {
   @property({ type: String })
   public initialCheckoutId: string;
 
+  @property({ type: String })
+  public checkoutBranchId: string;
+
   @property({ type: Object })
   context: Context;
 
   @property({ type: Array })
   branches: Branch[];
-
-  @property({ type: String })
-  checkoutBranchId: string;
 
   @property({ type: String })
   checkoutCommitId: string;
@@ -57,7 +57,7 @@ export class ContextManager extends connect(store)(LitElement) {
                 .branches=${this.branches}
                 .selectedBranchId=${this.checkoutBranchId}
                 @branch-selected=${e =>
-                  this.checkoutBranch(true, e.detail.branchId)}
+                  this.checkoutBranchAndDispatch(e.detail.branchId)}
                 @create-branch=${e => this.createBranch(e.detail.branchName)}
               ></branch-manager>
 
@@ -76,7 +76,7 @@ export class ContextManager extends connect(store)(LitElement) {
                 .branches=${this.branches}
                 .checkoutCommitId=${this.checkoutCommitId}
                 @checkout-commit=${e =>
-                  this.checkoutCommit(true, e.detail.commitId)}
+                  this.checkoutCommitAndDispatch(e.detail.commitId)}
               ></context-history>
             </div>
           `}
@@ -118,15 +118,15 @@ export class ContextManager extends connect(store)(LitElement) {
     let checkoutFn;
     switch (checkoutEntryResult.type) {
       case 'context':
-        checkoutFn = (id: string) => this.checkoutContext(false, id);
+        checkoutFn = (id: string) => this.checkoutContext(id);
         contextId = checkoutEntryResult.entry.id;
         break;
       case 'branch':
-        checkoutFn = (id: string) => this.checkoutBranch(false, id);
+        checkoutFn = (id: string) => this.checkoutBranch(id);
         contextId = checkoutEntryResult.entry.context_address;
         break;
       case 'commit':
-        checkoutFn = (id: string) => this.checkoutCommit(false, id);
+        checkoutFn = (id: string) => this.checkoutCommit(id);
         contextId = checkoutEntryResult.entry.context_address;
         break;
     }
@@ -136,52 +136,52 @@ export class ContextManager extends connect(store)(LitElement) {
     checkoutFn(checkoutEntryResult.entry.id);
   }
 
-  checkoutContext(dispatch: boolean, contextId: string) {
+  checkoutContext(contextId: string) {
     this.checkoutBranch(
-      dispatch,
       selectDefaultBranch(contextId)(
         selectVersionControl(<RootState>store.getState())
       ).id
     );
   }
 
-  checkoutBranch(dispatch: boolean, branchId: string) {
-    this.checkoutCommit(
-      dispatch,
-      selectBranchHeadId(branchId)(
-        selectVersionControl(<RootState>store.getState())
-      ),
-      branchId
+  checkoutBranchAndDispatch(branchId: string) {
+    this.checkoutBranch(branchId);
+    this.dispatchEvent(
+      new CustomEvent('branch-checkout', {
+        detail: { branchId: branchId }
+      })
     );
   }
 
-  checkoutCommit(dispatch: boolean, commitId: string, branchId: string = null) {
+  checkoutBranch(branchId: string) {
+    this.checkoutCommit(
+      selectBranchHeadId(branchId)(
+        selectVersionControl(<RootState>store.getState())
+      )
+    );
+  }
+
+  checkoutCommitAndDispatch(commitId: string) {
+    this.checkoutCommit(commitId);
+    this.dispatchEvent(
+      new CustomEvent('commit-checkout', {
+        detail: { commitId: commitId }
+      })
+    );
+  }
+
+  checkoutCommit(commitId: string) {
     this.checkoutCommitId = commitId;
-    if (!branchId) {
-      const branch = this.branches.find(
-        branch => branch.branch_head === commitId
+
+    this.dispatchSelectedEntry(null);
+
+    store.dispatch(getCommitAndContent(commitId)).then(() => {
+      const object = selectObjectFromCommit(commitId)(
+        selectVersionControl(<RootState>store.getState())
       );
-      if (branch) branchId = branch.id;
-    }
-    this.checkoutBranchId = branchId;
 
-    if (dispatch) {
-      this.dispatchSelectedEntry(null);
-
-      store.dispatch(getCommitAndContent(commitId)).then(() => {
-        const object = selectObjectFromCommit(commitId)(
-          selectVersionControl(<RootState>store.getState())
-        );
-
-        this.dispatchSelectedEntry(object.data);
-      });
-
-      this.dispatchEvent(
-        new CustomEvent('branch-checkout', {
-          detail: { branchId: branchId }
-        })
-      );
-    }
+      this.dispatchSelectedEntry(object.data);
+    });
   }
 
   createBranch(branchName: string) {

@@ -68,7 +68,8 @@ export class DocumentContainer extends ContextContainer {
         .checkoutId=${link.address}
         .editing=${this.editing}
         .rootContainer=${false}
-        @entry-selected=${e => (link.address = e.target.entryId)}
+        @branch-checkout=${e => (link.address = e.detail.entryId)}
+        @commit-checkout=${e => (link.address = e.detail.entryId)}
       ></document-container>
     `;
   }

@@ -9,7 +9,7 @@ import * as _ from 'lodash';
 import './context-selector';
 
 import { store, RootState } from '../../store';
-import { CommitObject, Link, Context } from '../types';
+import { CommitObject, Link, Context, Branch } from '../types';
 import { sharedStyles } from '../styles/styles';
 import { getCheckout, getCheckoutAndContent } from '../state/checkout/actions';
 import {
@@ -18,6 +18,7 @@ import {
   selectBranchIdFromCheckout
 } from '../state/checkout/selectors';
 import { selectVersionControl, VersionControlState } from '../state/reducer';
+import { selectContextBranches } from '../state/context/selectors';
 
 export abstract class ContextContainer extends connect(store)(LitElement) {
   @property({ type: String })
@@ -32,6 +33,9 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   @property({ type: Object })
   commitObject: CommitObject;
   backupObject: CommitObject;
+
+  @property({ type: Array })
+  branches: Branch[];
 
   @property({ type: String })
   selectedEntryId: string;
@@ -81,8 +85,11 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
                       <context-manager
                         style="margin-right: 20px;"
                         .initialCheckoutId=${this.checkoutId}
+                        .checkoutBranchId=${this.checkoutBranchId}
                         @branch-checkout=${e =>
                           (this.checkoutBranchId = e.detail.branchId)}
+                        @commit-checkout=${e =>
+                          this.checkoutCommit(e.detail.commitId)}
                         @entry-selected=${e =>
                           this.selectEntry(e.detail.entryId)}
                       ></context-manager>
@@ -179,6 +186,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
                     .filterIds=${[this.contextId]}
                     @context-selected=${e => {
                       link.address = e.detail.contextId;
+                      link.name = e.detail.contextName;
                       this.requestUpdate();
                     }}
                   ></context-selector>
@@ -229,7 +237,33 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
         );
 
         this.contextId = selectContextIdFromCheckout(this.checkoutId)(state);
+        this.branches = selectContextBranches(this.checkoutId)(state);
         this.selectEntry(this.commitObject.data);
+      })
+    );
+  }
+
+  checkoutBranch(branchId: string) {
+    this.dispatchEvent(
+      new CustomEvent('branch-checkout', {
+        detail: {
+          branchId: branchId
+        }
+      })
+    );
+  }
+
+  checkoutCommit(commitId: string) {
+    const branch = this.branches.find(
+      branch => branch.branch_head === commitId
+    );
+    this.checkoutBranchId = branch ? branch.id : null;
+
+    this.dispatchEvent(
+      new CustomEvent('commit-checkout', {
+        detail: {
+          commitId: commitId
+        }
       })
     );
   }
