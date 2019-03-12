@@ -58,14 +58,14 @@ export class MyDocuments extends connect(store)(LitElement) {
               `
             : html`
                 <created-contexts
-                  style="margin: 12px;"
+                  style="padding: 12px;"
                   @context-selected=${e =>
                     (this.selectedContextId = e.detail.contextId)}
                 ></created-contexts>
               `}
         </div>
 
-        <div class="row" style="flex: 1; margin: 20px;">
+        <div class="row" style="flex: 1; padding: 20px;">
           ${this.selectedContextId
             ? html`
                 <document-container

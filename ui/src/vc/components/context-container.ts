@@ -70,6 +70,12 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   render() {
     return html`
       ${sharedStyles}
+      <style>
+        .disabled-manager {
+          opacity: 0.4;
+          pointer-events: none;
+        }
+      </style>
       ${this.loadingIf(
         this.loading,
         () =>
@@ -84,10 +90,12 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
                   ? html`
                       <context-manager
                         style="margin-right: 20px;"
+                        class="${this.editing && this.rootContainer
+                          ? 'disabled-manager'
+                          : ''}"
                         .initialCheckoutId=${this.checkoutId}
-                        .checkoutBranchId=${this.checkoutBranchId}
                         @checkout-branch=${e =>
-                          (this.checkoutBranchId = e.detail.branchId)}
+                          this.checkoutBranch(e.detail.branchId)}
                         @checkout-commit=${e =>
                           this.checkoutCommit(e.detail.commitId)}
                         @entry-selected=${e =>
@@ -132,6 +140,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
                     <vaadin-button
                       theme="icon"
                       @click=${e => this.toggleEditing()}
+                      ?disabled=${!this.checkoutBranchId}
                     >
                       <iron-icon icon="vaadin:edit"></iron-icon>
                     </vaadin-button>
@@ -159,9 +168,11 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
           : html``}
         ${this.editing
           ? html`
-              <vaadin-button @click="${e => this.createEmptyChild()}">
-                Add child
-              </vaadin-button>
+              <div>
+                <vaadin-button @click="${e => this.createEmptyChild()}">
+                  Add child
+                </vaadin-button>
+              </div>
             `
           : html``}
       </div>
@@ -244,6 +255,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   }
 
   checkoutBranch(branchId: string) {
+    this.checkoutBranchId = branchId;
     this.dispatchEvent(
       new CustomEvent('checkout-branch', {
         detail: {

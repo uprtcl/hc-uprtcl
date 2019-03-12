@@ -27,7 +27,7 @@ export class ContextManager extends connect(store)(LitElement) {
   public initialCheckoutId: string;
 
   @property({ type: String })
-  public checkoutBranchId: string;
+  checkoutBranchId: string;
 
   @property({ type: Object })
   context: Context;
@@ -182,6 +182,11 @@ export class ContextManager extends connect(store)(LitElement) {
 
       this.dispatchSelectedEntry(object.data);
     });
+
+    const branch = this.branches.find(
+      branch => branch.branch_head === commitId
+    );
+    this.checkoutBranchId = branch ? branch.id : null;
   }
 
   createBranch(branchName: string) {
