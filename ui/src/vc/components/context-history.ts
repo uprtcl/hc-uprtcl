@@ -75,9 +75,7 @@ export class ContextHistoryElement extends connect(store)(LitElement) {
             <vaadin-progress-bar indeterminate value="0"></vaadin-progress-bar>
           `
         : html`
-            <div style="flex-grow: 1; overflow: auto;">
-              <canvas id="gitGraph"></canvas>
-            </div>
+            <canvas id="gitGraph"></canvas>
           `}
     `;
   }

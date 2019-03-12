@@ -45,7 +45,6 @@ export class ContextSelector extends connect(store)(LitElement) {
   }
 
   contextSelected(contextName: string) {
-    console.log('name', this.contexts);
     if (contextName) {
       this.dispatchEvent(
         new CustomEvent('context-selected', {

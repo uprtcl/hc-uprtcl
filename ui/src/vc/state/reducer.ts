@@ -34,6 +34,7 @@ const initialState: VersionControlState = {
 };
 
 export function versionControlReducer(state = initialState, action: AnyAction) {
+  console.log(state);
   console.log(action);
   switch (action.type) {
     case getType(getCreatedContexts.success):

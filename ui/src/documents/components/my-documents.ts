@@ -7,10 +7,9 @@ import '@vaadin/vaadin-progress-bar/theme/material/vaadin-progress-bar.js';
 import { store } from '../../store';
 
 import './document-container';
-import '../../vc/components/context-manager';
 import '../../vc/components/created-contexts';
 import { sharedStyles } from '../../vc/styles/styles';
-import { saveDocument, createDocument } from '../state/actions';
+import { createDocument } from '../state/actions';
 
 @customElement('my-documents')
 export class MyDocuments extends connect(store)(LitElement) {

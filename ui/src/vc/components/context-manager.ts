@@ -173,8 +173,6 @@ export class ContextManager extends connect(store)(LitElement) {
   checkoutCommit(commitId: string) {
     this.checkoutCommitId = commitId;
 
-    this.dispatchSelectedEntry(null);
-
     store.dispatch(getCommitAndContent(commitId)).then(() => {
       const object = selectObjectFromCommit(commitId)(
         selectVersionControl(<RootState>store.getState())
