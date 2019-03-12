@@ -147,7 +147,7 @@ export class ContextManager extends connect(store)(LitElement) {
   checkoutBranchAndDispatch(branchId: string) {
     this.checkoutBranch(branchId);
     this.dispatchEvent(
-      new CustomEvent('branch-checkout', {
+      new CustomEvent('checkout-branch', {
         detail: { branchId: branchId }
       })
     );
@@ -164,7 +164,7 @@ export class ContextManager extends connect(store)(LitElement) {
   checkoutCommitAndDispatch(commitId: string) {
     this.checkoutCommit(commitId);
     this.dispatchEvent(
-      new CustomEvent('commit-checkout', {
+      new CustomEvent('checkout-commit', {
         detail: { commitId: commitId }
       })
     );

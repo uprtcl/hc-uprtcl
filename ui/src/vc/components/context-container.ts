@@ -86,9 +86,9 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
                         style="margin-right: 20px;"
                         .initialCheckoutId=${this.checkoutId}
                         .checkoutBranchId=${this.checkoutBranchId}
-                        @branch-checkout=${e =>
+                        @checkout-branch=${e =>
                           (this.checkoutBranchId = e.detail.branchId)}
-                        @commit-checkout=${e =>
+                        @checkout-commit=${e =>
                           this.checkoutCommit(e.detail.commitId)}
                         @entry-selected=${e =>
                           this.selectEntry(e.detail.entryId)}
@@ -245,7 +245,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
 
   checkoutBranch(branchId: string) {
     this.dispatchEvent(
-      new CustomEvent('branch-checkout', {
+      new CustomEvent('checkout-branch', {
         detail: {
           branchId: branchId
         }
@@ -260,7 +260,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
     this.checkoutBranchId = branch ? branch.id : null;
 
     this.dispatchEvent(
-      new CustomEvent('commit-checkout', {
+      new CustomEvent('checkout-commit', {
         detail: {
           commitId: commitId
         }
