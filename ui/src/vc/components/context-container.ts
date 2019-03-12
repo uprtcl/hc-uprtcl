@@ -7,6 +7,7 @@ import { connect } from 'pwa-helpers/connect-mixin.js';
 import * as _ from 'lodash';
 
 import './context-selector';
+import './context-manager';
 import './details-toggle';
 
 import { store, RootState } from '../../store';
@@ -206,6 +207,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
               ? html`
                   <context-selector
                     .filterIds=${[this.contextId]}
+                    .selectedContextName=${link.name}
                     @context-selected=${e => {
                       link.address = e.detail.contextId;
                       link.name = e.detail.contextName;

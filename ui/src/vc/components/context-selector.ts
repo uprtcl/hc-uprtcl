@@ -11,10 +11,13 @@ import '@vaadin/vaadin-combo-box/theme/material/vaadin-combo-box.js';
 @customElement('context-selector')
 export class ContextSelector extends connect(store)(LitElement) {
   @property({ type: Array })
-  contexts: Array<Context>;
+  public contexts: Array<Context>;
 
   @property({ type: Array })
-  filterIds: Array<string>;
+  public filterIds: Array<string>;
+
+  @property({ type: String })
+  public selectedContextName: string;
 
   @property({ type: Boolean })
   loading = false;
@@ -25,9 +28,11 @@ export class ContextSelector extends connect(store)(LitElement) {
         label="Select context"
         .items=${this.contexts.map((c: Context) => c.name)}
         .loading=${this.loading}
+        .value=${this.selectedContextName}
         @open=${e => this.loadContexts()}
         @value-changed=${e => this.contextSelected(e.detail.value)}
-      ></vaadin-combo-box>
+      >
+      </vaadin-combo-box>
     `;
   }
 

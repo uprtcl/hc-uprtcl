@@ -10,15 +10,15 @@ export class DetailsToggle extends LitElement {
     return html`
       ${sharedStyles}
       <div class="column">
-        <div class="row">
+        <div class="row" style="align-items: center;">
           <vaadin-button
             theme="icon"
             @click="${e => (this.detailsOpened = !this.detailsOpened)}"
           >
             <iron-icon
               icon="${this.detailsOpened
-                ? 'vaadin:arrow-down'
-                : 'vaadin:arrow-right'}"
+                ? 'vaadin:angle-down'
+                : 'vaadin:angle-right'}"
             ></iron-icon>
           </vaadin-button>
 
