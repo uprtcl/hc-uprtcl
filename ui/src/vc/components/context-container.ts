@@ -20,7 +20,10 @@ import {
   selectBranchIdFromCheckout
 } from '../state/checkout/selectors';
 import { selectVersionControl, VersionControlState } from '../state/reducer';
-import { selectContextBranches } from '../state/context/selectors';
+import {
+  selectContextBranches,
+  selectContextById
+} from '../state/context/selectors';
 import { createBranch } from '../state/branch/actions';
 import { selectBranchHead, selectBranchById } from '../state/branch/selectors';
 
@@ -35,11 +38,14 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   public editing: boolean = false;
 
   @property({ type: Object })
-  commitObject: CommitObject;
-  backupObject: CommitObject;
+  context: Context;
 
   @property({ type: Array })
   branches: Branch[];
+
+  @property({ type: Object })
+  commitObject: CommitObject;
+  backupObject: CommitObject;
 
   @property({ type: String })
   selectedEntryId: string;
@@ -114,38 +120,41 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
     return html`
       <div
         class="row"
-        style="align-items: flex-end; place-content: space-between;"
+        style="align-items: center; place-content: space-between;"
       >
-        ${this.rootContainer
-          ? html`
-              ${this.editing
-                ? html`
-                    <vaadin-button
-                      theme="icon"
-                      @click="${e => this.commitChanges()}"
-                      ?disabled=${this.commiting}
-                    >
-                      <iron-icon icon="vaadin:disc"></iron-icon>
-                    </vaadin-button>
-                    <vaadin-button
-                      theme="icon"
-                      @click="${e => this.toggleEditing()}"
-                      ?disabled=${this.commiting}
-                    >
-                      <iron-icon icon="vaadin:close"></iron-icon>
-                    </vaadin-button>
-                  `
-                : html`
-                    <vaadin-button
-                      theme="icon"
-                      @click=${e => this.toggleEditing()}
-                      ?disabled=${!this.checkoutBranchId}
-                    >
-                      <iron-icon icon="vaadin:edit"></iron-icon>
-                    </vaadin-button>
-                  `}
-            `
-          : html``}
+        <div class="row" style="align-items: center;">
+          <span>${this.context.name}</span>
+          ${this.rootContainer
+            ? html`
+                ${this.editing
+                  ? html`
+                      <vaadin-button
+                        theme="icon"
+                        @click="${e => this.commitChanges()}"
+                        ?disabled=${this.commiting}
+                      >
+                        <iron-icon icon="vaadin:disc"></iron-icon>
+                      </vaadin-button>
+                      <vaadin-button
+                        theme="icon"
+                        @click="${e => this.toggleEditing()}"
+                        ?disabled=${this.commiting}
+                      >
+                        <iron-icon icon="vaadin:close"></iron-icon>
+                      </vaadin-button>
+                    `
+                  : html`
+                      <vaadin-button
+                        theme="icon"
+                        @click=${e => this.toggleEditing()}
+                        ?disabled=${!this.checkoutBranchId}
+                      >
+                        <iron-icon icon="vaadin:edit"></iron-icon>
+                      </vaadin-button>
+                    `}
+              `
+            : html``}
+        </div>
 
         <div
           class="row"
@@ -280,6 +289,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
       ));
 
       this.contextId = selectContextIdFromCheckout(this.checkoutId)(state);
+      this.context = selectContextById(this.contextId)(state);
       this.branches = selectContextBranches(this.checkoutId)(state);
       this.checkoutObject(this.checkoutId);
 
@@ -296,14 +306,12 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   checkoutObject(checkoutId: string) {
     this.loadingContent = true;
 
-    console.log('checkout', checkoutId);
     return store.dispatch(getCheckoutAndContent(checkoutId)).then(() => {
       const state: VersionControlState = selectVersionControl(<RootState>(
         store.getState()
       ));
 
       this.commitObject = selectObjectFromCheckout(checkoutId)(state);
-      console.log('object', this.commitObject);
       this.selectEntry(this.commitObject.data);
     });
   }
