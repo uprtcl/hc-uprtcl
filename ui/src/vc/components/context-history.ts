@@ -11,8 +11,8 @@ import { selectVersionControl } from '../state/reducer';
 
 @customElement('context-history')
 export class ContextHistoryElement extends connect(store)(LitElement) {
-  @property({ type: Object })
-  public context: Context;
+  @property({ type: String })
+  public contextId: string;
 
   @property({ type: Array })
   public branches: Branch[];
@@ -30,7 +30,7 @@ export class ContextHistoryElement extends connect(store)(LitElement) {
     return html`
       <style>
         #gitGraph {
-          margin: -60px;
+          margin: -45px 0px;
         }
 
         .gitgraph-tooltip {
@@ -87,7 +87,7 @@ export class ContextHistoryElement extends connect(store)(LitElement) {
   loadContextHistory() {
     this.loading = true;
     store
-      .dispatch(getContextHistory.create({ context_address: this.context.id }))
+      .dispatch(getContextHistory.create({ context_address: this.contextId }))
       .then(() => {
         this.loading = false;
         setTimeout(() => this.drawHistory());
@@ -106,7 +106,7 @@ export class ContextHistoryElement extends connect(store)(LitElement) {
   }
 
   stateChanged(state: RootState) {
-    this.contextHistory = selectContextHistory(this.context.id)(
+    this.contextHistory = selectContextHistory(this.contextId)(
       selectVersionControl(state)
     );
   }

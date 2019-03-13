@@ -27,16 +27,16 @@ export class ContextManager extends connect(store)(LitElement) {
   public initialCheckoutId: string;
 
   @property({ type: String })
+  checkoutContextId: string;
+
+  @property({ type: String })
   checkoutBranchId: string;
-
-  @property({ type: Object })
-  context: Context;
-
-  @property({ type: Array })
-  branches: Branch[];
 
   @property({ type: String })
   checkoutCommitId: string;
+
+  @property({ type: Array })
+  branches: Branch[];
 
   @property({ type: Boolean })
   loading = true;
@@ -56,7 +56,7 @@ export class ContextManager extends connect(store)(LitElement) {
               <branch-manager
                 .branches=${this.branches}
                 .selectedBranchId=${this.checkoutBranchId}
-                @branch-selected=${e =>
+                @checkout-branch=${e =>
                   this.checkoutBranchAndDispatch(e.detail.branchId)}
                 @create-branch=${e => this.createBranch(e.detail.branchName)}
               ></branch-manager>
@@ -72,7 +72,7 @@ export class ContextManager extends connect(store)(LitElement) {
                 : html``}
 
               <context-history
-                .context=${this.context}
+                .contextId=${this.checkoutContextId}
                 .branches=${this.branches}
                 .checkoutCommitId=${this.checkoutCommitId}
                 @checkout-commit=${e =>
@@ -131,7 +131,7 @@ export class ContextManager extends connect(store)(LitElement) {
         break;
     }
 
-    this.context = selectContextById(contextId)(state);
+    this.checkoutContextId = contextId;
     this.branches = selectContextBranches(contextId)(state);
     checkoutFn(checkoutEntryResult.entry.id);
   }

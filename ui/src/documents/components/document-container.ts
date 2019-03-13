@@ -28,7 +28,7 @@ export class DocumentContainer extends ContextContainer {
       ${editing
         ? html`
             <textarea
-              style="height: 100px; width: 100%;"
+              style="width: 100%;"
               .value=${this.document.content}
               @keyup="${e => (this.documentContent = e.target.value)}"
             ></textarea>

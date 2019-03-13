@@ -21,6 +21,8 @@ import {
 } from '../state/checkout/selectors';
 import { selectVersionControl, VersionControlState } from '../state/reducer';
 import { selectContextBranches } from '../state/context/selectors';
+import { createBranch } from '../state/branch/actions';
+import { selectBranchHead, selectBranchById } from '../state/branch/selectors';
 
 export abstract class ContextContainer extends connect(store)(LitElement) {
   @property({ type: String })
@@ -54,8 +56,9 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   @property({ type: Boolean })
   showContextManager = false;
 
-  checkoutBranchId: string;
   contextId: string;
+  checkoutBranchId: string;
+  checkoutCommitId: string;
 
   abstract loadContent(entryId: string): Promise<any>;
   abstract renderContent(editing: boolean): TemplateResult;
@@ -86,25 +89,13 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
         () =>
           html`
             <div class="column fill">
+              ${this.renderToolbar()}
               <div class="row fill">
                 ${this.loadingIf(this.loadingContent, () =>
                   this.renderContent(this.editing)
                 )}
-                ${this.renderToolbar()}
                 ${this.showContextManager
-                  ? html`
-                      <context-manager
-                        style="max-height: 250px; overflow: auto;"
-                        class="${this.editing && this.rootContainer
-                          ? 'disabled-manager'
-                          : ''}"
-                        .initialCheckoutId=${this.checkoutId}
-                        @checkout-branch=${e =>
-                          this.checkoutBranch(e.detail.branchId)}
-                        @checkout-commit=${e =>
-                          this.checkoutCommit(e.detail.commitId)}
-                      ></context-manager>
-                    `
+                  ? this.renderContextManager()
                   : html``}
               </div>
 
@@ -119,27 +110,28 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
 
   renderToolbar(): TemplateResult {
     return html`
-      <div class="row" style="align-items: start;">
+      <div
+        class="row"
+        style="align-items: flex-end; place-content: space-evenly;"
+      >
         ${this.rootContainer
           ? html`
               ${this.editing
                 ? html`
-                    <div class="column">
-                      <vaadin-button
-                        theme="icon"
-                        @click="${e => this.commitChanges()}"
-                        ?disabled=${this.commiting}
-                      >
-                        <iron-icon icon="vaadin:disc"></iron-icon>
-                      </vaadin-button>
-                      <vaadin-button
-                        theme="icon"
-                        @click="${e => this.toggleEditing()}"
-                        ?disabled=${this.commiting}
-                      >
-                        <iron-icon icon="vaadin:close"></iron-icon>
-                      </vaadin-button>
-                    </div>
+                    <vaadin-button
+                      theme="icon"
+                      @click="${e => this.commitChanges()}"
+                      ?disabled=${this.commiting}
+                    >
+                      <iron-icon icon="vaadin:disc"></iron-icon>
+                    </vaadin-button>
+                    <vaadin-button
+                      theme="icon"
+                      @click="${e => this.toggleEditing()}"
+                      ?disabled=${this.commiting}
+                    >
+                      <iron-icon icon="vaadin:close"></iron-icon>
+                    </vaadin-button>
                   `
                 : html`
                     <vaadin-button
@@ -153,13 +145,38 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
             `
           : html``}
 
-        <vaadin-button
-          theme="icon"
-          @click=${e => (this.showContextManager = !this.showContextManager)}
+        <div
+          class="row"
+          style="align-items: flex-end; place-content: flex-end;"
         >
-          <iron-icon icon="vaadin:file-tree"></iron-icon>
-        </vaadin-button>
+          <branch-manager
+            .branches=${this.branches}
+            .selectedBranchId=${this.checkoutBranchId}
+            @checkout-branch=${e => this.checkoutBranch(e.detail.branchId)}
+            @create-branch=${e => this.createBranch(e.detail.branchName)}
+          ></branch-manager>
+
+          <vaadin-button
+            theme="icon"
+            @click=${e => (this.showContextManager = !this.showContextManager)}
+          >
+            <iron-icon icon="vaadin:file-tree"></iron-icon>
+          </vaadin-button>
+        </div>
       </div>
+    `;
+  }
+
+  renderContextManager() {
+    return html`
+      <context-history
+        style="max-height: 250px; overflow: auto;"
+        class="${this.editing && this.rootContainer ? 'disabled-manager' : ''}"
+        .contextId=${this.contextId}
+        .branches=${this.branches}
+        .checkoutCommitId=${this.checkoutCommitId}
+        @checkout-commit=${e => this.checkoutCommit(e.detail.commitId)}
+      ></context-history>
     `;
   }
 
@@ -267,6 +284,9 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
       this.checkoutBranchId = selectBranchIdFromCheckout(this.checkoutId)(
         state
       );
+      this.checkoutCommitId = selectBranchById(this.checkoutBranchId)(
+        state
+      ).branch_head;
       this.loading = false;
     });
   }
@@ -293,6 +313,10 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
         }
       })
     );
+    this.checkoutCommitId = selectBranchById(this.checkoutBranchId)(
+      selectVersionControl(<RootState>store.getState())
+    ).branch_head;
+
     this.checkoutBranchId = branchId;
   }
 
@@ -301,6 +325,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
       branch => branch.branch_head === commitId
     );
     this.checkoutBranchId = branch ? branch.id : null;
+    this.checkoutCommitId = commitId;
 
     this.checkoutObject(commitId);
 
@@ -346,5 +371,21 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
         this.loadCheckout();
       }
     );
+  }
+
+  createBranch(branchName: string) {
+    this.loading = true;
+
+    store
+      .dispatch(
+        createBranch.create({
+          commit_address: this.checkoutCommitId,
+          name: branchName
+        })
+      )
+      .then(() => {
+        this.loading = false;
+        this.loadCheckout();
+      });
   }
 }
