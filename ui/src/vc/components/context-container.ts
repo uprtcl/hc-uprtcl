@@ -57,7 +57,9 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   showContextManager = false;
 
   contextId: string;
+  @property({ type: String })
   checkoutBranchId: string;
+  @property({ type: String })
   checkoutCommitId: string;
 
   abstract loadContent(entryId: string): Promise<any>;
@@ -112,7 +114,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
     return html`
       <div
         class="row"
-        style="align-items: flex-end; place-content: space-evenly;"
+        style="align-items: flex-end; place-content: space-between;"
       >
         ${this.rootContainer
           ? html`
@@ -294,12 +296,14 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   checkoutObject(checkoutId: string) {
     this.loadingContent = true;
 
-    return store.dispatch(getCheckoutAndContent(this.checkoutId)).then(() => {
+    console.log('checkout', checkoutId);
+    return store.dispatch(getCheckoutAndContent(checkoutId)).then(() => {
       const state: VersionControlState = selectVersionControl(<RootState>(
         store.getState()
       ));
 
       this.commitObject = selectObjectFromCheckout(checkoutId)(state);
+      console.log('object', this.commitObject);
       this.selectEntry(this.commitObject.data);
     });
   }
