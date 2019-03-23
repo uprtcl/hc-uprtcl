@@ -181,7 +181,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
   renderContextManager() {
     return html`
       <context-history
-        style="max-height: 250px; overflow: auto;"
+        style="max-height: 400px; overflow: auto;"
         class="${this.editing && this.rootContainer ? 'disabled-manager' : ''}"
         .contextId=${this.contextId}
         .branches=${this.branches}
@@ -259,12 +259,13 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
     this.loadCheckout();
   }
 
-  update(changedProperties) {
+  updated(changedProperties) {
     // Don't forget this or your element won't render!
     super.update(changedProperties);
     if (changedProperties.get('checkoutId')) {
       this.showContextManager = false;
       this.editing = false;
+
       this.loadCheckout();
     }
   }
@@ -281,7 +282,6 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
 
   loadCheckout() {
     this.loading = true;
-    this.requestUpdate();
 
     store.dispatch(getCheckoutAndContent(this.checkoutId)).then(() => {
       const state: VersionControlState = selectVersionControl(<RootState>(
@@ -290,7 +290,7 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
 
       this.contextId = selectContextIdFromCheckout(this.checkoutId)(state);
       this.context = selectContextById(this.contextId)(state);
-      this.branches = selectContextBranches(this.checkoutId)(state);
+      this.branches = selectContextBranches(this.contextId)(state);
       this.checkoutObject(this.checkoutId);
 
       this.checkoutBranchId = selectBranchIdFromCheckout(this.checkoutId)(
@@ -325,11 +325,11 @@ export abstract class ContextContainer extends connect(store)(LitElement) {
         }
       })
     );
+    this.checkoutBranchId = branchId;
+
     this.checkoutCommitId = selectBranchById(this.checkoutBranchId)(
       selectVersionControl(<RootState>store.getState())
     ).branch_head;
-
-    this.checkoutBranchId = branchId;
   }
 
   checkoutCommit(commitId: string) {

@@ -19,7 +19,7 @@ export class BranchManager extends LitElement {
 
   render() {
     return html`
-    ${sharedStyles}
+      ${sharedStyles}
       <div class="row" style="align-items: baseline;">
         <vaadin-select
           label="Select branch"

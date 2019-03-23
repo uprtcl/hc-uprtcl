@@ -43,6 +43,7 @@
     "babel-plugin-transform-regenerator": "6.26.0",
     "babel-polyfill": "6.26.0",
     "babel-preset-es2015": "^6.24.1",
+    "concurrently": "^4.1.0",
     "gitgraph.js": "^1.15.1",
     "ipfs": "^0.34.4",
     "ipfs-postmsg-proxy": "^3.1.1",
