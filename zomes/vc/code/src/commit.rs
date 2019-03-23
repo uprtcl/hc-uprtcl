@@ -12,7 +12,7 @@ use hdk::{
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 use std::convert::TryFrom;
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Commit {
   context_address: Address,
 
@@ -54,13 +54,12 @@ pub fn definition() -> ValidatingEntryType {
     name: "commit",
     description: "a commit object",
     sharing: Sharing::Public,
-    native_type: Commit,
 
     validation_package: || {
       hdk::ValidationPackageDefinition::ChainFull
     },
 
-    validation: |commit: Commit, _ctx: hdk::ValidationData| {
+    validation: |_validation_data: hdk::EntryValidationData<Commit>| {
       Ok(())
     },
 

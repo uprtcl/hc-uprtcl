@@ -10,7 +10,7 @@ use hdk::{
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 use std::convert::TryFrom;
 
-#[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson)]
+#[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Link {
   pub name: String,
   pub address: Address,
@@ -25,7 +25,7 @@ impl Link {
   }
 }
 
-#[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson)]
+#[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Object {
   data: Option<Address>,
   links: Vec<Link>,
@@ -60,13 +60,12 @@ pub fn definition() -> ValidatingEntryType {
     name: "object",
     description: "an abstract object",
     sharing: Sharing::Public,
-    native_type: Object,
 
     validation_package: || {
       hdk::ValidationPackageDefinition::ChainFull
     },
 
-    validation: |object: Object, _ctx: hdk::ValidationData| {
+    validation: |_validation_data: hdk::EntryValidationData<Object>| {
       Ok(())
     },
 

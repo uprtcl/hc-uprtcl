@@ -4,7 +4,7 @@ use hdk::{
   error::ZomeApiResult,
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
-    hash::HashString, json::JsonString,
+    hash::HashString, json::JsonString, validation::EntryValidationData,
   },
   AGENT_ADDRESS,
 };
@@ -12,9 +12,8 @@ use holochain_wasm_utils::api_serialization::{
   get_entry::{GetEntryOptions, GetEntryResult, StatusRequestKind},
   get_links::{GetLinksOptions, GetLinksResult, LinksStatusRequestKind},
 };
-use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Context {
   name: String,
   date_created: String,
@@ -36,13 +35,12 @@ pub fn definition() -> ValidatingEntryType {
     name: "context",
     description: "a context containing branches",
     sharing: Sharing::Public,
-    native_type: Context,
 
     validation_package: || {
       hdk::ValidationPackageDefinition::ChainFull
     },
 
-    validation: |context: Context, _ctx: hdk::ValidationData| {
+    validation: |_ctx: hdk::EntryValidationData<Context>| {
       Ok(())
     },
 
@@ -53,7 +51,7 @@ pub fn definition() -> ValidatingEntryType {
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
-        validation: |_source: Address, _target: Address, _validation_data: hdk::ValidationData | {
+        validation: |_validation_data: hdk::LinkValidationData | {
           Ok(())
         }
       ),
@@ -63,7 +61,7 @@ pub fn definition() -> ValidatingEntryType {
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
-        validation: |_source: Address, _target: Address, _validation_data: hdk::ValidationData | {
+        validation: | _validation_data: hdk::LinkValidationData | {
           Ok(())
         }
       ),
@@ -73,7 +71,7 @@ pub fn definition() -> ValidatingEntryType {
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
-        validation: |_source: Address, _target: Address, _ctx: hdk::ValidationData | {
+        validation: |_validation_data: hdk::LinkValidationData | {
           Ok(())
         }
       )

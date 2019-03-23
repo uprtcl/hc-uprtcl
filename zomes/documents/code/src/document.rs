@@ -12,7 +12,7 @@ use serde_json::json;
 use std::convert::TryFrom;
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntryOptions};
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Document {
   title: String,
   content: String,
@@ -32,12 +32,12 @@ pub fn definition() -> ValidatingEntryType {
     name: "document",
     description: "simple document",
     sharing: Sharing::Public,
-    native_type: Document,
+
     validation_package: || {
       hdk::ValidationPackageDefinition::Entry
     },
 
-    validation: |_document: Document, _validation_data: hdk::ValidationData| {
+    validation: |_validation_data: hdk::EntryValidationData<Document>| {
       Ok(())
     },
 

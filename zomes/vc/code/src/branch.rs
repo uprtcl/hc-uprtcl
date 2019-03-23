@@ -3,6 +3,7 @@ use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::{
+    validation::{EntryValidationData},
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
@@ -10,7 +11,7 @@ use hdk::{
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 use std::convert::TryFrom;
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Branch {
   context_address: Address,
   name: String,
@@ -30,13 +31,12 @@ pub fn definition() -> ValidatingEntryType {
     name: "branch",
     description: "branch pointing to a commit object",
     sharing: Sharing::Public,
-    native_type: Branch,
 
     validation_package: || {
       hdk::ValidationPackageDefinition::ChainFull
     },
 
-    validation: |branch: Branch, _ctx: hdk::ValidationData| {
+    validation: |_ctx: hdk::EntryValidationData<Branch>| {
       Ok(())
     },
 
@@ -47,7 +47,7 @@ pub fn definition() -> ValidatingEntryType {
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
-        validation: |_source: Address, _target: Address, _ctx: hdk::ValidationData | {
+        validation: |_validation_data: hdk::LinkValidationData | {
           Ok(())
         }
       )
