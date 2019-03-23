@@ -1,8 +1,8 @@
 {
   "dependencies": {
+    "@holochain/holochain-nodejs": "^0.4.6-alpha",
     "faucet": "0.0.1",
     "json3": "*",
-    "node-pre-gyp": "^0.12.0",
     "sleep": "^5.2.3",
     "tape": "^4.9.1"
   },

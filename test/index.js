@@ -3,7 +3,7 @@ const path = require('path');
 const { Config, Scenario } = require('../../holochain-rust/nodejs_conductor');
 Scenario.setTape(require('tape'));
 
-const dnaPath = path.join(__dirname, '../dist/bundle.json');
+const dnaPath = path.join(__dirname, '../dist/hc-versioncontrol.dna.json');
 const dna = Config.dna(dnaPath);
 const agentAlice = Config.agent('alice');
 const agentBob = Config.agent('bob');
@@ -44,7 +44,7 @@ const SAMPLE_ADDRESS3 = 'QmRqn5F3J3uL8NRoCugfNJF8556cp1khZJAP1XAdVdL73S';
 
 scenario1.runTape('create context', async (t, { alice }) => {
   const { Ok: contextAddress } = await createContext('myNewContext')(alice);
-  t.equal(contextAddress, 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en');
+  t.equal(contextAddress, 'QmcasGWZuCjaUqKoTZtpnvB9GSAtivXoWksJbhxH7RANYR');
 
   const result = alice.call('vc', 'get_context_info', {
     context_address: contextAddress
@@ -66,7 +66,7 @@ scenario1.runTape(
     } = getContextBranches(contextAddress)(alice);
     t.equal(
       branchAddresses[0],
-      'QmdYFTXuTyuaXbyLAPHmemgkjsaVQ5tfpnLqY9on5JZmzR'
+      'Qmdc41NJ5SEF89wUqsurm3foz9sEza5hcJbEnDMo8uBQub'
     );
 
     const { Ok: firstCommitAddress } = await createCommit(
@@ -76,7 +76,7 @@ scenario1.runTape(
     )(alice);
     t.equal(
       firstCommitAddress,
-      'QmdHCYqdC6zHhRUD7GmgxyvHAz8BLzoY5gfZSAfbaW86wp'
+      'QmWv8Qz3bmqPz1cTWArAdmLcZHif3dJ5Jpj211Fos8mmAQ'
     );
 
     const { Ok: branchHead } = getBranchHead(branchAddresses[0])(alice);
@@ -89,7 +89,7 @@ scenario1.runTape(
     )(alice);
     t.equal(
       secondCommitAddress,
-      'QmVi27G7WYokDcUAod1pZevRAdZasGVywWWqfx7fNmJKmN'
+      'QmefjwHuhjajsRSeMuhe2uVzvvvB5ReZ3G23zwBAXqYEe3'
     );
 
     const commitInfoJsonString = getCommitInfo(secondCommitAddress)(alice);
@@ -117,7 +117,7 @@ scenario1.runTape(
     const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
       alice
     );
-    t.equal(developAddress, 'QmRqn5F3J3uL8NRoCugfNJF8556cp1khZJAP1XAdVdL73S');
+    t.equal(developAddress, 'QmPV17A2Y1rJ7yzif6AApaYP7ianS6FwBpFNEfqqyqJVA2');
 
     const developBranchJson = getBranchInfo(developAddress)(alice);
     const developBranchInfo = parseEntry(developBranchJson);
@@ -136,12 +136,12 @@ scenario1.runTape(
     const { commitAddress, masterAddress } = await createContextAndCommit(
       'myNewContext',
       'first commit',
-      buildObject(null, {
-        file1: SAMPLE_ADDRESS2,
-        file2: SAMPLE_ADDRESS1
-      })
+      buildObject(null, [
+        { name: 'file1', address: SAMPLE_ADDRESS2 },
+        { name: 'file2', address: SAMPLE_ADDRESS1 }
+      ])
     )(alice);
-    t.equal(commitAddress, 'QmdWfhvyAn1tqXwCEoFRgN2bDr4g7WkdhypLp1QuG9jyW1');
+    t.equal(commitAddress, 'QmaECgwN2H2xLXpMYBjDBg6BAyHxpQx1bP2Y862HFyfyuN');
 
     const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
       alice
@@ -149,11 +149,14 @@ scenario1.runTape(
     const { Ok: developCommit } = await createCommit(
       developAddress,
       'develop commit',
-      buildObject(null, {
-        file1: SAMPLE_ADDRESS2,
-        file2: SAMPLE_ADDRESS2,
-        file3: SAMPLE_ADDRESS2
-      })
+      buildObject(null, [
+        {
+          name: 'file1',
+          address: SAMPLE_ADDRESS2
+        },
+        { name: 'file2', address: SAMPLE_ADDRESS2 },
+        { name: 'file3', address: SAMPLE_ADDRESS2 }
+      ])
     )(alice);
 
     const { Ok: mergedCommitAddress } = await mergeBranches(
@@ -163,7 +166,7 @@ scenario1.runTape(
 
     t.equal(
       mergedCommitAddress,
-      'QmSMNTPW8Q9BbFxCJxwvSQdDcnN4dxmuZr8634bh8ygpz4'
+      'QmYxeYk1hRvUo2dESjciBThc28DKSiKJ8U9JyiJAbmkmA1'
     );
 
     const { Ok: commitInfoJsonString } = getCommitInfo(mergedCommitAddress)(
@@ -181,11 +184,14 @@ scenario1.runTape(
 
     t.deepEqual(commitContent, {
       data: null,
-      links: {
-        file3: SAMPLE_ADDRESS2,
-        file2: SAMPLE_ADDRESS2,
-        file1: SAMPLE_ADDRESS2
-      }
+      links: [
+        { name: 'file1', address: SAMPLE_ADDRESS2 },
+        { name: 'file2', address: SAMPLE_ADDRESS2 },
+        {
+          name: 'file3',
+          address: SAMPLE_ADDRESS2
+        }
+      ]
     });
 
     const { Ok: lastMasterCommitAddress } = await getBranchHead(masterAddress)(
@@ -201,10 +207,13 @@ scenario1.runTape(
     const { commitAddress, masterAddress } = await createContextAndCommit(
       'myNewContext',
       'first commit',
-      buildObject(null, {
-        file1: SAMPLE_ADDRESS2,
-        file2: SAMPLE_ADDRESS1
-      })
+      buildObject(null, [
+        {
+          name: 'file1',
+          address: SAMPLE_ADDRESS2
+        },
+        { name: 'file2', address: SAMPLE_ADDRESS1 }
+      ])
     )(alice);
     const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
       alice
@@ -212,20 +221,26 @@ scenario1.runTape(
     const { Ok: masterCommit } = await createCommit(
       masterAddress,
       'master commit 2',
-      buildObject(null, {
-        file1: SAMPLE_ADDRESS1,
-        file2: SAMPLE_ADDRESS1,
-        file3: SAMPLE_ADDRESS2
-      })
+      buildObject(null, [
+        {
+          name: 'file1',
+          address: SAMPLE_ADDRESS1
+        },
+        { name: 'file2', address: SAMPLE_ADDRESS1 },
+        { name: 'file3', address: SAMPLE_ADDRESS2 }
+      ])
     )(alice);
     const { Ok: developCommit } = await createCommit(
       developAddress,
       'develop commit',
-      buildObject(null, {
-        file1: SAMPLE_ADDRESS3,
-        file2: SAMPLE_ADDRESS2,
-        file4: SAMPLE_ADDRESS2
-      })
+      buildObject(null, [
+        {
+          name: 'file1',
+          address: SAMPLE_ADDRESS3
+        },
+        { name: 'file2', address: SAMPLE_ADDRESS2 },
+        { name: 'file4', address: SAMPLE_ADDRESS2 }
+      ])
     )(alice);
 
     const result = await mergeBranches(developAddress, masterAddress)(alice);
@@ -236,34 +251,14 @@ scenario1.runTape(
   }
 );
 
-scenario1.runTape('create document', async (t, { alice }) => {
-  const { Ok: contextAddress } = await alice.callSync(
+scenario1.runTape('save document', async (t, { alice }) => {
+  const { Ok: documentAddress } = await alice.callSync(
     'documents',
-    'create_document',
+    'save_document',
     {
       title: 'Title',
       content: 'content'
     }
   );
-  t.equal(contextAddress, 'QmNTSi7M2MCtsj2qJETdT7kuZ8wymPDZdiur2mJx7VRasZ');
-  const result = await alice.callSync('vc', 'get_created_contexts', {});
-  t.equal(
-    result.Ok[0].Ok.result.Single.meta.address,
-    'QmNTSi7M2MCtsj2qJETdT7kuZ8wymPDZdiur2mJx7VRasZ'
-  );
-
-  const currentCommitsHeads = getContextHeadCommits(contextAddress)(alice);
-  const commitInfo = getCommitInfo(currentCommitsHeads[0].Ok)(alice);
-
-  t.equal(
-    commitInfo.Ok.result.Single.entry.App[1],
-    '{"context_address":"QmNTSi7M2MCtsj2qJETdT7kuZ8wymPDZdiur2mJx7VRasZ","author_address":"alice-----------------------------------------------------------------------------AAAIuDJb4M","message":"first commit","object_address":"QmXYxA9R4TBEfRCFcmKjqtWE6jzPrAasL3hC9zu5Sgo98v","parent_commits_addresses":[]}'
-  );
-
-  const currentObjects = getContextCurrentContents(contextAddress)(alice);
-
-  t.equal(
-    currentObjects[0].Ok.result.Single.entry.App[1],
-    '{"data":"QmT2eRGdpZmxJxHSbkFhczaSgLukL8YqMqwoX85jb9X43Q","links":{}}'
-  );
+  t.equal(documentAddress, 'QmT2eRGdpZmxJxHSbkFhczaSgLukL8YqMqwoX85jb9X43Q');
 });
