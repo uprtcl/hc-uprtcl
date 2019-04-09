@@ -1,5 +1,3 @@
-use crate::object::Object;
-use boolinator::Boolinator;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::ZomeApiResult,

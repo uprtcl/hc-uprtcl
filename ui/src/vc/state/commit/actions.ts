@@ -1,12 +1,12 @@
 import { INSTANCE_NAME, ZOME_NAME } from '../actions/common.actions';
-import { createHolochainAsyncAction } from '@holochain/hc-redux-middleware';
+import { createHolochainZomeCallAsyncAction } from '@holochain/hc-redux-middleware';
 import { adapters, selectVersionControl } from '../reducer';
 import { getCachedEntry } from '../actions/cached.actions';
 import { getObjectEntries } from '../object/actions';
 import { CommitObject } from '../../types';
 import { setBranchHead } from '../branch/actions';
 
-export const createCommit = createHolochainAsyncAction<
+export const createCommit = createHolochainZomeCallAsyncAction<
   { branch_address: string; message: string; content: any },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'create_commit');

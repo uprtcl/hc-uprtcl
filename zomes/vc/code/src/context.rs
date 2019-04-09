@@ -1,16 +1,15 @@
-use crate::commit::Commit;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::ZomeApiResult,
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
-    hash::HashString, json::JsonString, validation::EntryValidationData,
+    json::JsonString,
   },
   AGENT_ADDRESS,
 };
 use holochain_wasm_utils::api_serialization::{
-  get_entry::{GetEntryOptions, GetEntryResult, StatusRequestKind},
-  get_links::{GetLinksOptions, GetLinksResult, LinksStatusRequestKind},
+  get_entry::{GetEntryOptions, GetEntryResult},
+  get_links::{GetLinksOptions, GetLinksResult},
 };
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]

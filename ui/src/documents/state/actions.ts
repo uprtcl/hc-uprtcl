@@ -1,4 +1,4 @@
-import { createHolochainAsyncAction } from '@holochain/hc-redux-middleware';
+import { createHolochainZomeCallAsyncAction } from '@holochain/hc-redux-middleware';
 import { selectDocuments, documentsAdapter } from './reducer';
 import { getCachedEntry } from '../../vc/state/actions/cached.actions';
 import { createContextAndCommit } from '../../vc/state/context/actions';
@@ -21,7 +21,7 @@ export function getDocument(documentAddress: string) {
     );
 }
 
-export const saveDocument = createHolochainAsyncAction<
+export const saveDocument = createHolochainZomeCallAsyncAction<
   { title: string; content: string },
   string
 >('test-instance', 'documents', 'save_document');

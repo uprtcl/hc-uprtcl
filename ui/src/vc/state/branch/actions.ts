@@ -1,5 +1,5 @@
 import { INSTANCE_NAME, ZOME_NAME } from '../actions/common.actions';
-import { createHolochainAsyncAction } from '@holochain/hc-redux-middleware';
+import { createHolochainZomeCallAsyncAction } from '@holochain/hc-redux-middleware';
 import { getCommitAndContent } from '../commit/actions';
 import { getCachedEntry } from '../actions/cached.actions';
 import { Branch, EntryResult } from '../../types';
@@ -8,17 +8,17 @@ import { selectVersionControl } from '../reducer';
 
 /** Holochain actions */
 
-export const createBranch = createHolochainAsyncAction<
+export const createBranch = createHolochainZomeCallAsyncAction<
   { commit_address: string; name: string },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'create_branch');
 
-export const getBranchHead = createHolochainAsyncAction<
+export const getBranchHead = createHolochainZomeCallAsyncAction<
   { branch_address: string },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'get_branch_head');
 
-export const mergeBranches = createHolochainAsyncAction<
+export const mergeBranches = createHolochainZomeCallAsyncAction<
   { from_branch_address: string; to_branch_address: string },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'merge_branches');

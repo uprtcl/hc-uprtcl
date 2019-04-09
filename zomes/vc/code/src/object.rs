@@ -1,4 +1,3 @@
-use boolinator::Boolinator;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},

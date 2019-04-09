@@ -1,16 +1,12 @@
 use hdk::{
   entry_definition::ValidatingEntryType,
-  error::{ZomeApiError, ZomeApiResult},
+  error::ZomeApiResult,
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
-  AGENT_ADDRESS, PUBLIC_TOKEN
 };
-use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
-use serde_json::json;
-use std::convert::TryFrom;
-use holochain_wasm_utils::api_serialization::get_entry::{GetEntryResult,GetEntryOptions};
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Document {
@@ -50,9 +46,6 @@ pub fn handle_get_document(address: Address) -> ZomeApiResult<GetEntryResult> {
 }
 
 pub fn handle_save_document(title: String, content: String) -> ZomeApiResult<Address> {
-  let document_entry = Entry::App(
-    "document".into(),
-    Document::new(title, content).into(),
-  );
+  let document_entry = Entry::App("document".into(), Document::new(title, content).into());
   hdk::commit_entry(&document_entry)
 }

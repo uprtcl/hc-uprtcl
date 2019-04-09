@@ -9,7 +9,9 @@
     }
   ],
   "version": "0.1.0",
-  "dna_spec_version": "2.0",
   "dht": {},
+
   "properties": null
 }
+  "dna_spec_version": "2.0",
+

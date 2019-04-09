@@ -1,5 +1,5 @@
 import { ZOME_NAME, INSTANCE_NAME } from '../actions/common.actions';
-import { createHolochainAsyncAction } from '@holochain/hc-redux-middleware';
+import { createHolochainZomeCallAsyncAction } from '@holochain/hc-redux-middleware';
 import { CommitObject } from '../../types';
 import { getCachedEntry } from '../actions/cached.actions';
 import { parseEntriesResults } from '../../utils/utils';
@@ -7,34 +7,34 @@ import { getBranchInfo, getBranchContent, getBranchAndContent } from '../branch/
 
 /** Holochain actions */
 
-export const createContext = createHolochainAsyncAction<
+export const createContext = createHolochainZomeCallAsyncAction<
   { name: string },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'create_context');
 
-export const createContextAndCommit = createHolochainAsyncAction<
+export const createContextAndCommit = createHolochainZomeCallAsyncAction<
   { name: string; message: string; content: CommitObject },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'create_context_and_commit');
 
-export const getCreatedContexts = createHolochainAsyncAction<{}, any>(
+export const getCreatedContexts = createHolochainZomeCallAsyncAction<{}, any>(
   INSTANCE_NAME,
   ZOME_NAME,
   'get_created_contexts'
 );
 
-export const getAllContexts = createHolochainAsyncAction<{}, any>(
+export const getAllContexts = createHolochainZomeCallAsyncAction<{}, any>(
   INSTANCE_NAME,
   ZOME_NAME,
   'get_all_contexts'
 );
 
-export const getContextBranches = createHolochainAsyncAction<
+export const getContextBranches = createHolochainZomeCallAsyncAction<
   { context_address: string },
   any
 >(INSTANCE_NAME, ZOME_NAME, 'get_context_branches');
 
-export const getContextHistory = createHolochainAsyncAction<
+export const getContextHistory = createHolochainZomeCallAsyncAction<
   { context_address: string },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'get_context_history');

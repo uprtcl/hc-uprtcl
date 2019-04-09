@@ -1,6 +1,5 @@
 use hdk::{
   error::{ZomeApiError, ZomeApiResult},
-  
   holochain_core_types::{
     cas::content::{Address, Content},
     entry::Entry,
@@ -8,7 +7,7 @@ use hdk::{
 };
 
 /**
- * Stores the given entry in the DHT if it didn't exist before, 
+ * Stores the given entry in the DHT if it didn't exist before,
  * otherwise return its address
  */
 pub fn store_entry_if_new(entry: Entry) -> ZomeApiResult<Address> {

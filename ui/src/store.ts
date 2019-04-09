@@ -18,7 +18,7 @@ import {
 import thunk, { ThunkMiddleware } from 'redux-thunk';
 import { lazyReducerEnhancer } from 'pwa-helpers/lazy-reducer-enhancer.js';
 
-import { connect } from '@holochain/hc-web-client/dist/index.js';
+import { connect } from '@holochain/hc-web-client';
 import { holochainMiddleware } from '@holochain/hc-redux-middleware';
 
 import { DocumentsState, documentsReducer } from './documents/state/reducer';

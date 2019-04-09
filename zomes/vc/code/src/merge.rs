@@ -2,10 +2,7 @@ use crate::commit::Commit;
 use crate::object::{Link, Object};
 use hdk::{
   error::{ZomeApiError, ZomeApiResult},
-  holochain_core_types::{
-    cas::content::{Address, Content},
-    entry::Entry,
-  },
+  holochain_core_types::cas::content::Address,
 };
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};

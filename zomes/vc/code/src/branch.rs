@@ -3,7 +3,6 @@ use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::{
-    validation::{EntryValidationData},
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },

@@ -12,9 +12,7 @@ extern crate holochain_core_types_derive;
 
 use hdk::{
   error::ZomeApiResult,
-  holochain_core_types::{
-    cas::content::Address, entry::Entry, error::HolochainError, json::JsonString,
-  },
+  holochain_core_types::{cas::content::Address, error::HolochainError, json::JsonString},
 };
 use holochain_wasm_utils::api_serialization::{
   get_entry::GetEntryResult, get_links::GetLinksResult,
@@ -120,7 +118,7 @@ define_zome! {
       outputs: |result: ZomeApiResult<GetEntryResult>|,
       handler: commit::handle_get_commit_content
     }
-    
+
     create_context_and_commit: {
       inputs: |name: String, message: String, content: object::Object|,
       outputs: |result: ZomeApiResult<context::CreatedCommitResponse>|,
@@ -138,8 +136,8 @@ define_zome! {
 
   traits: {
     hc_public [
-      create_context, get_created_contexts, get_all_contexts, get_context_info, get_context_history, 
-      create_branch, get_context_branches, get_branch_info, get_branch_head, create_commit, 
+      create_context, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
+      create_branch, get_context_branches, get_branch_info, get_branch_head, create_commit,
       get_commit_info, get_commit_content, merge_branches, create_context_and_commit, get_entry
     ]
   }
