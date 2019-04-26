@@ -1,6 +1,6 @@
 {
-  "name": "Holochain Version Control",
-  "description": "Git version control for any Holochain app",
+  "name": "_prtcl",
+  "description": "Implementation of the _prtcl as a Holochain zome",
   "authors": [
     {
       "identifier": "Guillem Cordoba <guillem.cordoba@gmail.com>",

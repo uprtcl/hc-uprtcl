@@ -32,7 +32,7 @@ impl Context {
 pub fn definition() -> ValidatingEntryType {
   entry!(
     name: "context",
-    description: "a context containing branches",
+    description: "a context containing different perspectives",
     sharing: Sharing::Public,
 
     validation_package: || {
@@ -65,8 +65,8 @@ pub fn definition() -> ValidatingEntryType {
         }
       ),
       to!(
-        "branch",
-        tag: "active_branches",
+        "perspective",
+        tag: "perspectives",
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
@@ -86,10 +86,10 @@ pub fn definition() -> ValidatingEntryType {
 pub fn handle_create_context(name: String) -> ZomeApiResult<Address> {
   let context_address = create_context_entry(name)?;
 
-  // Create main starting branch and link it to the newly created context
-  let branch_address =
-    crate::branch::create_new_empty_branch(&context_address, String::from("master"))?;
-  link_branch_to_context(&context_address, &branch_address)?;
+  // Create main starting perspective and link it to the newly created context
+  let perspective_address =
+    crate::perspective::create_new_empty_perspective(&context_address, String::from("master"))?;
+  link_perspective_to_context(&context_address, &perspective_address)?;
 
   Ok(context_address)
 }
@@ -120,37 +120,37 @@ pub fn handle_get_context_info(context_address: Address) -> ZomeApiResult<GetEnt
 }
 
 /**
- * Creates a new branch in the given context with the head pointing to the given commit
+ * Creates a new perspective in the given context with the head pointing to the given commit
  */
-pub fn handle_create_branch_in_context(
+pub fn handle_create_perspective_in_context(
   commit_address: Address,
   name: String,
 ) -> ZomeApiResult<Address> {
   let context_address = crate::commit::get_context_address(&commit_address)?;
 
-  let branch_address = crate::branch::create_new_branch(&context_address, &commit_address, name)?;
+  let perspective_address = crate::perspective::create_new_perspective(&context_address, &commit_address, name)?;
 
-  link_branch_to_context(&context_address, &branch_address)?;
+  link_perspective_to_context(&context_address, &perspective_address)?;
 
-  Ok(branch_address)
+  Ok(perspective_address)
 }
 
 /**
- * Returns the branches of the context
+ * Returns the perspectives of the context
  */
-pub fn handle_get_context_branches(context_address: Address) -> ZomeApiResult<GetLinksResult> {
-  hdk::get_links(&context_address, "active_branches")
+pub fn handle_get_context_perspectives(context_address: Address) -> ZomeApiResult<GetLinksResult> {
+  hdk::get_links(&context_address, "perspectives")
 }
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson)]
 pub struct CreatedCommitResponse {
   context_address: Address,
-  branch_address: Address,
+  perspective_address: Address,
   commit_address: Address,
 }
 
 /**
- * Creates a context, a branch and a commit and return the addresses
+ * Creates a context, a perspective and a commit and return the addresses
  */
 pub fn handle_create_context_and_commit(
   name: String,
@@ -159,33 +159,33 @@ pub fn handle_create_context_and_commit(
 ) -> ZomeApiResult<CreatedCommitResponse> {
   let context_address = create_context_entry(name)?;
 
-  // Create main starting branch and link it to the newly created context
-  let branch_address =
-    crate::branch::create_new_empty_branch(&context_address, String::from("master"))?;
-  link_branch_to_context(&context_address, &branch_address)?;
+  // Create main starting perspective and link it to the newly created context
+  let perspective_address =
+    crate::perspective::create_new_empty_perspective(&context_address, String::from("master"))?;
+  link_perspective_to_context(&context_address, &perspective_address)?;
 
   let commit_address =
-    crate::branch::handle_create_commit(branch_address.clone(), message, content)?;
+    crate::perspective::handle_create_commit(perspective_address.clone(), message, content)?;
 
   Ok(CreatedCommitResponse {
     context_address: context_address,
-    branch_address: branch_address,
+    perspective_address: perspective_address,
     commit_address: commit_address,
   })
 }
 
 /**
- * Returns the commit history from all the branches from the given context
+ * Returns the commit history from all the perspectives from the given context
  */
 pub fn handle_get_context_history(context_address: Address) -> ZomeApiResult<Vec<GetEntryResult>> {
-  let context_branches = handle_get_context_branches(context_address)?;
+  let context_perspectives = handle_get_context_perspectives(context_address)?;
   Ok(
-    context_branches
+    context_perspectives
       .addresses()
       .into_iter()
-      .flat_map(|branch_address| {
-        let branch_history = crate::branch::get_branch_history(branch_address.to_owned()).unwrap();
-        branch_history.into_iter()
+      .flat_map(|perspective_address| {
+        let perspective_history = crate::perspective::get_perspective_history(perspective_address.to_owned()).unwrap();
+        perspective_history.into_iter()
       })
       .collect(),
   )
@@ -212,11 +212,11 @@ pub fn create_context_entry(name: String) -> ZomeApiResult<Address> {
 }
 
 /**
- * Links the given branch to the given repository as an active branch
+ * Links the given perspective to the given context
  */
-pub fn link_branch_to_context(
+pub fn link_perspective_to_context(
   context_address: &Address,
-  branch_address: &Address,
+  perspective_address: &Address,
 ) -> ZomeApiResult<()> {
-  hdk::link_entries(context_address, branch_address, "active_branches")
+  hdk::link_entries(context_address, perspective_address, "perspectives")
 }

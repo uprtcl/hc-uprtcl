@@ -20,7 +20,7 @@ use holochain_wasm_utils::api_serialization::{
 
 // see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
 
-pub mod branch;
+pub mod perspective;
 pub mod commit;
 pub mod context;
 pub mod merge;
@@ -31,7 +31,7 @@ define_zome! {
   entries: [
     object::definition(),
     commit::definition(),
-    branch::definition(),
+    perspective::definition(),
     context::definition()
   ]
 
@@ -69,42 +69,42 @@ define_zome! {
       handler: context::handle_get_context_history
     }
 
-    // Branches
-    create_branch: {
+    // Perspectives
+    create_perspective: {
       inputs: |commit_address: Address, name: String|,
       outputs: |result: ZomeApiResult<Address>|,
-      handler: context::handle_create_branch_in_context
+      handler: context::handle_create_perspective_in_context
     }
 
-    get_context_branches: {
+    get_context_perspectives: {
       inputs: |context_address: Address|,
       outputs: |result: ZomeApiResult<GetLinksResult>|,
-      handler: context::handle_get_context_branches
+      handler: context::handle_get_context_perspectives
     }
 
-    get_branch_info: {
-      inputs: |branch_address: Address|,
+    get_perspective_info: {
+      inputs: |perspective_address: Address|,
       outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: branch::handle_get_branch_info
+      handler: perspective::handle_get_perspective_info
     }
 
-    get_branch_head: {
-      inputs: |branch_address: Address|,
+    get_perspective_head: {
+      inputs: |perspective_address: Address|,
       outputs: |result: ZomeApiResult<Address>|,
-      handler: branch::handle_get_branch_head
+      handler: perspective::handle_get_perspective_head
     }
 
-    merge_branches: {
-      inputs: |from_branch_address: Address, to_branch_address: Address|,
+    merge_perspectives: {
+      inputs: |from_perspective_address: Address, to_perspective_address: Address|,
       outputs: |result: ZomeApiResult<Address>|,
-      handler: branch::handle_merge_branches
+      handler: perspective::handle_merge_perspectives
     }
 
     // Commits
     create_commit: {
-      inputs: |branch_address: Address, message: String, content: object::Object|,
+      inputs: |perspective_address: Address, message: String, content: object::Object|,
       outputs: |result: ZomeApiResult<Address>|,
-      handler: branch::handle_create_commit
+      handler: perspective::handle_create_commit
     }
 
     get_commit_info: {
@@ -137,8 +137,8 @@ define_zome! {
   traits: {
     hc_public [
       create_context, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
-      create_branch, get_context_branches, get_branch_info, get_branch_head, create_commit,
-      get_commit_info, get_commit_content, merge_branches, create_context_and_commit, get_entry
+      create_perspective, get_context_perspectives, get_perspective_info, get_perspective_head, create_commit,
+      get_commit_info, get_commit_content, merge_perspectives, create_context_and_commit, get_entry
     ]
   }
 

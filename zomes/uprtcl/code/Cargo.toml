@@ -1,5 +1,5 @@
 [package]
-name = "vc"
+name = "uprtcl"
 version = "0.1.0"
 authors = ["Guillem Cordoba <guillem.cordoba@gmail.com>"]
 edition = "2018"
