@@ -61,8 +61,8 @@ fn build_merge_content(
 ) -> ZomeApiResult<Content> {
   #[derive(Eq, PartialEq, Serialize, Deserialize, Debug)]
   struct MergeLink {
-    position: usize,
-    address: Address,
+    index: usize,
+    link: Link,
   }
 
   let mut from_links: HashMap<String, MergeLink> = HashMap::new();
@@ -73,8 +73,8 @@ fn build_merge_content(
   for i in 0..from_content.get_links().len() {
     let link: &Link = from_content.get_links().get(i).unwrap();
     let merge_link = MergeLink {
-      position: i,
-      address: link.address.clone(),
+      index: i,
+      link: link.clone(),
     };
     from_links.insert(link.name.clone(), merge_link);
   }
@@ -82,8 +82,8 @@ fn build_merge_content(
   for i in 0..to_content.get_links().len() {
     let link: &Link = to_content.get_links().get(i).unwrap();
     let merge_link = MergeLink {
-      position: i,
-      address: link.address.clone(),
+      index: i,
+      link: link.clone(),
     };
     to_links.insert(link.name.clone(), merge_link);
   }
@@ -91,8 +91,8 @@ fn build_merge_content(
   for i in 0..ancestor_content.get_links().len() {
     let link: &Link = ancestor_content.get_links().get(i).unwrap();
     let merge_link = MergeLink {
-      position: i,
-      address: link.address.clone(),
+      index: i,
+      link: link.clone(),
     };
     ancestor_links.insert(link.name.clone(), merge_link);
   }
@@ -107,7 +107,7 @@ fn build_merge_content(
     .cloned()
     .collect();
 
-  let mut merged_contents: HashMap<String, &MergeLink> = HashMap::new();
+  let mut merged_links: HashMap<String, &MergeLink> = HashMap::new();
 
   // For each key, call get_merge_result and include the result in the merge resulting contents
   for key in merge_keys.into_iter() {
@@ -116,23 +116,24 @@ fn build_merge_content(
       to_links.get(&key),
       ancestor_links.get(&key),
     )? {
-      merged_contents.insert(key, result);
+      merged_links.insert(key, result);
     }
   }
 
-  let mut keys: Vec<String> = merged_contents.keys().cloned().collect::<Vec<String>>();
+  // Sort keys by merged links index
+  let mut keys: Vec<String> = merged_links.keys().cloned().collect::<Vec<String>>();
   keys.sort_by(|a, b| {
-    merged_contents
+    merged_links
       .get(a)
       .unwrap()
-      .position
-      .cmp(&merged_contents.get(b).unwrap().position)
+      .index
+      .cmp(&merged_links.get(b).unwrap().index)
   });
 
-  let mut merged_links: Vec<Link> = Vec::new();
+  let mut merged_links_list: Vec<Link> = Vec::new();
   for key in keys {
-    let link = Link::new(&key, &merged_contents.get(&key).unwrap().address);
-    merged_links.push(link);
+    let link: Link = merged_links.get(&key).unwrap().link.clone();
+    merged_links_list.push(link);
   }
 
   let merged_data = get_merge_result(
@@ -140,7 +141,7 @@ fn build_merge_content(
     to_content.get_data(),
     ancestor_content.get_data(),
   )?;
-  Ok(Content::new(merged_data, merged_links))
+  Ok(Content::new(merged_data, merged_links_list))
 }
 
 /**

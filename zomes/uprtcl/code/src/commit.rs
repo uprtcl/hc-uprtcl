@@ -12,27 +12,26 @@ use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Commit {
-  context_address: Address,
-
-  author_address: Address,
+  creator: Address,
   message: String,
+  nonce: i32,
 
+  // Hard links
   content_address: Address,
   parent_commits_addresses: Vec<Address>,
 }
 
 impl Commit {
   fn new(
-    context_address: &Address,
-    author_address: &Address,
+    creator: &Address,
     message: &str,
     content_address: &Address,
     parent_commits_addresses: &Vec<Address>,
   ) -> Commit {
     Commit {
-      context_address: context_address.to_owned(),
-      author_address: author_address.to_owned(),
+      creator: creator.to_owned(),
       message: message.to_owned(),
+      nonce: 1,
       content_address: content_address.to_owned(),
       parent_commits_addresses: parent_commits_addresses.to_owned(),
     }
@@ -80,17 +79,6 @@ pub fn handle_get_commit_info(commit_address: Address) -> ZomeApiResult<GetEntry
 pub fn handle_get_commit_content(commit_address: Address) -> ZomeApiResult<GetEntryResult> {
   let commit = Commit::try_from(crate::utils::get_entry_content(&commit_address)?)?;
   hdk::get_entry_result(&(commit.content_address), GetEntryOptions::default())
-  /*
-  Useful when full commit contents should be retrieved, to iterate deep into the tree
-
-  if let Some(Entry::App(_, content_entry)) = hdk::get_entry(&commit.object_address)? {
-    match Blob::try_from(content_entry) {
-      Ok(blob) => Ok(Some(CommitContent::ContentBlob(blob))) as ZomeApiResult<Option<CommitContent>>,
-      Err(_) => Ok(Some(CommitContent::ContentTree(Tree::try_from(
-        content_entry,
-      )?))),
-    };
-  } */
 }
 
 /** Helper functions */
@@ -99,32 +87,16 @@ pub fn handle_get_commit_content(commit_address: Address) -> ZomeApiResult<GetEn
  * Creates a new commit in the given context_address with the given properties
  */
 pub fn create_commit(
-  context_address: Address,
   message: String,
   content_address: Address,
   parent_commits: &Vec<Address>,
 ) -> ZomeApiResult<Address> {
   let commit_entry = Entry::App(
     "commit".into(),
-    Commit::new(
-      &context_address,
-      &AGENT_ADDRESS,
-      &message,
-      &content_address,
-      parent_commits,
-    )
-    .into(),
+    Commit::new(&AGENT_ADDRESS, &message, &content_address, parent_commits).into(),
   );
 
   hdk::commit_entry(&commit_entry)
-}
-
-/**
- * Gets the commit and returns its context address
- */
-pub fn get_context_address(commit_address: &Address) -> ZomeApiResult<Address> {
-  let commit = Commit::try_from(crate::utils::get_entry_content(commit_address)?)?;
-  Ok(commit.context_address)
 }
 
 /**
@@ -138,10 +110,8 @@ pub fn merge_commits(
 ) -> ZomeApiResult<Address> {
   let merge_object_address =
     crate::merge::merge_commits_contents(from_commit_address, to_commit_address)?;
-  let to_commit: Commit = Commit::try_from(crate::utils::get_entry_content(to_commit_address)?)?;
 
   create_commit(
-    to_commit.context_address,
     merge_commit_message,
     merge_object_address,
     &vec![from_commit_address.to_owned(), to_commit_address.to_owned()],

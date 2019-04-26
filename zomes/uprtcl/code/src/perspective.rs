@@ -6,21 +6,24 @@ use hdk::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
+  AGENT_ADDRESS,
 };
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Perspective {
-  context_address: Address,
   name: String,
+  creator: Address,
+  context_address: Address,
 }
 
 impl Perspective {
-  fn new(context_address: &Address, name: &str) -> Perspective {
+  fn new(name: &str, creator: &Address, context_address: &Address) -> Perspective {
     Perspective {
-      context_address: context_address.to_owned(),
       name: name.to_owned(),
+      creator: creator.to_owned(),
+      context_address: context_address.to_owned(),
     }
   }
 }
@@ -98,7 +101,8 @@ pub fn handle_merge_perspectives(
 ) -> ZomeApiResult<Address> {
   let from_perspective: Perspective =
     Perspective::try_from(crate::utils::get_entry_content(&from_perspective_address)?)?;
-  let to_perspective: Perspective = Perspective::try_from(crate::utils::get_entry_content(&to_perspective_address)?)?;
+  let to_perspective: Perspective =
+    Perspective::try_from(crate::utils::get_entry_content(&to_perspective_address)?)?;
 
   if from_perspective.context_address != to_perspective.context_address {
     return Err(ZomeApiError::from(String::from(
@@ -112,7 +116,10 @@ pub fn handle_merge_perspectives(
   let merged_commit_address = crate::commit::merge_commits(
     &from_commit_address,
     &to_commit_address,
-    format!("merge {} into {}", from_perspective.name, to_perspective.name),
+    format!(
+      "merge {} into {}",
+      from_perspective.name, to_perspective.name
+    ),
   )?;
 
   set_perspective_head(&to_perspective_address, &merged_commit_address)?;
@@ -125,7 +132,10 @@ pub fn handle_merge_perspectives(
 /**
  * Sets the given perspective head pointing to the given commit head
  */
-pub fn set_perspective_head(perspective_address: &Address, commit_address: &Address) -> ZomeApiResult<()> {
+pub fn set_perspective_head(
+  perspective_address: &Address,
+  commit_address: &Address,
+) -> ZomeApiResult<()> {
   let previous_head = hdk::get_links(&perspective_address, "head")?;
   if previous_head.addresses().len() != 0 {
     hdk::remove_link(
@@ -146,15 +156,10 @@ pub fn create_commit_in_perspective(
   message: String,
   content_address: Address,
 ) -> ZomeApiResult<Address> {
-  let perspective = Perspective::try_from(crate::utils::get_entry_content(&perspective_address)?)?;
   let parent_commit_address = hdk::get_links(&perspective_address, "head")?;
 
-  let commit_address = crate::commit::create_commit(
-    perspective.context_address,
-    message,
-    content_address,
-    &parent_commit_address.addresses(),
-  )?;
+  let commit_address =
+    crate::commit::create_commit(message, content_address, &parent_commit_address.addresses())?;
 
   set_perspective_head(&perspective_address, &commit_address)?;
 
@@ -164,8 +169,14 @@ pub fn create_commit_in_perspective(
 /**
  * Create new perspective with the given name
  */
-pub fn create_new_empty_perspective(context_address: &Address, name: String) -> ZomeApiResult<Address> {
-  let perspective_entry = Entry::App("perspective".into(), Perspective::new(context_address, &name).into());
+pub fn create_new_empty_perspective(
+  name: String,
+  context_address: &Address,
+) -> ZomeApiResult<Address> {
+  let perspective_entry = Entry::App(
+    "perspective".into(),
+    Perspective::new(&name, &AGENT_ADDRESS, context_address).into(),
+  );
   hdk::commit_entry(&perspective_entry)
 }
 
@@ -177,7 +188,7 @@ pub fn create_new_perspective(
   commit_address: &Address,
   name: String,
 ) -> ZomeApiResult<Address> {
-  let perspective_address = create_new_empty_perspective(context_address, name)?;
+  let perspective_address = create_new_empty_perspective(name, context_address)?;
 
   hdk::link_entries(&perspective_address, commit_address, "head")?;
 

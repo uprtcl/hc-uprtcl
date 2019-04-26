@@ -12,13 +12,17 @@ use std::convert::TryFrom;
 #[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Link {
   pub name: String,
+  pub position: JsonString,
+  pub writable: bool,
   pub address: Address,
 }
 
 impl Link {
-  pub fn new(name: &String, address: &Address) -> Link {
+  pub fn new(name: &String, position: &JsonString, writable: bool, address: &Address) -> Link {
     Link {
       name: name.clone(),
+      position: position.clone(),
+      writable: writable,
       address: address.clone(),
     }
   }
@@ -87,20 +91,3 @@ pub fn store_content(content: Content) -> ZomeApiResult<Address> {
   let content_entry = Entry::App("content".into(), content.into());
   crate::utils::store_entry_if_new(content_entry)
 }
-
-/*
-  Stores the contents of the commit in the DHT
-  pub fn store_content_object(content: ContentObject) -> ZomeApiResult<Address> {
-  let mut links: HashMap<String, Address> = HashMap::new();
-
-  for (key, links_object) in content.links.into_iter() {
-    links.insert(key, store_content_object(links_object)?);
-  }
-
-  let object_entry = Entry::App(
-    "object".into(),
-    Object::new(content.data, links).into(),
-  );
-  crate::utils::store_entry_if_new(object_entry)
-}
- */

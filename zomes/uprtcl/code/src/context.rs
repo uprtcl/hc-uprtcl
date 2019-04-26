@@ -14,17 +14,17 @@ use holochain_wasm_utils::api_serialization::{
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Context {
-  name: String,
-  date_created: String,
-  created_by: Address,
+  creator: Address,
+  timestamp: String,
+  nonce: u32,
 }
 
 impl Context {
-  fn new(name: &str, date_created: &str, created_by: &Address) -> Context {
+  fn new(creator: &Address, timestamp: &str) -> Context {
     Context {
-      name: name.to_owned(),
-      date_created: date_created.to_owned(),
-      created_by: created_by.to_owned(),
+      creator: creator.to_owned(),
+      timestamp: timestamp.to_owned(),
+      nonce: 1,
     }
   }
 }
@@ -84,11 +84,11 @@ pub fn definition() -> ValidatingEntryType {
  * Create a new context with the given name, passing the author and the current time
  */
 pub fn handle_create_context(name: String) -> ZomeApiResult<Address> {
-  let context_address = create_context_entry(name)?;
+  let context_address = create_context_entry()?;
 
   // Create main starting perspective and link it to the newly created context
   let perspective_address =
-    crate::perspective::create_new_empty_perspective(&context_address, String::from("master"))?;
+    crate::perspective::create_new_empty_perspective(name, &context_address)?;
   link_perspective_to_context(&context_address, &perspective_address)?;
 
   Ok(context_address)
@@ -123,12 +123,12 @@ pub fn handle_get_context_info(context_address: Address) -> ZomeApiResult<GetEnt
  * Creates a new perspective in the given context with the head pointing to the given commit
  */
 pub fn handle_create_perspective_in_context(
+  context_address: Address,
   commit_address: Address,
   name: String,
 ) -> ZomeApiResult<Address> {
-  let context_address = crate::commit::get_context_address(&commit_address)?;
-
-  let perspective_address = crate::perspective::create_new_perspective(&context_address, &commit_address, name)?;
+  let perspective_address =
+    crate::perspective::create_new_perspective(&context_address, &commit_address, name)?;
 
   link_perspective_to_context(&context_address, &perspective_address)?;
 
@@ -157,11 +157,11 @@ pub fn handle_create_context_and_commit(
   message: String,
   content: crate::content::Content,
 ) -> ZomeApiResult<CreatedCommitResponse> {
-  let context_address = create_context_entry(name)?;
+  let context_address = create_context_entry()?;
 
   // Create main starting perspective and link it to the newly created context
   let perspective_address =
-    crate::perspective::create_new_empty_perspective(&context_address, String::from("master"))?;
+    crate::perspective::create_new_empty_perspective(name, &context_address)?;
   link_perspective_to_context(&context_address, &perspective_address)?;
 
   let commit_address =
@@ -184,7 +184,8 @@ pub fn handle_get_context_history(context_address: Address) -> ZomeApiResult<Vec
       .addresses()
       .into_iter()
       .flat_map(|perspective_address| {
-        let perspective_history = crate::perspective::get_perspective_history(perspective_address.to_owned()).unwrap();
+        let perspective_history =
+          crate::perspective::get_perspective_history(perspective_address.to_owned()).unwrap();
         perspective_history.into_iter()
       })
       .collect(),
@@ -193,12 +194,9 @@ pub fn handle_get_context_history(context_address: Address) -> ZomeApiResult<Vec
 
 /** Helper functions */
 
-pub fn create_context_entry(name: String) -> ZomeApiResult<Address> {
+pub fn create_context_entry() -> ZomeApiResult<Address> {
   // Create context
-  let context_entry = Entry::App(
-    "context".into(),
-    Context::new(&name, "now", &AGENT_ADDRESS).into(),
-  );
+  let context_entry = Entry::App("context".into(), Context::new(&AGENT_ADDRESS, "now").into());
   let context_address = hdk::commit_entry(&context_entry)?;
 
   hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts")?;

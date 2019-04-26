@@ -20,11 +20,11 @@ use holochain_wasm_utils::api_serialization::{
 
 // see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
 
-pub mod perspective;
 pub mod commit;
+pub mod content;
 pub mod context;
 pub mod merge;
-pub mod content;
+pub mod perspective;
 pub mod utils;
 
 define_zome! {
@@ -71,7 +71,7 @@ define_zome! {
 
     // Perspectives
     create_perspective: {
-      inputs: |commit_address: Address, name: String|,
+      inputs: |context_address: Address, commit_address: Address, name: String|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: context::handle_create_perspective_in_context
     }
