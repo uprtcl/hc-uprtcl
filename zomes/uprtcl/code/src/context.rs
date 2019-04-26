@@ -155,7 +155,7 @@ pub struct CreatedCommitResponse {
 pub fn handle_create_context_and_commit(
   name: String,
   message: String,
-  content: crate::object::Object,
+  content: crate::content::Content,
 ) -> ZomeApiResult<CreatedCommitResponse> {
   let context_address = create_context_entry(name)?;
 

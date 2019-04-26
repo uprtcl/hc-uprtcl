@@ -24,12 +24,12 @@ pub mod perspective;
 pub mod commit;
 pub mod context;
 pub mod merge;
-pub mod object;
+pub mod content;
 pub mod utils;
 
 define_zome! {
   entries: [
-    object::definition(),
+    content::definition(),
     commit::definition(),
     perspective::definition(),
     context::definition()
@@ -102,7 +102,7 @@ define_zome! {
 
     // Commits
     create_commit: {
-      inputs: |perspective_address: Address, message: String, content: object::Object|,
+      inputs: |perspective_address: Address, message: String, content: content::Content|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: perspective::handle_create_commit
     }
@@ -120,16 +120,16 @@ define_zome! {
     }
 
     create_context_and_commit: {
-      inputs: |name: String, message: String, content: object::Object|,
+      inputs: |name: String, message: String, content: content::Content|,
       outputs: |result: ZomeApiResult<context::CreatedCommitResponse>|,
       handler: context::handle_create_context_and_commit
     }
 
-    // Objects
+    // Content
     get_entry: {
       inputs: |address: Address|,
       outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: object::handle_get_entry
+      handler: content::handle_get_entry
     }
 
   ]

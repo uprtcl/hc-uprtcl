@@ -1,5 +1,5 @@
 use crate::commit::Commit;
-use crate::object::{Link, Object};
+use crate::content::{Content, Link};
 use hdk::{
   error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::cas::content::Address,
@@ -20,8 +20,8 @@ pub fn merge_commits_contents(
     Commit::try_from(crate::utils::get_entry_content(from_commit_address)?)?;
   let to_commit: Commit = Commit::try_from(crate::utils::get_entry_content(to_commit_address)?)?;
 
-  if from_commit.get_object_address() == to_commit.get_object_address() {
-    return Ok(to_commit.get_object_address().to_owned());
+  if from_commit.get_content_address() == to_commit.get_content_address() {
+    return Ok(to_commit.get_content_address().to_owned());
   }
 
   // Else, compute most recent ancestor and try to merge the contents
@@ -31,9 +31,9 @@ pub fn merge_commits_contents(
   let ancestor_commit: Commit =
     Commit::try_from(crate::utils::get_entry_content(&ancestor_commit_address)?)?;
 
-  let ancestor_content = Object::from(ancestor_commit.get_object_address())?;
-  let from_content = Object::from(from_commit.get_object_address())?;
-  let to_content = Object::from(to_commit.get_object_address())?;
+  let ancestor_content = Content::from(ancestor_commit.get_content_address())?;
+  let from_content = Content::from(from_commit.get_content_address())?;
+  let to_content = Content::from(to_commit.get_content_address())?;
 
   merge_content(from_content, to_content, ancestor_content)
 }
@@ -42,23 +42,23 @@ pub fn merge_commits_contents(
  * Merges the given contents, stores the result and returns its address
  */
 fn merge_content(
-  from_content: Object,
-  to_content: Object,
-  ancestor_content: Object,
+  from_content: Content,
+  to_content: Content,
+  ancestor_content: Content,
 ) -> ZomeApiResult<Address> {
   let merge_result = build_merge_content(from_content, to_content, ancestor_content)?;
 
-  crate::object::store_object(merge_result)
+  crate::content::store_content(merge_result)
 }
 
 /**
  * Builds the merged content from the given contents
  */
 fn build_merge_content(
-  from_content: Object,
-  to_content: Object,
-  ancestor_content: Object,
-) -> ZomeApiResult<Object> {
+  from_content: Content,
+  to_content: Content,
+  ancestor_content: Content,
+) -> ZomeApiResult<Content> {
   #[derive(Eq, PartialEq, Serialize, Deserialize, Debug)]
   struct MergeLink {
     position: usize,
@@ -140,7 +140,7 @@ fn build_merge_content(
     to_content.get_data(),
     ancestor_content.get_data(),
   )?;
-  Ok(Object::new(merged_data, merged_links))
+  Ok(Content::new(merged_data, merged_links))
 }
 
 /**

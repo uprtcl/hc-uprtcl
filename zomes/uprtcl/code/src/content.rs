@@ -25,22 +25,22 @@ impl Link {
 }
 
 #[derive(Eq, PartialEq, Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct Object {
+pub struct Content {
   data: Option<Address>,
   links: Vec<Link>,
 }
 
-impl Object {
-  pub fn new(data: Option<Address>, links: Vec<Link>) -> Object {
-    Object {
+impl Content {
+  pub fn new(data: Option<Address>, links: Vec<Link>) -> Content {
+    Content {
       data: data,
       links: links,
     }
   }
 
-  pub fn from(object_address: &Address) -> ZomeApiResult<Object> {
-    match Object::try_from(crate::utils::get_entry_content(object_address)?) {
-      Ok(object) => Ok(object),
+  pub fn from(content_address: &Address) -> ZomeApiResult<Content> {
+    match Content::try_from(crate::utils::get_entry_content(content_address)?) {
+      Ok(content) => Ok(content),
       Err(err) => Err(ZomeApiError::from(err)),
     }
   }
@@ -56,15 +56,15 @@ impl Object {
 
 pub fn definition() -> ValidatingEntryType {
   entry!(
-    name: "object",
-    description: "an abstract object",
+    name: "content",
+    description: "an abstract content",
     sharing: Sharing::Public,
 
     validation_package: || {
       hdk::ValidationPackageDefinition::ChainFull
     },
 
-    validation: |_validation_data: hdk::EntryValidationData<Object>| {
+    validation: |_validation_data: hdk::EntryValidationData<Content>| {
       Ok(())
     },
 
@@ -83,9 +83,9 @@ pub fn handle_get_entry(address: Address) -> ZomeApiResult<GetEntryResult> {
 /**
  * Stores the contents of the given tree in the DHT, if it didn't exist before
  */
-pub fn store_object(object: Object) -> ZomeApiResult<Address> {
-  let object_entry = Entry::App("object".into(), object.into());
-  crate::utils::store_entry_if_new(object_entry)
+pub fn store_content(content: Content) -> ZomeApiResult<Address> {
+  let content_entry = Entry::App("content".into(), content.into());
+  crate::utils::store_entry_if_new(content_entry)
 }
 
 /*

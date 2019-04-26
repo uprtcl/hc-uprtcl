@@ -16,8 +16,8 @@ pub struct Commit {
 
   author_address: Address,
   message: String,
-  // Content can point to a tree or a blob
-  object_address: Address,
+
+  content_address: Address,
   parent_commits_addresses: Vec<Address>,
 }
 
@@ -26,14 +26,14 @@ impl Commit {
     context_address: &Address,
     author_address: &Address,
     message: &str,
-    object_address: &Address,
+    content_address: &Address,
     parent_commits_addresses: &Vec<Address>,
   ) -> Commit {
     Commit {
       context_address: context_address.to_owned(),
       author_address: author_address.to_owned(),
       message: message.to_owned(),
-      object_address: object_address.to_owned(),
+      content_address: content_address.to_owned(),
       parent_commits_addresses: parent_commits_addresses.to_owned(),
     }
   }
@@ -42,15 +42,15 @@ impl Commit {
     self.parent_commits_addresses
   }
 
-  pub fn get_object_address(&self) -> &Address {
-    &(self.object_address)
+  pub fn get_content_address(&self) -> &Address {
+    &(self.content_address)
   }
 }
 
 pub fn definition() -> ValidatingEntryType {
   entry!(
     name: "commit",
-    description: "a commit object",
+    description: "a commit entry",
     sharing: Sharing::Public,
 
     validation_package: || {
@@ -79,7 +79,7 @@ pub fn handle_get_commit_info(commit_address: Address) -> ZomeApiResult<GetEntry
  */
 pub fn handle_get_commit_content(commit_address: Address) -> ZomeApiResult<GetEntryResult> {
   let commit = Commit::try_from(crate::utils::get_entry_content(&commit_address)?)?;
-  hdk::get_entry_result(&(commit.object_address), GetEntryOptions::default())
+  hdk::get_entry_result(&(commit.content_address), GetEntryOptions::default())
   /*
   Useful when full commit contents should be retrieved, to iterate deep into the tree
 
@@ -101,7 +101,7 @@ pub fn handle_get_commit_content(commit_address: Address) -> ZomeApiResult<GetEn
 pub fn create_commit(
   context_address: Address,
   message: String,
-  object_address: Address,
+  content_address: Address,
   parent_commits: &Vec<Address>,
 ) -> ZomeApiResult<Address> {
   let commit_entry = Entry::App(
@@ -110,7 +110,7 @@ pub fn create_commit(
       &context_address,
       &AGENT_ADDRESS,
       &message,
-      &object_address,
+      &content_address,
       parent_commits,
     )
     .into(),

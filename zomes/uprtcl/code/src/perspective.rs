@@ -1,4 +1,4 @@
-use crate::object::Object;
+use crate::content::Content;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},
@@ -28,7 +28,7 @@ impl Perspective {
 pub fn definition() -> ValidatingEntryType {
   entry!(
     name: "perspective",
-    description: "perspective pointing to a commit object",
+    description: "perspective pointing to a commit",
     sharing: Sharing::Public,
 
     validation_package: || {
@@ -69,10 +69,10 @@ pub fn handle_get_perspective_info(perspective_address: Address) -> ZomeApiResul
 pub fn handle_create_commit(
   perspective_address: Address,
   message: String,
-  content: Object,
+  content: Content,
 ) -> ZomeApiResult<Address> {
-  let object_address = crate::object::store_object(content)?;
-  create_commit_in_perspective(perspective_address, message, object_address)
+  let content_address = crate::content::store_content(content)?;
+  create_commit_in_perspective(perspective_address, message, content_address)
 }
 
 /**
