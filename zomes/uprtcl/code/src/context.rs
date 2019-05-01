@@ -1,6 +1,6 @@
 use hdk::{
   entry_definition::ValidatingEntryType,
-  error::ZomeApiResult,
+  error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
@@ -16,15 +16,13 @@ use holochain_wasm_utils::api_serialization::{
 pub struct Context {
   creator: Address,
   timestamp: String,
-  nonce: u32,
 }
 
 impl Context {
-  fn new(creator: &Address, timestamp: &str) -> Context {
+  fn new() -> Context {
     Context {
-      creator: creator.to_owned(),
-      timestamp: timestamp.to_owned(),
-      nonce: 1,
+      creator: AGENT_ADDRESS.to_owned(),
+      timestamp: String::from("now"),
     }
   }
 }
@@ -44,6 +42,16 @@ pub fn definition() -> ValidatingEntryType {
     },
 
     links: [
+      from!(
+        "%agent_id",
+        tag: "root",
+        validation_package: || {
+          hdk::ValidationPackageDefinition::ChainFull
+        },
+        validation: |_validation_data: hdk::LinkValidationData | {
+          Ok(())
+        }
+      ),
       from!(
         "%agent_id",
         tag: "created_contexts",
@@ -94,6 +102,29 @@ pub fn handle_create_context(name: String) -> ZomeApiResult<Address> {
   Ok(context_address)
 }
 
+/**
+ * Returns the root context of the agent, created at genesis time
+ */
+pub fn handle_get_root_context() -> ZomeApiResult<GetEntryResult> {
+  let links = hdk::get_links_result(
+    &AGENT_ADDRESS,
+    "root",
+    GetLinksOptions::default(),
+    GetEntryOptions::default(),
+  )?;
+
+  match links.len() {
+    1 => links[0].clone(),
+    _ => Err(ZomeApiError::from(format!(
+      "agent has {} root contexts",
+      links.len()
+    ))),
+  }
+}
+
+/**
+ * Returns a list with all the contexts created by the agent
+ */
 pub fn handle_get_created_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
   hdk::get_links_result(
     &AGENT_ADDRESS,
@@ -103,6 +134,9 @@ pub fn handle_get_created_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntry
   )
 }
 
+/**
+ * Returns a list with all the contexts created in the app
+ */
 pub fn handle_get_all_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
   hdk::get_links_result(
     &AGENT_ADDRESS, // TODO: change for DNA address
@@ -194,9 +228,23 @@ pub fn handle_get_context_history(context_address: Address) -> ZomeApiResult<Vec
 
 /** Helper functions */
 
+/**
+ * Creates the root context for the agent
+ * Only to be called at genesis time
+ */
+pub fn create_root_context() -> ZomeApiResult<Address> {
+  let context_address = handle_create_context(String::from("root"))?;
+  hdk::link_entries(&AGENT_ADDRESS, &context_address, "root")?;
+
+  Ok(context_address)
+}
+
+/**
+ * Helper to create and commit an empty context empty, with the appropiate links
+ */
 pub fn create_context_entry() -> ZomeApiResult<Address> {
   // Create context
-  let context_entry = Entry::App("context".into(), Context::new(&AGENT_ADDRESS, "now").into());
+  let context_entry = Entry::App("context".into(), Context::new().into());
   let context_address = hdk::commit_entry(&context_entry)?;
 
   hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts")?;
@@ -215,6 +263,6 @@ pub fn create_context_entry() -> ZomeApiResult<Address> {
 pub fn link_perspective_to_context(
   context_address: &Address,
   perspective_address: &Address,
-) -> ZomeApiResult<()> {
+) -> ZomeApiResult<Address> {
   hdk::link_entries(context_address, perspective_address, "perspectives")
 }

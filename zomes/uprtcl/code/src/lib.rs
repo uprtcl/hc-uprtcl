@@ -35,7 +35,12 @@ define_zome! {
     context::definition()
   ]
 
-  genesis: || { Ok(()) }
+  genesis: || {
+    {
+      context::create_root_context()?;
+      Ok(())
+    }
+  }
 
   functions: [
     // Contexts
@@ -43,6 +48,12 @@ define_zome! {
       inputs: |name: String|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: context::handle_create_context
+    }
+
+    get_root_context: {
+      inputs: | |,
+      outputs: |result: ZomeApiResult<GetEntryResult>|,
+      handler: context::handle_get_root_context
     }
 
     get_created_contexts: {
@@ -136,7 +147,7 @@ define_zome! {
 
   traits: {
     hc_public [
-      create_context, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
+      create_context, get_root_context, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
       create_perspective, get_context_perspectives, get_perspective_info, get_perspective_head, create_commit,
       get_commit_info, get_commit_content, merge_perspectives, create_context_and_commit, get_entry
     ]

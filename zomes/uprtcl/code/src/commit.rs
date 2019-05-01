@@ -118,6 +118,9 @@ pub fn merge_commits(
   )
 }
 
+/**
+ * Computes the commit history from the given commit
+ */
 pub fn get_commit_history(commit_address: Address) -> ZomeApiResult<Vec<GetEntryResult>> {
   let commit: Commit = Commit::try_from(crate::utils::get_entry_content(&commit_address)?)?;
 

@@ -1,69 +1,77 @@
 /** Basic functions which call the zome */
 
-const createCommit = function(branchAddress, message, commitContent) {
+const getRootContext = function() {
+  return async caller => await caller.call('uprtcl', 'get_root_context', {});
+};
+
+const createCommit = function(perspectiveAddress, message, commitContent) {
   return async caller =>
-    await caller.callSync('vc', 'create_commit', {
-      branch_address: branchAddress,
+    await caller.callSync('uprtcl', 'create_commit', {
+      perspective_address: perspectiveAddress,
       message: message,
       content: commitContent
     });
 };
 
-const createBranch = function(commitAddress, name) {
+const createPerspective = function(contextAddress, commitAddress, name) {
   return async caller =>
-    await caller.callSync('vc', 'create_branch', {
+    await caller.callSync('uprtcl', 'create_perspective', {
+      context_address: contextAddress,
       commit_address: commitAddress,
       name: name
     });
 };
 
-const getBranchHead = function(branchAddress) {
+const getPerspectiveHead = function(perspectiveAddress) {
   return caller =>
-    caller.call('vc', 'get_branch_head', {
-      branch_address: branchAddress
+    caller.call('uprtcl', 'get_perspective_head', {
+      perspective_address: perspectiveAddress
     });
 };
 
-const createContext = function(contextName) {
+const createContext = function(perspectiveName) {
   return async caller =>
-    await caller.callSync('vc', 'create_context', {
-      name: contextName
+    await caller.callSync('uprtcl', 'create_context', {
+      name: perspectiveName
     });
 };
 
-const getContextBranches = function(contextAddress) {
+const getContextPerspectives = function(contextAddress) {
   return caller =>
-    caller.call('vc', 'get_context_branches', {
+    caller.call('uprtcl', 'get_context_perspectives', {
       context_address: contextAddress
     });
 };
 
 const getCommitInfo = function(commitAddress) {
   return caller =>
-    caller.call('vc', 'get_commit_info', {
+    caller.call('uprtcl', 'get_commit_info', {
       commit_address: commitAddress
     });
 };
 
-const getBranchInfo = function(branchAddress) {
+const getPerspectiveInfo = function(perspectiveAddress) {
   return caller =>
-    caller.call('vc', 'get_branch_info', {
-      branch_address: branchAddress
+    caller.call('uprtcl', 'get_perspective_info', {
+      perspective_address: perspectiveAddress
     });
 };
 
 const getCommitContent = function(commitAddress) {
   return caller =>
-    caller.call('vc', 'get_commit_content', {
+    caller.call('uprtcl', 'get_commit_content', {
       commit_address: commitAddress
     });
 };
 
-const mergeBranches = function(fromBranchAddress, toBranchAddress) {
+const mergePerspectives = function(
+  fromPerspectiveAddress,
+  toPerspectiveAddress
+) {
   return async caller =>
-    await caller.callSync('vc', 'merge_branches', {
-      from_branch_address: fromBranchAddress,
-      to_branch_address: toBranchAddress
+    await caller.callSync('uprtcl', 'merge_perspectives', {
+      from_perspective_address: fromPerspectiveAddress,
+      to_perspective_address: toPerspectiveAddress
     });
 };
 
@@ -73,28 +81,28 @@ const createContextAndCommit = function(contextName, message, commitContent) {
   return async caller => {
     const { Ok: contextAddress } = await createContext(contextName)(caller);
     const {
-      Ok: { addresses: branchAddresses }
-    } = getContextBranches(contextAddress)(caller);
+      Ok: { links: perspectiveAddresses }
+    } = getContextPerspectives(contextAddress)(caller);
     const { Ok: commitAddress } = await createCommit(
-      branchAddresses[0],
+      perspectiveAddresses[0].address,
       message,
       commitContent
     )(caller);
 
     return {
       contextAddress,
-      masterAddress: branchAddresses[0],
+      masterAddress: perspectiveAddresses[0].address,
       commitAddress
     };
   };
 };
 
-const createNCommits = function(branchAddress, message, commits) {
+const createNCommits = function(perspectiveAddress, message, commits) {
   return async caller => {
     var lastCommitAddress;
     for (var [index, commitContent] of commits.entries()) {
       lastCommitAddress = await createCommit(
-        branchAddress,
+        perspectiveAddress,
         message + index,
         commitContent
       )(caller);
@@ -103,16 +111,21 @@ const createNCommits = function(branchAddress, message, commits) {
   };
 };
 
-const branchAndMerge = function(originBranchAddress, commitContent) {
+const perspectiveAndMerge = function(originPerspectiveAddress, commitContent) {
   return async caller => {
-    const { Ok: commitAddress } = getBranchHead(originBranchAddress)(caller);
-    const { Ok: developAddress } = await createBranch(commitAddress, 'develop')(
+    const { Ok: commitAddress } = getPerspectiveHead(originPerspectiveAddress)(
       caller
     );
+    const { Ok: developAddress } = await createPerspective(
+      commitAddress,
+      'develop'
+    )(caller);
 
     await createCommit(developAddress, 'develop commit', commitContent)(caller);
 
-    return await mergeBranches(developAddress, originBranchAddress)(caller);
+    return await mergePerspectives(developAddress, originPerspectiveAddress)(
+      caller
+    );
   };
 };
 
@@ -130,9 +143,11 @@ const getCommitHistory = function(commitAddress) {
   };
 };
 
-const getBranchHistory = function(branchAddress) {
+const getPerspectiveHistory = function(perspectiveAddress) {
   return caller => {
-    const { Ok: commitAddress } = getBranchHead(branchAddress)(caller);
+    const { Ok: commitAddress } = getPerspectiveHead(perspectiveAddress)(
+      caller
+    );
     return getCommitHistory(commitAddress)(caller);
   };
 };
@@ -140,16 +155,18 @@ const getBranchHistory = function(branchAddress) {
 const getContextHistory = function(contextAddress) {
   return caller => {
     const {
-      Ok: { addresses: branchAddresses }
-    } = getContextBranches(contextAddress)(caller);
+      Ok: { links: perspectiveAddresses }
+    } = getContextPerspectives(contextAddress)(caller);
 
-    return branchAddresses.map(branchAddress => {
-      const { Ok: stringBranchInfo } = getBranchInfo(branchAddress)(caller);
+    return perspectiveAddresses.map(perspectiveAddress => {
+      const { Ok: stringPerspectiveInfo } = getPerspectiveInfo(
+        perspectiveAddress
+      )(caller);
 
-      const branchInfo = JSON.parse(stringBranchInfo.App[1]);
+      const perspectiveInfo = JSON.parse(stringPerspectiveInfo.App[1]);
       return {
-        name: branchInfo.name,
-        commitHistory: getBranchHistory(branchAddress)(caller)
+        name: perspectiveInfo.name,
+        commitHistory: getPerspectiveHistory(perspectiveAddress)(caller)
       };
     });
   };
@@ -158,10 +175,12 @@ const getContextHistory = function(contextAddress) {
 const getContextHeadCommits = function(contextAddress) {
   return caller => {
     const {
-      Ok: { addresses: branchAddresses }
-    } = getContextBranches(contextAddress)(caller);
+      Ok: { addresses: perspectiveAddresses }
+    } = getContextPerspectives(contextAddress)(caller);
 
-    return branchAddresses.map(address => getBranchHead(address)(caller));
+    return perspectiveAddresses.map(address =>
+      getPerspectiveHead(address)(caller)
+    );
   };
 };
 
@@ -201,27 +220,28 @@ const chain = async function(caller, ...actions) {
 };
 
 const parseEntry = function(entry) {
-  let parsable = entry.Ok ? entry.Ok : entry;
-  return JSON.parse(parsable.result.Single.entry.App[1]);
-}
+  let parseable = entry.Ok ? entry.Ok : entry;
+  return JSON.parse(parseable.result.Single.entry.App[1]);
+};
 
 module.exports = {
+  getRootContext,
   createCommit,
   createNCommits,
-  createBranch,
+  createPerspective,
   createContext,
   createContextAndCommit,
-  getContextBranches,
+  getContextPerspectives,
   buildObject,
   getCommitContent,
   getCommitInfo,
-  getBranchInfo,
-  mergeBranches,
-  branchAndMerge,
-  getBranchHead,
+  getPerspectiveInfo,
+  mergePerspectives,
+  perspectiveAndMerge,
+  getPerspectiveHead,
   chain,
   getContextHistory,
-  getBranchHistory,
+  getPerspectiveHistory,
   getCommitHistory,
   getContextHeadCommits,
   getContextCurrentContents,

@@ -135,7 +135,7 @@ pub fn handle_merge_perspectives(
 pub fn set_perspective_head(
   perspective_address: &Address,
   commit_address: &Address,
-) -> ZomeApiResult<()> {
+) -> ZomeApiResult<Address> {
   let previous_head = hdk::get_links(&perspective_address, "head")?;
   if previous_head.addresses().len() != 0 {
     hdk::remove_link(
@@ -195,6 +195,9 @@ pub fn create_new_perspective(
   Ok(perspective_address)
 }
 
+/**
+ * Returns the commit history for the given perspective
+ */
 pub fn get_perspective_history(perspective_address: Address) -> ZomeApiResult<Vec<GetEntryResult>> {
   let perspective_head = handle_get_perspective_head(perspective_address)?;
   crate::commit::get_commit_history(perspective_head)
