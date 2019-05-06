@@ -1,16 +1,18 @@
+use crate::perspective;
 use hdk::{
   entry_definition::ValidatingEntryType,
-  error::{ZomeApiError, ZomeApiResult},
+  error::ZomeApiResult,
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
-  AGENT_ADDRESS,
+  AGENT_ADDRESS, PUBLIC_TOKEN,
 };
 use holochain_wasm_utils::api_serialization::{
   get_entry::{GetEntryOptions, GetEntryResult},
   get_links::{GetLinksOptions, GetLinksResult},
 };
+use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Context {
@@ -113,13 +115,24 @@ pub fn handle_get_root_context() -> ZomeApiResult<GetEntryResult> {
     GetEntryOptions::default(),
   )?;
 
+  // TODO: Comment when genesis block is executed
   match links.len() {
     1 => links[0].clone(),
-    _ => Err(ZomeApiError::from(format!(
-      "agent has {} root contexts",
-      links.len()
-    ))),
+    _ => {
+      create_root_context()?;
+      handle_get_root_context()
+    }
   }
+  /*
+    TODO: Uncomment when genesis block is executed
+  match links.len() {
+      1 => links[0].clone(),
+      _ => Err(ZomeApiError::from(format!(
+        "agent has {} root contexts",
+        links.len()
+      ))),
+    }
+   */
 }
 
 /**
@@ -189,7 +202,7 @@ pub struct CreatedCommitResponse {
 pub fn handle_create_context_and_commit(
   name: String,
   message: String,
-  content: crate::content::Content,
+  content_address: Address,
 ) -> ZomeApiResult<CreatedCommitResponse> {
   let context_address = create_context_entry()?;
 
@@ -198,8 +211,11 @@ pub fn handle_create_context_and_commit(
     crate::perspective::create_new_empty_perspective(name, &context_address)?;
   link_perspective_to_context(&context_address, &perspective_address)?;
 
-  let commit_address =
-    crate::perspective::handle_create_commit(perspective_address.clone(), message, content)?;
+  let commit_address = crate::perspective::handle_create_commit(
+    perspective_address.clone(),
+    message,
+    content_address,
+  )?;
 
   Ok(CreatedCommitResponse {
     context_address: context_address,
@@ -228,15 +244,40 @@ pub fn handle_get_context_history(context_address: Address) -> ZomeApiResult<Vec
 
 /** Helper functions */
 
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
+pub struct AddressResponse {
+  Ok: Address,
+}
+
 /**
  * Creates the root context for the agent
  * Only to be called at genesis time
  */
 pub fn create_root_context() -> ZomeApiResult<Address> {
-  let context_address = handle_create_context(String::from("root"))?;
-  hdk::link_entries(&AGENT_ADDRESS, &context_address, "root")?;
+  let json_response = hdk::call(
+    hdk::THIS_INSTANCE,
+    "folder",
+    Address::from(PUBLIC_TOKEN.to_string()),
+    "create_folder",
+    json!({
+      "folder": {
+        "name": "root",
+        "links": {}
+      }
+    })
+    .into(),
+  )?;
+  let response = AddressResponse::try_from(json_response)?;
 
-  Ok(context_address)
+  let result = handle_create_context_and_commit(
+    String::from("root"),
+    String::from("initial commit"),
+    response.Ok,
+  )?;
+
+  hdk::link_entries(&AGENT_ADDRESS, &result.context_address, "root")?;
+
+  Ok(result.context_address)
 }
 
 /**

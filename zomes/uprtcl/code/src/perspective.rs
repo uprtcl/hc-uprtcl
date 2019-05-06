@@ -1,4 +1,3 @@
-use crate::content::Content;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},
@@ -9,7 +8,6 @@ use hdk::{
   AGENT_ADDRESS,
 };
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
-use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Perspective {
@@ -72,9 +70,8 @@ pub fn handle_get_perspective_info(perspective_address: Address) -> ZomeApiResul
 pub fn handle_create_commit(
   perspective_address: Address,
   message: String,
-  content: Content,
+  content_address: Address,
 ) -> ZomeApiResult<Address> {
-  let content_address = crate::content::store_content(content)?;
   create_commit_in_perspective(perspective_address, message, content_address)
 }
 
@@ -86,45 +83,10 @@ pub fn handle_get_perspective_head(perspective_address: Address) -> ZomeApiResul
 
   if links_result.addresses().len() == 0 {
     return Err(ZomeApiError::from(String::from(
-      "given perspective has not commits",
+      "given perspective has no commits",
     )));
   }
   Ok(links_result.addresses().last().unwrap().to_owned())
-}
-
-/**
- * Merges the head commits of the two given perspectives and returns the resulting commit
- */
-pub fn handle_merge_perspectives(
-  from_perspective_address: Address,
-  to_perspective_address: Address,
-) -> ZomeApiResult<Address> {
-  let from_perspective: Perspective =
-    Perspective::try_from(crate::utils::get_entry_content(&from_perspective_address)?)?;
-  let to_perspective: Perspective =
-    Perspective::try_from(crate::utils::get_entry_content(&to_perspective_address)?)?;
-
-  if from_perspective.context_address != to_perspective.context_address {
-    return Err(ZomeApiError::from(String::from(
-      "given perspectives do not belong to the same context",
-    )));
-  }
-
-  let from_commit_address = handle_get_perspective_head(from_perspective_address)?;
-  let to_commit_address = handle_get_perspective_head(to_perspective_address.clone())?;
-
-  let merged_commit_address = crate::commit::merge_commits(
-    &from_commit_address,
-    &to_commit_address,
-    format!(
-      "merge {} into {}",
-      from_perspective.name, to_perspective.name
-    ),
-  )?;
-
-  set_perspective_head(&to_perspective_address, &merged_commit_address)?;
-
-  Ok(merged_commit_address)
 }
 
 /** Helper functions */

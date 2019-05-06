@@ -1,12 +1,15 @@
 #![feature(try_from)]
-
+#![warn(unused_extern_crates)]
 #[macro_use]
 extern crate hdk;
+#[macro_use]
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate boolinator;
+#[macro_use]
 extern crate serde_json;
+
 #[macro_use]
 extern crate holochain_core_types_derive;
 
@@ -15,21 +18,24 @@ use hdk::{
   holochain_core_types::{cas::content::Address, error::HolochainError, json::JsonString},
 };
 use holochain_wasm_utils::api_serialization::{
-  get_entry::GetEntryResult, get_links::GetLinksResult,
+  get_entry::{GetEntryResult, GetEntryOptions}, get_links::GetLinksResult,
 };
 
 // see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
 
 pub mod commit;
-pub mod content;
 pub mod context;
-pub mod merge;
 pub mod perspective;
 pub mod utils;
 
+/** Exposed zome functions */
+
+pub fn handle_get_entry(address: Address) -> ZomeApiResult<GetEntryResult> {
+  hdk::get_entry_result(&address, GetEntryOptions::default())
+}
+
 define_zome! {
   entries: [
-    content::definition(),
     commit::definition(),
     perspective::definition(),
     context::definition()
@@ -43,6 +49,13 @@ define_zome! {
   }
 
   functions: [
+
+    get_entry: {
+      inputs: |address: Address|,
+      outputs: |result: ZomeApiResult<GetEntryResult>|,
+      handler: handle_get_entry
+    }
+
     // Contexts
     create_context: {
       inputs: |name: String|,
@@ -105,15 +118,9 @@ define_zome! {
       handler: perspective::handle_get_perspective_head
     }
 
-    merge_perspectives: {
-      inputs: |from_perspective_address: Address, to_perspective_address: Address|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: perspective::handle_merge_perspectives
-    }
-
     // Commits
     create_commit: {
-      inputs: |perspective_address: Address, message: String, content: content::Content|,
+      inputs: |perspective_address: Address, message: String, content_address: Address|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: perspective::handle_create_commit
     }
@@ -124,32 +131,19 @@ define_zome! {
       handler: commit::handle_get_commit_info
     }
 
-    get_commit_content: {
-      inputs: |commit_address: Address|,
-      outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: commit::handle_get_commit_content
-    }
-
     create_context_and_commit: {
-      inputs: |name: String, message: String, content: content::Content|,
+      inputs: |name: String, message: String, content_address: Address|,
       outputs: |result: ZomeApiResult<context::CreatedCommitResponse>|,
       handler: context::handle_create_context_and_commit
-    }
-
-    // Content
-    get_entry: {
-      inputs: |address: Address|,
-      outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: content::handle_get_entry
     }
 
   ]
 
   traits: {
     hc_public [
-      create_context, get_root_context, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
+      get_entry, create_context, get_root_context, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
       create_perspective, get_context_perspectives, get_perspective_info, get_perspective_head, create_commit,
-      get_commit_info, get_commit_content, merge_perspectives, create_context_and_commit, get_entry
+      get_commit_info, create_context_and_commit
     ]
   }
 

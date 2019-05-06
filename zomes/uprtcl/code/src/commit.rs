@@ -14,7 +14,6 @@ use std::convert::TryFrom;
 pub struct Commit {
   creator: Address,
   message: String,
-  nonce: i32,
 
   // Hard links
   content_address: Address,
@@ -31,7 +30,6 @@ impl Commit {
     Commit {
       creator: creator.to_owned(),
       message: message.to_owned(),
-      nonce: 1,
       content_address: content_address.to_owned(),
       parent_commits_addresses: parent_commits_addresses.to_owned(),
     }
@@ -73,14 +71,6 @@ pub fn handle_get_commit_info(commit_address: Address) -> ZomeApiResult<GetEntry
   hdk::get_entry_result(&commit_address, GetEntryOptions::default())
 }
 
-/**
- * Retrieves the contents of the commit with the given address
- */
-pub fn handle_get_commit_content(commit_address: Address) -> ZomeApiResult<GetEntryResult> {
-  let commit = Commit::try_from(crate::utils::get_entry_content(&commit_address)?)?;
-  hdk::get_entry_result(&(commit.content_address), GetEntryOptions::default())
-}
-
 /** Helper functions */
 
 /**
@@ -97,25 +87,6 @@ pub fn create_commit(
   );
 
   hdk::commit_entry(&commit_entry)
-}
-
-/**
- * Merges the given commits and returns the resulting commit
- * Pre: both commits belong to the same context
- */
-pub fn merge_commits(
-  from_commit_address: &Address,
-  to_commit_address: &Address,
-  merge_commit_message: String,
-) -> ZomeApiResult<Address> {
-  let merge_object_address =
-    crate::merge::merge_commits_contents(from_commit_address, to_commit_address)?;
-
-  create_commit(
-    merge_commit_message,
-    merge_object_address,
-    &vec![from_commit_address.to_owned(), to_commit_address.to_owned()],
-  )
 }
 
 /**

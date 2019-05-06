@@ -1,0 +1,18 @@
+[package]
+name = "folder"
+version = "0.1.0"
+authors = ["guillemcordoba <guillem.cordoba@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = "=1.0.89"
+cid = "*"
+serde_json = { version = "=1.0.39", features = ["preserve_order"] }
+serde_derive = "=1.0.89"
+hdk = { git = "https://github.com/holochain/holochain-rust", branch = "develop" }
+holochain_wasm_utils = { git = "https://github.com/holochain/holochain-rust", branch = "develop" }
+holochain_core_types_derive = { git = "https://github.com/holochain/holochain-rust", branch = "develop" }
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
