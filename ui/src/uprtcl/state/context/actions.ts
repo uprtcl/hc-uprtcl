@@ -1,6 +1,9 @@
 import { createHolochainZomeCallAsyncAction } from '@holochain/hc-redux-middleware';
 import { INSTANCE_NAME, ZOME_NAME, getCachedEntry } from '../common/actions';
-import { getPerspectiveContent, getPerspectiveInfo } from '../perspective/actions';
+import {
+  getPerspectiveContent,
+  getPerspectiveInfo
+} from '../perspective/actions';
 
 /** Holochain actions */
 
@@ -11,7 +14,11 @@ export const createContext = createHolochainZomeCallAsyncAction<
 
 export const createContextAndCommit = createHolochainZomeCallAsyncAction<
   { name: string; message: string; content_address: string },
-  string
+  {
+    context_address: string;
+    perspective_address: string;
+    commit_address: string;
+  }
 >(INSTANCE_NAME, ZOME_NAME, 'create_context_and_commit');
 
 export const getCreatedContexts = createHolochainZomeCallAsyncAction<{}, any>(
