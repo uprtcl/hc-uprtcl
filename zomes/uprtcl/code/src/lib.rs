@@ -17,7 +17,8 @@ use hdk::{
   holochain_core_types::{cas::content::Address, error::HolochainError, json::JsonString},
 };
 use holochain_wasm_utils::api_serialization::{
-  get_entry::{GetEntryResult, GetEntryOptions}, get_links::GetLinksResult,
+  get_entry::{GetEntryOptions, GetEntryResult},
+  get_links::GetLinksResult,
 };
 
 // see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
@@ -41,10 +42,7 @@ define_zome! {
   ]
 
   genesis: || {
-    {
-      context::create_root_context()?;
-      Ok(())
-    }
+    Ok(())
   }
 
   functions: [
@@ -57,13 +55,13 @@ define_zome! {
 
     // Contexts
     create_context: {
-      inputs: |name: String|,
+      inputs: |name: String, timestamp: u64|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: context::handle_create_context
     }
 
     get_root_context: {
-      inputs: | |,
+      inputs: |timestamp: u64|,
       outputs: |result: ZomeApiResult<GetEntryResult>|,
       handler: context::handle_get_root_context
     }
@@ -119,7 +117,7 @@ define_zome! {
 
     // Commits
     create_commit: {
-      inputs: |perspective_address: Address, message: String, content_address: Address|,
+      inputs: |perspective_address: Address, message: String, timestamp: u64, content_address: Address|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: perspective::handle_create_commit
     }
@@ -131,7 +129,7 @@ define_zome! {
     }
 
     create_context_and_commit: {
-      inputs: |name: String, message: String, content_address: Address|,
+      inputs: |name: String, timestamp: u64, message: String, content_address: Address|,
       outputs: |result: ZomeApiResult<context::CreatedCommitResponse>|,
       handler: context::handle_create_context_and_commit
     }

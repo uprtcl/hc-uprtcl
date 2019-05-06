@@ -70,9 +70,10 @@ pub fn handle_get_perspective_info(perspective_address: Address) -> ZomeApiResul
 pub fn handle_create_commit(
   perspective_address: Address,
   message: String,
+  timestamp: u64,
   content_address: Address,
 ) -> ZomeApiResult<Address> {
-  create_commit_in_perspective(perspective_address, message, content_address)
+  create_commit_in_perspective(perspective_address, message, timestamp, content_address)
 }
 
 /**
@@ -116,12 +117,13 @@ pub fn set_perspective_head(
 pub fn create_commit_in_perspective(
   perspective_address: Address,
   message: String,
+  timestamp: u64,
   content_address: Address,
 ) -> ZomeApiResult<Address> {
   let parent_commit_address = hdk::get_links(&perspective_address, "head")?;
 
   let commit_address =
-    crate::commit::create_commit(message, content_address, &parent_commit_address.addresses())?;
+    crate::commit::create_commit(message, timestamp, content_address, &parent_commit_address.addresses())?;
 
   set_perspective_head(&perspective_address, &commit_address)?;
 

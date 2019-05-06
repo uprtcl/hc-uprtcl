@@ -14,6 +14,7 @@ use std::convert::TryFrom;
 pub struct Commit {
   creator: Address,
   message: String,
+  timestamp: u64,
 
   // Hard links
   content_address: Address,
@@ -24,12 +25,14 @@ impl Commit {
   fn new(
     creator: &Address,
     message: &str,
+    timestamp: u64,
     content_address: &Address,
     parent_commits_addresses: &Vec<Address>,
   ) -> Commit {
     Commit {
       creator: creator.to_owned(),
       message: message.to_owned(),
+      timestamp: timestamp.to_owned(),
       content_address: content_address.to_owned(),
       parent_commits_addresses: parent_commits_addresses.to_owned(),
     }
@@ -78,12 +81,13 @@ pub fn handle_get_commit_info(commit_address: Address) -> ZomeApiResult<GetEntry
  */
 pub fn create_commit(
   message: String,
+  timestamp: u64,
   content_address: Address,
   parent_commits: &Vec<Address>,
 ) -> ZomeApiResult<Address> {
   let commit_entry = Entry::App(
     "commit".into(),
-    Commit::new(&AGENT_ADDRESS, &message, &content_address, parent_commits).into(),
+    Commit::new(&AGENT_ADDRESS, &message, timestamp, &content_address, parent_commits).into(),
   );
 
   hdk::commit_entry(&commit_entry)

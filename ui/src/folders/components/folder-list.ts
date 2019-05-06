@@ -71,6 +71,7 @@ export class FolderList extends ReduxLens(store) {
             createContextAndCommit.create({
               name: name,
               message: '',
+              timestamp: Date.now(),
               content_address: folderAddress
             })
           )

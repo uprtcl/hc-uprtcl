@@ -8,12 +8,12 @@ import {
 /** Holochain actions */
 
 export const createContext = createHolochainZomeCallAsyncAction<
-  { name: string },
+  { name: string; timestamp: number },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'create_context');
 
 export const createContextAndCommit = createHolochainZomeCallAsyncAction<
-  { name: string; message: string; content_address: string },
+  { name: string; message: string; timestamp: number; content_address: string },
   {
     context_address: string;
     perspective_address: string;
@@ -43,11 +43,10 @@ export const getContextHistory = createHolochainZomeCallAsyncAction<
   string
 >(INSTANCE_NAME, ZOME_NAME, 'get_context_history');
 
-export const getRootContext = createHolochainZomeCallAsyncAction<{}, string>(
-  INSTANCE_NAME,
-  ZOME_NAME,
-  'get_root_context'
-);
+export const getRootContext = createHolochainZomeCallAsyncAction<
+  { timestamp: number },
+  string
+>(INSTANCE_NAME, ZOME_NAME, 'get_root_context');
 
 /** Helper actions */
 

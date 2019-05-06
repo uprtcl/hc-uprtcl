@@ -4,7 +4,12 @@ import { Address } from '../../../folders/types';
 import { setPerspectiveHead } from '../perspective/actions';
 
 export const createCommit = createHolochainZomeCallAsyncAction<
-  { perspective_address: string; message: string; content_address: Address },
+  {
+    perspective_address: string;
+    message: string;
+    timestamp: number;
+    content_address: Address;
+  },
   string
 >(INSTANCE_NAME, ZOME_NAME, 'create_commit');
 
@@ -18,6 +23,7 @@ export function createCommitInPerspective(
       createCommit.create({
         perspective_address: perspectiveAddress,
         message: message,
+        timestamp: Date.now(),
         content_address: contentAddress
       })
     ).then(commitAddress =>

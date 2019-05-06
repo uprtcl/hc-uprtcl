@@ -29,9 +29,11 @@ export class UprtclRoot extends connect(store)(LitElement) {
   }
 
   firstUpdated() {
-    store.dispatch(getRootContext.create({})).then(() => {
-      this.loading = false;
-    });
+    store
+      .dispatch(getRootContext.create({ timestamp: Date.now() }))
+      .then(() => {
+        this.loading = false;
+      });
   }
 
   stateChanged(state: RootState) {
