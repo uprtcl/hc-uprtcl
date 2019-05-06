@@ -59,5 +59,3 @@ store.addReducers({
   folders: foldersReducer,
   uprtcl: uprtclReducer
 });
-
-store.dispatch(createFolder.create({ folder: { name: 'hi', links: {} } }));

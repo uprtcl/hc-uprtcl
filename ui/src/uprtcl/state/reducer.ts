@@ -35,6 +35,8 @@ const initialState: UprtclState = {
 };
 
 export function uprtclReducer(state = initialState, action: AnyAction) {
+  console.log(state);
+  console.log(action);
   switch (action.type) {
     case getType(getCreatedContexts.success):
     case getType(getAllContexts.success):

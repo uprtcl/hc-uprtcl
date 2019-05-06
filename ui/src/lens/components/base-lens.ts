@@ -24,10 +24,10 @@ export class BaseLens extends LitElement {
     this.loadContent();
   }
 
-  update(changedProperties) {
+  updated(changedProperties) {
     // Don't forget this or your element won't render!
-    super.update(changedProperties);
-    if (changedProperties.get('cid')) {
+    super.updated(changedProperties);
+    if (changedProperties.has('cid')) {
       this.loadContent();
     }
   }

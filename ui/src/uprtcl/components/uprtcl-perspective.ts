@@ -2,12 +2,13 @@ import { LitElement, html, customElement, property } from 'lit-element';
 import { Perspective } from '../types';
 import { store, RootState } from '../../store';
 
-import './uprtcl-commit';
 import { selectUprtcl } from '../state/reducer';
 import { getPerspectiveContent } from '../state/perspective/actions';
 import { selectPerspectiveById } from '../state/perspective/selectors';
 import { createCommit } from '../state/commit/actions';
+
 import { ReduxLens } from '../../lens/components/redux-lens';
+import './uprtcl-commit';
 
 @customElement('uprtcl-perspective')
 export class UprtclPerspective extends ReduxLens(store) {
