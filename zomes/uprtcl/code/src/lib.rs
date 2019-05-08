@@ -21,7 +21,7 @@ use holochain_wasm_utils::api_serialization::{
   get_links::GetLinksResult,
 };
 
-// see https://developer.holochain.org/api/0.0.2/hdk/ for info on using the hdk library
+// see https://developer.holochain.org/api/latest/hdk/ for info on using the hdk library
 
 pub mod commit;
 pub mod context;

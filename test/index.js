@@ -164,7 +164,7 @@ scenario1.runTape(
     t.equal(perspectiveAddresses[1].address, developAddress);
   }
 );
-
+/* 
 scenario1.runTape(
   'merge two perspectives with no conflict',
   async (t, { alice }) => {
@@ -289,3 +289,4 @@ scenario1.runTape(
     });
   }
 );
+ */
