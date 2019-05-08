@@ -1,9 +1,6 @@
 import { createHolochainZomeCallAsyncAction } from '@holochain/hc-redux-middleware';
 import { INSTANCE_NAME, ZOME_NAME, getCachedEntry } from '../common/actions';
-import {
-  getPerspectiveContent,
-  getPerspectiveInfo
-} from '../perspective/actions';
+import { getPerspectiveInfo } from '../perspective/actions';
 
 /** Holochain actions */
 
