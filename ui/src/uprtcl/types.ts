@@ -22,9 +22,3 @@ export interface Commit {
 
   parent_commits_addresses: Array<string>;
 }
-
-// Auxiliar type for Holochain's get_entry call
-export interface EntryResult<T = any> {
-  entry: T;
-  type: string;
-}

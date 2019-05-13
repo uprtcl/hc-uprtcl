@@ -1,10 +1,9 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 
 import '../../lens/components/lens-renderer';
-import { connect } from 'pwa-helpers/connect-mixin';
 import { store, RootState } from '../../store';
 import { Commit } from '../types';
-import { getCommitInfo } from '../state/commit/actions';
+import { getCommit } from '../state/commit/actions';
 import { selectCommitById } from '../state/commit/selectors';
 import { selectUprtcl } from '../state/reducer';
 import { ReduxLens } from '../../lens/components/redux-lens';
@@ -23,7 +22,7 @@ export class UprtclCommit extends ReduxLens(store) {
   }
 
   getLoadAction() {
-    return getCommitInfo(this.cid);
+    return getCommit(this.cid);
   }
 
   stateChanged(state: RootState) {

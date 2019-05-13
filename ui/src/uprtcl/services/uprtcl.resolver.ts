@@ -1,8 +1,9 @@
-import { Commit, Perspective, Context } from '../uprtcl/types';
+import { Commit, Perspective, Context } from '../types';
 
 export interface UprtclResolver {
   /** Getters */
 
+  getRootContext(): Promise<Context>;
   getContext(contextId): Promise<Context>;
   getPerspective(perspectiveId): Promise<Perspective>;
   getCommit(commitId): Promise<Commit>;

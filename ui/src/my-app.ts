@@ -1,14 +1,17 @@
-import { LitElement, html, customElement, property, PropertyValues } from 'lit-element';
+import {
+  LitElement,
+  html,
+  customElement,
+  property,
+  PropertyValues
+} from 'lit-element';
 import { installRouter } from 'pwa-helpers/router.js';
 
 import './uprtcl/components/uprtcl-root';
 import { Perspective } from './uprtcl/types';
 import { store, RootState } from './store';
 import { connect } from 'pwa-helpers/connect-mixin';
-import {
-  getPerspectiveInfo,
-  getPerspectiveContent
-} from './uprtcl/state/perspective/actions';
+import { getPerspective } from './uprtcl/state/perspective/actions';
 import { selectPerspectiveById } from './uprtcl/state/perspective/selectors';
 import { selectUprtcl } from './uprtcl/state/reducer';
 
@@ -55,12 +58,10 @@ export class MyApp extends connect(store)(LitElement) {
   loadContent() {
     if (this.checkoutPerspectiveId) {
       this.loading = true;
-      store
-        .dispatch(getPerspectiveInfo(this.checkoutPerspectiveId))
-        .then(() => {
-          this.stateChanged(<RootState>store.getState());
-          this.loading = false;
-        });
+      store.dispatch(getPerspective(this.checkoutPerspectiveId)).then(() => {
+        this.stateChanged(<RootState>store.getState());
+        this.loading = false;
+      });
     }
   }
 

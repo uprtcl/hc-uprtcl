@@ -3,13 +3,13 @@ import { selectContextById } from '../context/selectors';
 
 export const selectPerspectiveById = (perspectiveId: string) => (
   state: UprtclState
-) => state.perspective.entities[perspectiveId];
+) => state.perspectives.entities[perspectiveId];
 
 export const selectPerspectiveHead = (perspectiveId: string) => (
   state: UprtclState
 ) =>
-  adapters.commit.selectById(selectPerspectiveHeadId(perspectiveId)(state))(
-    state.commit
+  adapters.commits.selectById(selectPerspectiveHeadId(perspectiveId)(state))(
+    state.commits
   );
 
 export const selectPerspectiveHeadId = (perspectiveId: string) => (

@@ -5,7 +5,6 @@ import { getFolder, createFolder } from '../state/actions';
 import { connect } from 'pwa-helpers/connect-mixin';
 import { selectFolder, selectFolders } from '../state/reducer';
 import { ReduxLens } from '../../lens/components/redux-lens';
-import { createContextAndCommit } from '../../uprtcl/state/context/actions';
 
 @customElement('folder-list')
 export class FolderList extends ReduxLens(store) {

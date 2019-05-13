@@ -1,21 +1,30 @@
-import { createHolochainZomeCallAsyncAction } from '@holochain/hc-redux-middleware';
-import { selectUprtcl, adapters } from '../reducer';
-import { EntityAdapter } from '../../../utils/entity';
-import { EntryResult } from '../../types';
-import { selectExistingEntry } from './selectors';
-import { parseEntryResult } from '../../../utils/parse';
+export function asyncAction<ParamType, SuccessType>(requestType: string) {
+  const create = (payload: ParamType) => ({
+    type: requestType,
+    payload: payload
+  });
 
-export const INSTANCE_NAME = 'test-instance';
-export const ZOME_NAME = 'uprtcl';
+  const successType = requestType + '_SUCCESS';
+  const success = (payload: SuccessType) => ({
+    type: successType,
+    payload: payload
+  });
 
-export interface AddressRequest {
-  address: string;
+  const failureType = requestType + '_FAILURE';
+  const failure = payload => ({
+    type: failureType,
+    payload: payload
+  });
+
+  return {
+    create: create,
+    createType: requestType,
+    success: success,
+    successType: successType,
+    failure: failure,
+    failureType: failureType
+  };
 }
-
-export const getEntry = createHolochainZomeCallAsyncAction<
-  { address: string },
-  any
->(INSTANCE_NAME, ZOME_NAME, 'get_entry');
 
 /**
  * Tries to find the given entry in the given entityTypes, and executes getEntry if it doesn't exist
@@ -23,7 +32,7 @@ export const getEntry = createHolochainZomeCallAsyncAction<
  * @param entityTypes the possible types of entity that the entry can have
  * @param selectState a state selector from the redux's root state, default to selectVersionControl
  */
-export function getCachedEntry(
+/* export function getCachedEntry(
   entryAddress: string,
   entityTypes: string[],
   selectState: (state) => any = selectUprtcl,
@@ -46,3 +55,4 @@ export function getCachedEntry(
     }
   };
 }
+ */

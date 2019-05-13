@@ -39,14 +39,7 @@ export class UprtclPerspective extends ReduxLens(store) {
 
   createCommit(contentAddress: string) {
     store
-      .dispatch(
-        createCommit.create({
-          perspective_address: this.cid,
-          message: '',
-          timestamp: Date.now(),
-          content_address: contentAddress
-        })
-      )
+      .dispatch(createCommit(this.cid, '', contentAddress))
       .then(() => this.loadContent());
   }
 }

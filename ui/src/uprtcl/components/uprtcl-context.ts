@@ -90,11 +90,7 @@ export class UprtclContext extends ReduxLens(store) {
   createPerspective(name): void {
     store
       .dispatch(
-        createPerspective.create({
-          context_address: this.cid,
-          commit_address: this.getCheckoutPerspective().head,
-          name: name
-        })
+        createPerspective(this.cid, this.getCheckoutPerspective().head, name)
       )
       .then(() => this.loadContent());
   }

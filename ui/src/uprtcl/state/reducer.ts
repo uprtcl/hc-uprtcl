@@ -1,88 +1,72 @@
-import { getType } from 'typesafe-actions';
 import { AnyAction } from 'redux';
 
 import { Context, Perspective, Commit } from '../types';
 import { RootState } from '../../store';
-import {
-  getContextHistory,
-  getCreatedContexts,
-  getAllContexts,
-  getRootContext
-} from './context/actions';
+import { GET_CONTEXT, GET_ROOT_CONTEXT } from './context/actions';
 import { EntityState, createEntityAdapter } from '../../utils/entity';
-import { parseEntriesResults, parseEntryResult } from '../../utils/parse';
-import { getEntry } from './common/actions';
-import { SET_PERSPECTIVE_HEAD } from './perspective/actions';
+import { SET_PERSPECTIVE_HEAD, GET_PERSPECTIVE } from './perspective/actions';
+import { UniversalUprtcl } from '../services/universal.uprtcl';
+import { GET_COMMIT } from './commit/actions';
 
 export interface UprtclState {
   rootContextId: string;
-  context: EntityState<Context>;
-  perspective: EntityState<Perspective>;
-  commit: EntityState<Commit>;
+  contexts: EntityState<Context>;
+  perspectives: EntityState<Perspective>;
+  commits: EntityState<Commit>;
 }
 
 export const adapters = {
-  context: createEntityAdapter<Context>(),
-  perspective: createEntityAdapter<Perspective>(),
-  commit: createEntityAdapter<Commit>()
+  contexts: createEntityAdapter<Context>(),
+  perspectives: createEntityAdapter<Perspective>(),
+  commits: createEntityAdapter<Commit>()
 };
 
 const initialState: UprtclState = {
   rootContextId: null,
-  context: adapters.context.getInitialState(),
-  perspective: adapters.perspective.getInitialState(),
-  commit: adapters.commit.getInitialState()
+  contexts: adapters.contexts.getInitialState(),
+  perspectives: adapters.perspectives.getInitialState(),
+  commits: adapters.commits.getInitialState()
 };
 
 export function uprtclReducer(state = initialState, action: AnyAction) {
   console.log(state);
   console.log(action);
   switch (action.type) {
-    case getType(getCreatedContexts.success):
-    case getType(getAllContexts.success):
+    case GET_CONTEXT.successType:
       return {
         ...state,
-        context: adapters.context.upsertMany(
-          parseEntriesResults(action.payload).map(result => result.entry),
-          state.context
+        contexts: adapters.contexts.upsertOne(action.payload, state.contexts)
+      };
+    case GET_PERSPECTIVE.successType:
+      return {
+        ...state,
+        perspectives: adapters.perspectives.upsertOne(
+          action.payload,
+          state.perspectives
         )
       };
-    case getType(getEntry.success):
-      const result = parseEntryResult(action.payload);
-      if (!state[result.type]) return state;
+    case GET_COMMIT.successType:
       return {
         ...state,
-        [result.type]: adapters[result.type].upsertOne(
-          result.entry,
-          state[result.type]
-        )
+        commits: adapters.commits.upsertOne(action.payload, state.commits)
       };
-    case getType(getRootContext.success):
-      const rootContext = parseEntryResult(action.payload);
+    case GET_ROOT_CONTEXT.successType:
       return {
         ...state,
-        context: adapters.context.upsertOne(rootContext.entry, state.context),
-        rootContextId: rootContext.entry.id
+        contexts: adapters.contexts.upsertOne(action.payload, state.contexts),
+        rootContextId: action.payload.id
       };
     case SET_PERSPECTIVE_HEAD:
       return {
         ...state,
-        perspective: adapters.perspective.updateOne(
+        perspectives: adapters.perspectives.updateOne(
           {
             id: action.payload.perspectiveId,
             changes: {
               head: action.payload.commitId
             }
           },
-          state.perspective
-        )
-      };
-    case getType(getContextHistory.success):
-      return {
-        ...state,
-        commit: adapters.commit.upsertMany(
-          parseEntriesResults(action.payload).map(result => result.entry),
-          state.commit
+          state.perspectives
         )
       };
 
@@ -92,3 +76,5 @@ export function uprtclReducer(state = initialState, action: AnyAction) {
 }
 
 export const selectUprtcl = (state: RootState) => state.uprtcl;
+
+export const universalUprtcl = new UniversalUprtcl();

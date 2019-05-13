@@ -1,24 +1,41 @@
-import { createHolochainZomeCallAsyncAction } from '@holochain/hc-redux-middleware';
-import { INSTANCE_NAME, ZOME_NAME, getCachedEntry } from '../common/actions';
-import { EntryResult, Perspective } from '../../types';
+import { Perspective } from '../../types';
 import { selectPerspectiveHeadId, selectPerspectiveById } from './selectors';
-import { selectUprtcl } from '../reducer';
-import { getCommitInfo } from '../commit/actions';
+import { selectUprtcl, universalUprtcl } from '../reducer';
 import { getContextContent } from '../context/actions';
+import { asyncAction } from '../common/actions';
+import { getCommit } from '../commit/actions';
 
-/** Holochain actions */
+/** Main actions */
 
-export const createPerspective = createHolochainZomeCallAsyncAction<
-  { context_address: string; commit_address: string; name: string },
+export const CREATE_PERSPECTIVE = asyncAction<
+  { contextId: string; commitId: string; name: string },
   string
->(INSTANCE_NAME, ZOME_NAME, 'create_perspective');
+>('create_perspective');
 
-export const getPerspectiveHead = createHolochainZomeCallAsyncAction<
-  { perspective_address: string },
-  string
->(INSTANCE_NAME, ZOME_NAME, 'get_perspective_head');
+export function createPerspective(
+  contextId: string,
+  commitId: string,
+  name: string
+) {
+  return dispatch =>
+    universalUprtcl
+      .createPerspective(contextId, commitId, name)
+      .then(perspectiveId =>
+        dispatch(CREATE_PERSPECTIVE.success(perspectiveId))
+      );
+}
 
-/** Common action */
+export const GET_PERSPECTIVE = asyncAction<
+  { perspectiveId: string },
+  Perspective
+>('get_perspective');
+
+export function getPerspective(perspectiveId: string) {
+  return dispatch =>
+    universalUprtcl
+      .getPerspective(perspectiveId)
+      .then(perspective => dispatch(GET_PERSPECTIVE.success(perspective)));
+}
 
 export const SET_PERSPECTIVE_HEAD = 'SET_PERSPECTIVE_HEAD';
 
@@ -34,37 +51,18 @@ export function setPerspectiveHead(perspectiveId: string, commitId: string) {
 
 /** Helper actions */
 
-export function getPerspectiveInfo(persectiveAddress: string) {
-  return dispatch =>
-    dispatch(getCachedEntry(persectiveAddress, ['perspective'])).then(
-      (result: EntryResult<Perspective>) => {
-        if (!result.entry.head) {
-          return dispatch(
-            getPerspectiveHead.create({
-              perspective_address: persectiveAddress
-            })
-          )
-            .then((commitAddress: string) =>
-              dispatch(setPerspectiveHead(persectiveAddress, commitAddress))
-            )
-        }
-        return result.entry;
-      }
-    );
-}
-
 /**
  * Gets the perspective head commit's info and contents
  */
 export function getPerspectiveContent(perspectiveAddress: string) {
   return (dispatch, getState) =>
-    dispatch(getPerspectiveInfo(perspectiveAddress)).then(() => {
+    dispatch(getPerspective(perspectiveAddress)).then(() => {
       const perspectiveHead = selectPerspectiveHeadId(perspectiveAddress)(
         selectUprtcl(getState())
       );
 
       return perspectiveHead
-        ? dispatch(getCommitInfo(perspectiveHead))
+        ? dispatch(getCommit(perspectiveHead))
         : Promise.resolve();
     });
 }
