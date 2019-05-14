@@ -4,14 +4,14 @@ import { Lens } from '../types';
 
 /** From the id of the content to render and the viewer id */
 
-import '../../documents/components/document-node';
+import '../../documents/components/text-node';
 import { BaseLens } from './base-lens';
 
 @customElement('lens-renderer')
 export class LensRenderer extends BaseLens {
   @property()
   private lens: Lens = {
-    element: 'document-node'
+    element: 'text-node'
   };
 
   buildElement() {

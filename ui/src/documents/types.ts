@@ -1,6 +1,6 @@
 export type Address = string;
 
-export interface DocumentNode {
+export interface TextNode {
   id?: string;
 
   text: string;

@@ -24,32 +24,32 @@ use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEnt
 // agent's chain via the exposed function create_my_entry
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct DocumentNode {
+pub struct TextNode {
     text: String,
     links: HashMap<String, Address>,
 }
 
-pub fn handle_create_document_node(node: DocumentNode) -> ZomeApiResult<Address> {
-    let entry = Entry::App("document_node".into(), node.into());
+pub fn handle_create_text_node(node: TextNode) -> ZomeApiResult<Address> {
+    let entry = Entry::App("text_node".into(), node.into());
     let address = hdk::commit_entry(&entry)?;
 
     Ok(address)
 }
 
-pub fn handle_get_document_node(address: Address) -> ZomeApiResult<GetEntryResult> {
+pub fn handle_get_text_node(address: Address) -> ZomeApiResult<GetEntryResult> {
     hdk::get_entry_result(&address, GetEntryOptions::default())
 }
 
 fn definition() -> ValidatingEntryType {
     entry!(
-        name: "document_node",
+        name: "text_node",
         description: "this is a same entry defintion",
         sharing: Sharing::Public,
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
 
-        validation: | _validation_data: hdk::EntryValidationData<DocumentNode>| {
+        validation: | _validation_data: hdk::EntryValidationData<TextNode>| {
             Ok(())
         }
     )
@@ -63,15 +63,15 @@ define_zome! {
     genesis: || { Ok(()) }
 
     functions: [
-        create_document_node: {
-            inputs: |node: DocumentNode|,
+        create_text_node: {
+            inputs: |node: TextNode|,
             outputs: |result: ZomeApiResult<Address>|,
-            handler: handle_create_document_node
+            handler: handle_create_text_node
         }
-        get_document_node: {
+        get_text_node: {
             inputs: |address: Address|,
             outputs: |result: ZomeApiResult<GetEntryResult>|,
-            handler: handle_get_document_node
+            handler: handle_get_text_node
         }
     ]
 

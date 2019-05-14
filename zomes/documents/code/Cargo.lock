@@ -117,17 +117,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "either"
-version = "1.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "fake-simd"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "folder"
+name = "documents"
 version = "0.1.0"
 dependencies = [
  "cid 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -138,6 +128,16 @@ dependencies = [
  "serde_derive 1.0.89 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "either"
+version = "1.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "fake-simd"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "fuchsia-cprng"

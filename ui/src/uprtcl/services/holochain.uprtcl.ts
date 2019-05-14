@@ -22,7 +22,7 @@ export class HolochainUprtcl implements UprtclService, LinkResolver {
   getRootContext() {
     return this.uprtclZome
       .call('get_root_context', {})
-      .then(result => result.entry);
+      .then(result => this.uprtclZome.parseEntryResult<Context>(result).entry);
   }
 
   getContextId(context: Context) {
@@ -51,7 +51,7 @@ export class HolochainUprtcl implements UprtclService, LinkResolver {
   }
 
   getContextPerspectives(contextId: string) {
-    return this.uprtclZome.call('get_context_perspective', {
+    return this.uprtclZome.call('get_context_perspectives', {
       context_address: contextId
     });
   }
@@ -62,13 +62,13 @@ export class HolochainUprtcl implements UprtclService, LinkResolver {
 
   createPerspective(
     contextId: string,
-    commitId: string,
-    name: string
+    name: string,
+    commitLink: string
   ): Promise<string> {
     return this.uprtclZome.call('create_perspective', {
       context_address: contextId,
-      commit_address: commitId,
-      name: name
+      name: name,
+      commit_address: commitLink
     });
   }
 

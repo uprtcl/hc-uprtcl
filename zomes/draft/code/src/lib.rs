@@ -36,11 +36,11 @@ impl Draft {
     }
 }
 
-fn remove_previous_draft(entry_address: Address) -> ZomeApiResult<()> {
-    let links = hdk::get_links(&entry_address, "draft")?;
+fn remove_previous_draft(entry_address: &Address) -> ZomeApiResult<()> {
+    let links = hdk::get_links(entry_address, "draft")?;
 
     if links.addresses().len() > 0 {
-        hdk::remove_link(&entry_address, &links.addresses()[0], "draft")?;
+        hdk::remove_link(entry_address, &links.addresses()[0], "draft")?;
         hdk::remove_entry(&links.addresses()[0])?;
     }
 
@@ -48,6 +48,8 @@ fn remove_previous_draft(entry_address: Address) -> ZomeApiResult<()> {
 }
 
 pub fn handle_set_draft(entry_address: Address, draft: Content) -> ZomeApiResult<Address> {
+    remove_previous_draft(&entry_address)?;
+
     let entry = Entry::App("draft".into(), Draft::new(draft).into());
     let address = hdk::commit_entry(&entry)?;
 

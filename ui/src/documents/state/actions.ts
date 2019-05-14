@@ -1,25 +1,25 @@
 import { documentsHolochain } from './reducer';
 import { asyncAction } from '../../uprtcl/state/common/actions';
-import { DocumentNode } from '../types';
+import { TextNode } from '../types';
 
-export const GET_DOCUMENT_NODE = asyncAction<{ nodeId: string }, DocumentNode>(
+export const GET_DOCUMENT_NODE = asyncAction<{ nodeId: string }, TextNode>(
   'GET_DOCUMENT_NODE'
 );
 
-export function getDocumentNode(nodeId: string) {
+export function getTextNode(nodeId: string) {
   return dispatch =>
     documentsHolochain
-      .getDocumentNode(nodeId)
+      .getTextNode(nodeId)
       .then(result => dispatch(GET_DOCUMENT_NODE.success(result)));
 }
 
-export const CREATE_DOCUMENT_NODE = asyncAction<{ node: DocumentNode }, string>(
+export const CREATE_DOCUMENT_NODE = asyncAction<{ node: TextNode }, string>(
   'CREATE_DOCUMENT_NODE'
 );
 
-export function createDocumentNode(node: DocumentNode) {
+export function createTextNode(node: TextNode) {
   return dispatch =>
     documentsHolochain
-      .createDocumentNode(node)
+      .createTextNode(node)
       .then(result => dispatch(CREATE_DOCUMENT_NODE.success(result)));
 }

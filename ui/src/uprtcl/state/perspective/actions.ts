@@ -14,12 +14,12 @@ export const CREATE_PERSPECTIVE = asyncAction<
 
 export function createPerspective(
   contextId: string,
-  commitId: string,
-  name: string
+  name: string,
+  commitLink: string
 ) {
   return dispatch =>
     uprtclHolochain
-      .createPerspective(contextId, commitId, name)
+      .createPerspective(contextId, name, commitLink)
       .then(perspectiveId =>
         dispatch(CREATE_PERSPECTIVE.success(perspectiveId))
       );

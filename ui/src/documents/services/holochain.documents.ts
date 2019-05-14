@@ -1,6 +1,6 @@
-import { DocumentsService } from './documents.service';
+import { DocumentsService } from './document.service';
 import { HolochainConnection } from '../../services/holochain.connection';
-import { DocumentNode } from '../types';
+import { TextNode } from '../types';
 
 export class HolochainDocuments implements DocumentsService {
   draftsZome: HolochainConnection;
@@ -11,29 +11,28 @@ export class HolochainDocuments implements DocumentsService {
     this.documentsZome = new HolochainConnection('test-instance', 'documents');
   }
 
-  async getDocumentNode(nodeId: string): Promise<DocumentNode> {
+  async getTextNode(nodeId: string): Promise<TextNode> {
     try {
       const draft = await this.draftsZome.call('get_draft', {
         address: nodeId
       });
-      return <DocumentNode>JSON.parse(draft);
+      return <TextNode>JSON.parse(draft);
     } catch (err) {
       return await this.documentsZome
-        .call('get_document_node', {
+        .call('get_text_node', {
           address: nodeId
         })
         .then(
-          result =>
-            this.documentsZome.parseEntryResult<DocumentNode>(result).entry
+          result => this.documentsZome.parseEntryResult<TextNode>(result).entry
         );
     }
   }
 
-  createDocumentNode(node: DocumentNode): Promise<string> {
-    return this.documentsZome.call('create_document_node', node);
+  createTextNode(node: TextNode): Promise<string> {
+    return this.documentsZome.call('create_text_node', node);
   }
 
-  storeDocumentNodeDraft(nodeId: string, node: DocumentNode): Promise<void> {
+  storeTextNodeDraft(nodeId: string, node: TextNode): Promise<void> {
     return this.documentsZome.call('set_draft', {
       entry_address: nodeId,
       draft: JSON.stringify(node)
@@ -41,6 +40,6 @@ export class HolochainDocuments implements DocumentsService {
   }
 
   resolve(link: string): Promise<any> {
-    return this.getDocumentNode(link);
+    return this.getTextNode(link);
   }
 }

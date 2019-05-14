@@ -1,20 +1,20 @@
 import { EntityState, createEntityAdapter } from '../../utils/entity';
-import { DocumentNode } from '../types';
+import { TextNode } from '../types';
 import { RootState } from '../../store';
 import { AnyAction } from 'redux';
 import { Resolver } from '../../services/resolver';
-import { DocumentsService } from '../services/documents.service';
 import { HolochainDocuments } from '../services/holochain.documents';
 import { GET_DOCUMENT_NODE } from './actions';
+import { DocumentsService } from '../services/document.service';
 
 export interface DocumentsState {
-  documentNodes: EntityState<DocumentNode>;
+  textNodes: EntityState<TextNode>;
 }
 
-export const documentsAdapter = createEntityAdapter<DocumentNode>();
+export const textAdapter = createEntityAdapter<TextNode>();
 
 const initialState: DocumentsState = {
-  documentNodes: documentsAdapter.getInitialState()
+  textNodes: textAdapter.getInitialState()
 };
 
 export function documentsReducer(state = initialState, action: AnyAction) {
@@ -22,9 +22,9 @@ export function documentsReducer(state = initialState, action: AnyAction) {
     case GET_DOCUMENT_NODE.successType:
       return {
         ...state,
-        documentNodes: documentsAdapter.upsertOne(
+        textNodes: textAdapter.upsertOne(
           action.payload,
-          state.documentNodes
+          state.textNodes
         )
       };
     default:
@@ -34,9 +34,9 @@ export function documentsReducer(state = initialState, action: AnyAction) {
 
 export const selectDocuments = (state: RootState) => state.documents;
 
-export const selectDocumentNode = (nodeId: string) => (
+export const selectTextNode = (nodeId: string) => (
   documents: DocumentsState
-) => documentsAdapter.selectById(nodeId)(documents.documentNodes);
+) => textAdapter.selectById(nodeId)(documents.textNodes);
 
 export const documentsResolver = new Resolver<DocumentsService>({
   holochain: {

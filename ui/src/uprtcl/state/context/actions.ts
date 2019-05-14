@@ -22,7 +22,11 @@ export const CREATE_CONTEXT = asyncAction<
 export function createContext() {
   return dispatch =>
     uprtclHolochain
-      .createContext({ creator: '', timestamp: Date.now().toString(), nonce: 0 })
+      .createContext({
+        creator: '',
+        timestamp: Date.now().toString(),
+        nonce: 0
+      })
       .then(contextId => dispatch(CREATE_CONTEXT.success(contextId)));
 }
 
@@ -33,16 +37,13 @@ export const GET_CONTEXT_PERSPECTIVES = asyncAction<
 
 export function getContextPerspectives(contextId: string) {
   return dispatch =>
-    uprtclHolochain
-      .getContextPerspectives(contextId)
-      .then(perspectives =>
-        dispatch(GET_CONTEXT_PERSPECTIVES.success(perspectives))
-      );
+    uprtclHolochain.getContextPerspectives(contextId).then(perspectives => {
+      dispatch(GET_CONTEXT_PERSPECTIVES.success(perspectives));
+      return perspectives;
+    });
 }
 
-export const GET_ROOT_CONTEXT = asyncAction<{}, Context>(
-  'get_context_perspectives'
-);
+export const GET_ROOT_CONTEXT = asyncAction<{}, Context>('get_root_context');
 
 export function getRootContext() {
   return dispatch =>
@@ -57,12 +58,13 @@ export function getContextContent(contextId: string) {
   return dispatch =>
     Promise.all([
       dispatch(getContext(contextId)),
-      dispatch(getContextPerspectives(contextId)).then(addressesResult =>
-        Promise.all(
-          addressesResult.links.map(({ address: perspectiveAddress }) =>
-            dispatch(getPerspective(perspectiveAddress))
+      dispatch(getContextPerspectives(contextId))
+        .then(({links: links}) =>
+          Promise.all(
+            links.map(({ address: perspectiveAddress }) =>
+              dispatch(getPerspective(perspectiveAddress))
+            )
           )
         )
-      )
     ]);
 }

@@ -8,16 +8,31 @@ export interface EntryResult<T = any> {
 
 export class HolochainConnection {
   connection: (funcName: string, params: any) => Promise<any>;
+  connectionReady: Promise<any>;
 
   constructor(instanceId: string, zome: string) {
-    connect('ws://localhost:8080').then(({ callZome, close }) => {
-      this.connection = (funcName: string, params: any) =>
-        callZome(instanceId, zome, funcName)(params);
-    });
+    this.connectionReady = connect('ws://localhost:8888').then(
+      ({ callZome, close }) => {
+        this.connection = (funcName: string, params: any) =>
+          callZome(instanceId, zome, funcName)(params);
+      }
+    );
   }
 
-  public call(funcName: string, params: any): Promise<any> {
-    return this.connection(funcName, params);
+  public async call(funcName: string, params: any): Promise<any> {
+    await this.ready();
+    return this.connection(funcName, params)
+      .then(jsonString => JSON.parse(jsonString))
+      .then(result => {
+        if (result.Ok) return result.Ok;
+        if (result.Err) throw new Error(JSON.stringify(result.Err));
+        return result;
+      });
+  }
+
+  public ready(): Promise<void> {
+    if (this.connection) return Promise.resolve();
+    else return this.connectionReady;
   }
 
   public parseEntry(entry) {
