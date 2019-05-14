@@ -1,15 +1,17 @@
 /** Basic functions which call the zome */
+const CREATOR_ADDRESS = 'QmdYFTXuTyuaXbyLAPHmemgkjsaVQ5tfpnLqY9on5JZmzR';
 
 const getRootContext = function() {
   return async caller => await caller.call('uprtcl', 'get_root_context', {});
 };
 
-const createCommit = function(perspectiveAddress, message, commitContent) {
+const createCommit = function(perspectiveAddress, message, contentAddress) {
   return async caller =>
     await caller.callSync('uprtcl', 'create_commit', {
       perspective_address: perspectiveAddress,
       message: message,
-      content: commitContent
+      timestamp: Date.now(),
+      content_address: contentAddress
     });
 };
 
@@ -29,10 +31,10 @@ const getPerspectiveHead = function(perspectiveAddress) {
     });
 };
 
-const createContext = function(perspectiveName) {
+const createContext = function() {
   return async caller =>
     await caller.callSync('uprtcl', 'create_context', {
-      name: perspectiveName
+      context: buildContext()
     });
 };
 
@@ -44,24 +46,21 @@ const getContextPerspectives = function(contextAddress) {
 };
 
 const getCommitInfo = function(commitAddress) {
-  return caller =>
-    caller.call('uprtcl', 'get_commit_info', {
+  return caller => {
+    const entry = caller.call('uprtcl', 'get_commit_info', {
       commit_address: commitAddress
     });
+    return parseEntry(entry);
+  };
 };
 
 const getPerspectiveInfo = function(perspectiveAddress) {
-  return caller =>
-    caller.call('uprtcl', 'get_perspective_info', {
+  return caller => {
+    const entry = caller.call('uprtcl', 'get_perspective_info', {
       perspective_address: perspectiveAddress
     });
-};
-
-const getCommitContent = function(commitAddress) {
-  return caller =>
-    caller.call('uprtcl', 'get_commit_content', {
-      commit_address: commitAddress
-    });
+    return parseEntry(entry);
+  };
 };
 
 const mergePerspectives = function(
@@ -75,27 +74,16 @@ const mergePerspectives = function(
     });
 };
 
-/** Aggregation functions that call the basic zome functions */
-
-const createContextAndCommit = function(contextName, message, commitContent) {
-  return async caller => {
-    const { Ok: contextAddress } = await createContext(contextName)(caller);
-    const {
-      Ok: { links: perspectiveAddresses }
-    } = getContextPerspectives(contextAddress)(caller);
-    const { Ok: commitAddress } = await createCommit(
-      perspectiveAddresses[0].address,
-      message,
-      commitContent
-    )(caller);
-
-    return {
-      contextAddress,
-      masterAddress: perspectiveAddresses[0].address,
-      commitAddress
-    };
-  };
+const createPerspectiveAndContent = function(context, name, commit) {
+  return async caller =>
+    await caller.callSync('uprtcl', 'create_perspective_and_content', {
+      context: context,
+      name: name,
+      commit: commit
+    });
 };
+
+/** Aggregation functions that call the basic zome functions */
 
 const createNCommits = function(perspectiveAddress, message, commits) {
   return async caller => {
@@ -196,10 +184,25 @@ const getContextCurrentContents = function(contextAddress) {
 
 /** Helper builders */
 
-const buildObject = function(dataAddress, links = []) {
+const buildContext = function() {
   return {
-    data: dataAddress,
-    links: links
+    creator: CREATOR_ADDRESS,
+    timestamp: Date.now(),
+    nonce: 0
+  };
+};
+
+const buildCommit = function(
+  contentAddress,
+  message = '',
+  parentCommitAddresses = []
+) {
+  return {
+    creator: CREATOR_ADDRESS,
+    timestamp: Date.now(),
+    message: message,
+    content_address: contentAddress,
+    parent_commits_addresses: parentCommitAddresses
   };
 };
 
@@ -230,10 +233,10 @@ module.exports = {
   createNCommits,
   createPerspective,
   createContext,
-  createContextAndCommit,
+  createPerspectiveAndContent,
   getContextPerspectives,
-  buildObject,
-  getCommitContent,
+  buildContext,
+  buildCommit,
   getCommitInfo,
   getPerspectiveInfo,
   mergePerspectives,
@@ -245,5 +248,6 @@ module.exports = {
   getCommitHistory,
   getContextHeadCommits,
   getContextCurrentContents,
-  parseEntry
+  parseEntry,
+  CREATOR_ADDRESS
 };
