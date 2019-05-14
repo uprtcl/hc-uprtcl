@@ -18,13 +18,15 @@ use std::convert::TryFrom;
 pub struct Context {
   creator: Address,
   timestamp: u64,
+  nonce: u128,
 }
 
 impl Context {
-  fn new(timestamp: u64) -> Context {
+  fn new(timestamp: u64, nonce: u128) -> Context {
     Context {
       creator: AGENT_ADDRESS.to_owned(),
       timestamp: timestamp.to_owned(),
+      nonce: nonce.to_owned(),
     }
   }
 }
@@ -93,13 +95,16 @@ pub fn definition() -> ValidatingEntryType {
 /**
  * Create a new context with the given name, passing the author and the current time
  */
-pub fn handle_create_context(name: String, timestamp: u64) -> ZomeApiResult<Address> {
-  let context_address = create_context_entry(timestamp)?;
+pub fn handle_create_context(context: Context) -> ZomeApiResult<Address> {
+  let context_entry = context_entry(context);
+  let context_address = hdk::commit_entry(&context_entry)?;
 
-  // Create main starting perspective and link it to the newly created context
-  let perspective_address =
-    crate::perspective::create_new_empty_perspective(name, &context_address)?;
-  link_perspective_to_context(&context_address, &perspective_address)?;
+  hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts")?;
+  hdk::link_entries(
+    &AGENT_ADDRESS, // TODO: change for DNA address
+    &context_address,
+    "all_contexts",
+  )?;
 
   Ok(context_address)
 }
@@ -107,7 +112,7 @@ pub fn handle_create_context(name: String, timestamp: u64) -> ZomeApiResult<Addr
 /**
  * Returns the root context of the agent, created at genesis time
  */
-pub fn handle_get_root_context(timestamp: u64) -> ZomeApiResult<GetEntryResult> {
+pub fn handle_get_root_context() -> ZomeApiResult<GetEntryResult> {
   let links = hdk::get_links_result(
     &AGENT_ADDRESS,
     "root",
@@ -119,8 +124,8 @@ pub fn handle_get_root_context(timestamp: u64) -> ZomeApiResult<GetEntryResult> 
   match links.len() {
     1 => links[0].clone(),
     _ => {
-      create_root_context(timestamp)?;
-      handle_get_root_context(timestamp)
+      create_root_context()?;
+      handle_get_root_context()
     }
   }
   /*
@@ -167,63 +172,10 @@ pub fn handle_get_context_info(context_address: Address) -> ZomeApiResult<GetEnt
 }
 
 /**
- * Creates a new perspective in the given context with the head pointing to the given commit
- */
-pub fn handle_create_perspective_in_context(
-  context_address: Address,
-  commit_address: Address,
-  name: String,
-) -> ZomeApiResult<Address> {
-  let perspective_address =
-    crate::perspective::create_new_perspective(&context_address, &commit_address, name)?;
-
-  link_perspective_to_context(&context_address, &perspective_address)?;
-
-  Ok(perspective_address)
-}
-
-/**
  * Returns the perspectives of the context
  */
 pub fn handle_get_context_perspectives(context_address: Address) -> ZomeApiResult<GetLinksResult> {
   hdk::get_links(&context_address, "perspectives")
-}
-
-#[derive(Serialize, Deserialize, Debug, DefaultJson)]
-pub struct CreatedCommitResponse {
-  context_address: Address,
-  perspective_address: Address,
-  commit_address: Address,
-}
-
-/**
- * Creates a context, a perspective and a commit and return the addresses
- */
-pub fn handle_create_context_and_commit(
-  name: String,
-  timestamp: u64,
-  message: String,
-  content_address: Address,
-) -> ZomeApiResult<CreatedCommitResponse> {
-  let context_address = create_context_entry(timestamp)?;
-
-  // Create main starting perspective and link it to the newly created context
-  let perspective_address =
-    crate::perspective::create_new_empty_perspective(name, &context_address)?;
-  link_perspective_to_context(&context_address, &perspective_address)?;
-
-  let commit_address = crate::perspective::handle_create_commit(
-    perspective_address.clone(),
-    message,
-    timestamp,
-    content_address,
-  )?;
-
-  Ok(CreatedCommitResponse {
-    context_address: context_address,
-    perspective_address: perspective_address,
-    commit_address: commit_address,
-  })
 }
 
 /**
@@ -244,7 +196,18 @@ pub fn handle_get_context_history(context_address: Address) -> ZomeApiResult<Vec
   )
 }
 
+/**
+ * Returns the address of the context with the given properties
+ */
+pub fn handle_get_context_address(context: Context) -> ZomeApiResult<Address> {
+  hdk::entry_address(&context_entry(context))
+}
+
 /** Helper functions */
+
+fn context_entry(context: Context) -> Entry {
+  Entry::App("context".into(), context.into())
+}
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct AddressResponse {
@@ -255,7 +218,7 @@ pub struct AddressResponse {
  * Creates the root context for the agent
  * Only to be called at genesis time
  */
-pub fn create_root_context(timestamp: u64) -> ZomeApiResult<Address> {
+pub fn create_root_context() -> ZomeApiResult<Address> {
   let json_response = hdk::call(
     hdk::THIS_INSTANCE,
     "folder",
@@ -271,42 +234,11 @@ pub fn create_root_context(timestamp: u64) -> ZomeApiResult<Address> {
   )?;
   let response = AddressResponse::try_from(json_response)?;
 
-  let result = handle_create_context_and_commit(
-    String::from("root"),
-    timestamp,
-    String::from("initial commit"),
-    response.Ok,
-  )?;
+  let commit = crate::commit::create_initial_commit(&response.Ok);
+
+  let result = crate::perspective::handle_create_perspective_and_content(Context::new(0, 0), String::from("root"), commit)?;
 
   hdk::link_entries(&AGENT_ADDRESS, &result.context_address, "root")?;
 
   Ok(result.context_address)
-}
-
-/**
- * Helper to create and commit an empty context empty, with the appropiate links
- */
-pub fn create_context_entry(timestamp: u64) -> ZomeApiResult<Address> {
-  // Create context
-  let context_entry = Entry::App("context".into(), Context::new(timestamp).into());
-  let context_address = hdk::commit_entry(&context_entry)?;
-
-  hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts")?;
-  hdk::link_entries(
-    &AGENT_ADDRESS, // TODO: change for DNA address
-    &context_address,
-    "all_contexts",
-  )?;
-
-  Ok(context_address)
-}
-
-/**
- * Links the given perspective to the given context
- */
-pub fn link_perspective_to_context(
-  context_address: &Address,
-  perspective_address: &Address,
-) -> ZomeApiResult<Address> {
-  hdk::link_entries(context_address, perspective_address, "perspectives")
 }

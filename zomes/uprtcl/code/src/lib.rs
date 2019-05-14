@@ -55,13 +55,13 @@ define_zome! {
 
     // Contexts
     create_context: {
-      inputs: |name: String, timestamp: u64|,
+      inputs: |context: context::Context|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: context::handle_create_context
     }
 
     get_root_context: {
-      inputs: |timestamp: u64|,
+      inputs: | |,
       outputs: |result: ZomeApiResult<GetEntryResult>|,
       handler: context::handle_get_root_context
     }
@@ -90,11 +90,17 @@ define_zome! {
       handler: context::handle_get_context_history
     }
 
+    get_context_address: {
+      inputs: |context: context::Context|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: context::handle_get_context_address
+    }
+
     // Perspectives
     create_perspective: {
-      inputs: |context_address: Address, commit_address: Address, name: String|,
+      inputs: |context_address: Address, name: String, commit_address: Address|,
       outputs: |result: ZomeApiResult<Address>|,
-      handler: context::handle_create_perspective_in_context
+      handler: perspective::handle_create_perspective
     }
 
     get_context_perspectives: {
@@ -128,10 +134,10 @@ define_zome! {
       handler: commit::handle_get_commit_info
     }
 
-    create_context_and_commit: {
-      inputs: |name: String, timestamp: u64, message: String, content_address: Address|,
-      outputs: |result: ZomeApiResult<context::CreatedCommitResponse>|,
-      handler: context::handle_create_context_and_commit
+    create_perspective_and_content: {
+      inputs: |context: context::Context, name: String, commit: commit::Commit|,
+      outputs: |result: ZomeApiResult<perspective::PerspectiveCreated>|,
+      handler: perspective::handle_create_perspective_and_content
     }
 
   ]
@@ -140,7 +146,7 @@ define_zome! {
     hc_public [
       get_entry, create_context, get_root_context, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
       create_perspective, get_context_perspectives, get_perspective_info, get_perspective_head, create_commit,
-      get_commit_info, create_context_and_commit
+      get_commit_info, create_perspective_and_content
     ]
   }
 

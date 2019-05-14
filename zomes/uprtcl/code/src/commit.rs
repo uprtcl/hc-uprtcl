@@ -76,20 +76,36 @@ pub fn handle_get_commit_info(commit_address: Address) -> ZomeApiResult<GetEntry
 
 /** Helper functions */
 
+fn commit_entry(commit: Commit) -> Entry {
+  Entry::App("commit".into(), commit.into())
+}
+
+pub fn create_initial_commit(content_address: &Address) -> Commit {
+  Commit::new(&AGENT_ADDRESS, "Initial commit", 0, content_address, &vec![])
+}
+
 /**
  * Creates a new commit in the given context_address with the given properties
  */
-pub fn create_commit(
+pub fn create_commit_entry(
   message: String,
   timestamp: u64,
   content_address: Address,
   parent_commits: &Vec<Address>,
 ) -> ZomeApiResult<Address> {
-  let commit_entry = Entry::App(
-    "commit".into(),
-    Commit::new(&AGENT_ADDRESS, &message, timestamp, &content_address, parent_commits).into(),
-  );
+  let commit_entry = commit_entry(Commit::new(
+    &AGENT_ADDRESS,
+    &message,
+    timestamp,
+    &content_address,
+    parent_commits,
+  ));
 
+  hdk::commit_entry(&commit_entry)
+}
+
+pub fn create_commit(commit: Commit) -> ZomeApiResult<Address> {
+  let commit_entry = commit_entry(commit);
   hdk::commit_entry(&commit_entry)
 }
 
