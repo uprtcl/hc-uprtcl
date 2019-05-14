@@ -76,6 +76,6 @@ define_zome! {
     ]
 
     traits: {
-        hc_public [create_document_node,get_document_node]
+        hc_public [create_text_node,get_text_node]
     }
 }

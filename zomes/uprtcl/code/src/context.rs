@@ -221,12 +221,12 @@ pub struct AddressResponse {
 pub fn create_root_context() -> ZomeApiResult<Address> {
   let json_response = hdk::call(
     hdk::THIS_INSTANCE,
-    "folder",
+    "documents",
     Address::from(PUBLIC_TOKEN.to_string()),
-    "create_folder",
+    "create_text_node",
     json!({
-      "folder": {
-        "name": "root",
+      "node": {
+        "text": "Hi",
         "links": {}
       }
     })
