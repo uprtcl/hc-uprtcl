@@ -23,7 +23,7 @@ export interface UprtclService extends LinkResolver {
   createPerspective(
     contextId: string,
     name: string,
-    commitId: string
+    commitLink: string
   ): Promise<string>;
   createPerspectiveAndContent(
     context: Context,
