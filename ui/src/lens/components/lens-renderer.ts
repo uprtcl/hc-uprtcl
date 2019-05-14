@@ -4,14 +4,14 @@ import { Lens } from '../types';
 
 /** From the id of the content to render and the viewer id */
 
-import '../../folders/components/folder-list';
+import '../../documents/components/document-node';
 import { BaseLens } from './base-lens';
 
 @customElement('lens-renderer')
 export class LensRenderer extends BaseLens {
   @property()
   private lens: Lens = {
-    element: 'folder-list'
+    element: 'document-node'
   };
 
   buildElement() {

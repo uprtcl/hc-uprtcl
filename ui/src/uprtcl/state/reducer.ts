@@ -80,5 +80,9 @@ export function uprtclReducer(state = initialState, action: AnyAction) {
 export const selectUprtcl = (state: RootState) => state.uprtcl;
 
 export const uprtclResolver = new Resolver<UprtclService>({
-  holochain: new HolochainUprtcl()
+  holochain: {
+    'test-instance': new HolochainUprtcl()
+  }
 });
+
+export const uprtclHolochain = uprtclResolver.getResolver('holochain', 'test-instance');

@@ -1,5 +1,5 @@
 import { asyncAction } from '../common/actions';
-import { uprtclResolver } from '../reducer';
+import { uprtclHolochain } from '../reducer';
 import { Commit } from '../../types';
 import { setPerspectiveHead } from '../perspective/actions';
 
@@ -14,8 +14,7 @@ export function createCommit(
   contentAddress: string
 ) {
   return dispatch =>
-    uprtclResolver
-      .getResolver('holochain')
+    uprtclHolochain
       .createCommit(perspectiveAddress, message, contentAddress)
       .then(commitAddress =>
         dispatch(CREATE_COMMIT.success(commitAddress)).then(() =>
@@ -30,7 +29,7 @@ export const GET_COMMIT = asyncAction<{ commitId: string }, Commit>(
 
 export function getCommit(commitId: string) {
   return dispatch =>
-    uprtclResolver
+    uprtclHolochain
       .getCommit(commitId)
       .then(commit => dispatch(GET_COMMIT.success(commit)));
 }

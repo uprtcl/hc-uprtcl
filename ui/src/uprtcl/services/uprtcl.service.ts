@@ -1,6 +1,7 @@
 import { Commit, Perspective, Context } from '../types';
+import { LinkResolver } from '../../services/resolver';
 
-export interface UprtclService {
+export interface UprtclService extends LinkResolver {
   /** Getters */
 
   getRootContext(): Promise<Context>;

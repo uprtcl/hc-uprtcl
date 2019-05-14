@@ -69,7 +69,6 @@ export class MyApp extends connect(store)(LitElement) {
     this.perspective = selectPerspectiveById(this.checkoutPerspectiveId)(
       selectUprtcl(state)
     );
-    console.log(this.perspective);
   }
 
   handleNavigation(location: Location) {

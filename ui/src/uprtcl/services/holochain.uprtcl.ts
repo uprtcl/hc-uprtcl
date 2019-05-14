@@ -1,8 +1,12 @@
-import { HolochainConnection, EntryResult } from '../../services/holochain.connection';
+import {
+  HolochainConnection,
+  EntryResult
+} from '../../services/holochain.connection';
 import { Perspective, Commit, Context } from '../types';
 import { UprtclService } from './uprtcl.service';
+import { LinkResolver } from '../../services/resolver';
 
-export class HolochainUprtcl implements UprtclService {
+export class HolochainUprtcl implements UprtclService, LinkResolver {
   uprtclZome: HolochainConnection;
 
   constructor() {
@@ -22,7 +26,7 @@ export class HolochainUprtcl implements UprtclService {
   }
 
   getContextId(context: Context) {
-    return this.getEntry(contextId).then(result => result.entry);
+    return this.uprtclZome.call('get_context_address', context);
   }
 
   getContext(contextId: string) {
@@ -67,6 +71,7 @@ export class HolochainUprtcl implements UprtclService {
       name: name
     });
   }
+
   createPerspectiveAndContent(
     context: Context,
     name: string,
@@ -74,8 +79,8 @@ export class HolochainUprtcl implements UprtclService {
   ): Promise<string> {
     return this.uprtclZome.call('create_perspective_and_content', {
       context_address: context,
-      commit_address: commit,
-      name: name
+      name: name,
+      commit_address: commit
     });
   }
 
@@ -90,5 +95,9 @@ export class HolochainUprtcl implements UprtclService {
       timestamp: Date.now(),
       content_address: contentAddress
     });
+  }
+
+  resolve(link: string) {
+    return this.getEntry(link).then(result => result.entry);
   }
 }

@@ -1,8 +1,8 @@
 export type Address = string;
 
-export interface Folder {
+export interface DocumentNode {
   id?: string;
 
-  name: string;
+  text: string;
   links: { [name: string]: Address };
 }

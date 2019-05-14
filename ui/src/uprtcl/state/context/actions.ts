@@ -1,5 +1,5 @@
 import { asyncAction } from '../common/actions';
-import { uprtclResolver } from '../reducer';
+import { uprtclHolochain } from '../reducer';
 import { Perspective, Context } from '../../types';
 import { getPerspective } from '../perspective/actions';
 
@@ -9,7 +9,7 @@ export const GET_CONTEXT = asyncAction<{ contextId: string }, Context>(
 
 export function getContext(contextId: string) {
   return dispatch =>
-    uprtclResolver
+    uprtclHolochain
       .getContext(contextId)
       .then(context => dispatch(GET_CONTEXT.success(context)));
 }
@@ -21,8 +21,8 @@ export const CREATE_CONTEXT = asyncAction<
 
 export function createContext() {
   return dispatch =>
-    uprtclResolver
-      .createContext()
+    uprtclHolochain
+      .createContext({ creator: '', timestamp: Date.now().toString(), nonce: 0 })
       .then(contextId => dispatch(CREATE_CONTEXT.success(contextId)));
 }
 
@@ -33,7 +33,7 @@ export const GET_CONTEXT_PERSPECTIVES = asyncAction<
 
 export function getContextPerspectives(contextId: string) {
   return dispatch =>
-    uprtclResolver
+    uprtclHolochain
       .getContextPerspectives(contextId)
       .then(perspectives =>
         dispatch(GET_CONTEXT_PERSPECTIVES.success(perspectives))
@@ -46,7 +46,7 @@ export const GET_ROOT_CONTEXT = asyncAction<{}, Context>(
 
 export function getRootContext() {
   return dispatch =>
-    uprtclResolver
+    uprtclHolochain
       .getRootContext()
       .then(context => dispatch(GET_ROOT_CONTEXT.success(context)));
 }
@@ -66,4 +66,3 @@ export function getContextContent(contextId: string) {
       )
     ]);
 }
-

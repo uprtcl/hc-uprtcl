@@ -21,13 +21,12 @@ import { lazyReducerEnhancer } from 'pwa-helpers/lazy-reducer-enhancer.js';
 import { connect } from '@holochain/hc-web-client';
 import { holochainMiddleware } from '@holochain/hc-redux-middleware';
 
-import { foldersReducer, FoldersState } from './folders/state/reducer';
 import { UprtclState, uprtclReducer } from './uprtcl/state/reducer';
-import { createFolder } from './folders/state/actions';
+import { DocumentsState, documentsReducer } from './documents/state/reducer';
 
 // Overall state extends static states and partials lazy states.
 export interface RootState {
-  folders: FoldersState;
+  documents: DocumentsState;
   uprtcl: UprtclState;
 }
 
@@ -56,6 +55,6 @@ export const store = createStore(
 
 // Initially loaded reducers.
 store.addReducers({
-  folders: foldersReducer,
+  documents: documentsReducer,
   uprtcl: uprtclReducer
 });
