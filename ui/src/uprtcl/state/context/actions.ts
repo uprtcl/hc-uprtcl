@@ -1,5 +1,5 @@
 import { asyncAction } from '../common/actions';
-import { universalUprtcl } from '../reducer';
+import { uprtclResolver } from '../reducer';
 import { Perspective, Context } from '../../types';
 import { getPerspective } from '../perspective/actions';
 
@@ -9,7 +9,7 @@ export const GET_CONTEXT = asyncAction<{ contextId: string }, Context>(
 
 export function getContext(contextId: string) {
   return dispatch =>
-    universalUprtcl
+    uprtclResolver
       .getContext(contextId)
       .then(context => dispatch(GET_CONTEXT.success(context)));
 }
@@ -21,7 +21,7 @@ export const CREATE_CONTEXT = asyncAction<
 
 export function createContext() {
   return dispatch =>
-    universalUprtcl
+    uprtclResolver
       .createContext()
       .then(contextId => dispatch(CREATE_CONTEXT.success(contextId)));
 }
@@ -33,7 +33,7 @@ export const GET_CONTEXT_PERSPECTIVES = asyncAction<
 
 export function getContextPerspectives(contextId: string) {
   return dispatch =>
-    universalUprtcl
+    uprtclResolver
       .getContextPerspectives(contextId)
       .then(perspectives =>
         dispatch(GET_CONTEXT_PERSPECTIVES.success(perspectives))
@@ -46,7 +46,7 @@ export const GET_ROOT_CONTEXT = asyncAction<{}, Context>(
 
 export function getRootContext() {
   return dispatch =>
-    universalUprtcl
+    uprtclResolver
       .getRootContext()
       .then(context => dispatch(GET_ROOT_CONTEXT.success(context)));
 }

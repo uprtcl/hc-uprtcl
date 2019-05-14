@@ -1,6 +1,6 @@
 import { Perspective } from '../../types';
 import { selectPerspectiveHeadId, selectPerspectiveById } from './selectors';
-import { selectUprtcl, universalUprtcl } from '../reducer';
+import { selectUprtcl, uprtclResolver } from '../reducer';
 import { getContextContent } from '../context/actions';
 import { asyncAction } from '../common/actions';
 import { getCommit } from '../commit/actions';
@@ -18,7 +18,7 @@ export function createPerspective(
   name: string
 ) {
   return dispatch =>
-    universalUprtcl
+    uprtclResolver
       .createPerspective(contextId, commitId, name)
       .then(perspectiveId =>
         dispatch(CREATE_PERSPECTIVE.success(perspectiveId))
@@ -32,7 +32,7 @@ export const GET_PERSPECTIVE = asyncAction<
 
 export function getPerspective(perspectiveId: string) {
   return dispatch =>
-    universalUprtcl
+    uprtclResolver
       .getPerspective(perspectiveId)
       .then(perspective => dispatch(GET_PERSPECTIVE.success(perspective)));
 }

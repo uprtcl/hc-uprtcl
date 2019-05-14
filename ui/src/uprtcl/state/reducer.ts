@@ -5,8 +5,10 @@ import { RootState } from '../../store';
 import { GET_CONTEXT, GET_ROOT_CONTEXT } from './context/actions';
 import { EntityState, createEntityAdapter } from '../../utils/entity';
 import { SET_PERSPECTIVE_HEAD, GET_PERSPECTIVE } from './perspective/actions';
-import { UniversalUprtcl } from '../services/universal.uprtcl';
 import { GET_COMMIT } from './commit/actions';
+import { Resolver } from '../../services/resolver';
+import { HolochainUprtcl } from '../services/holochain.uprtcl';
+import { UprtclService } from '../services/uprtcl.service';
 
 export interface UprtclState {
   rootContextId: string;
@@ -77,4 +79,6 @@ export function uprtclReducer(state = initialState, action: AnyAction) {
 
 export const selectUprtcl = (state: RootState) => state.uprtcl;
 
-export const universalUprtcl = new UniversalUprtcl();
+export const uprtclResolver = new Resolver<UprtclService>({
+  holochain: new HolochainUprtcl()
+});

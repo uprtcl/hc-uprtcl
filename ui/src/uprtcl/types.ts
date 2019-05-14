@@ -2,6 +2,7 @@ export interface Context {
   id: string;
   timestamp: string;
   creator: string;
+  nonce: number;
 }
 
 export interface Perspective {
