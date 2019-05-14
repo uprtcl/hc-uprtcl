@@ -1,6 +1,8 @@
+export type Address = string;
 
-export interface Document {
-  id: string;
-  title: string;
-  content: string;
+export interface TextNode {
+  id?: string;
+
+  text: string;
+  links: { [name: string]: Address };
 }

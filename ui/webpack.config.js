@@ -43,10 +43,8 @@ module.exports = {
       'images/**',
       'node_modules/@webcomponents/webcomponentsjs/**',
       'node_modules/@holochain/**',
-      'node_modules/@vaadin/**',
       'node_modules/lit-element/**',
-      'node_modules/ipfs/**',
-      'manifest.json'
+      'node_modules/ipfs/**'
     ]),
     new HtmlWebpackPlugin({
       chunksSortMode: 'none',

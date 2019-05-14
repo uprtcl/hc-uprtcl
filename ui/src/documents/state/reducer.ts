@@ -1,30 +1,31 @@
-import { getType } from 'typesafe-actions';
-import { AnyAction } from 'redux';
-import { Document } from '../types';
-import { EntityState, createEntityAdapter } from '../../vc/utils/entity';
-import { createSelector } from 'reselect';
+import { EntityState, createEntityAdapter } from '../../utils/entity';
+import { TextNode } from '../types';
 import { RootState } from '../../store';
-import { getEntry } from '../../vc/state/actions/common.actions';
-import { parseEntryResult } from '../../vc/utils/utils';
+import { AnyAction } from 'redux';
+import { Resolver } from '../../services/resolver';
+import { HolochainDocuments } from '../services/holochain.documents';
+import { GET_DOCUMENT_NODE } from './actions';
+import { DocumentsService } from '../services/document.service';
 
 export interface DocumentsState {
-  documents: EntityState<Document>;
+  textNodes: EntityState<TextNode>;
 }
 
-export const documentsAdapter = createEntityAdapter<Document>();
+export const textAdapter = createEntityAdapter<TextNode>();
 
 const initialState: DocumentsState = {
-  documents: documentsAdapter.getInitialState()
+  textNodes: textAdapter.getInitialState()
 };
 
 export function documentsReducer(state = initialState, action: AnyAction) {
   switch (action.type) {
-    case getType(getEntry.success):
-      const result = parseEntryResult(action.payload);
-      if (result.type !== 'document') return state;
+    case GET_DOCUMENT_NODE.successType:
       return {
         ...state,
-        documents: documentsAdapter.upsertOne(result.entry, state.documents)
+        textNodes: textAdapter.upsertOne(
+          action.payload,
+          state.textNodes
+        )
       };
     default:
       return state;
@@ -33,9 +34,17 @@ export function documentsReducer(state = initialState, action: AnyAction) {
 
 export const selectDocuments = (state: RootState) => state.documents;
 
-export const selectDocument = (documentId: string) =>
-  createSelector(
-    selectDocuments,
-    (documents: DocumentsState) =>
-      documentsAdapter.selectById(documentId)(documents.documents)
-  );
+export const selectTextNode = (nodeId: string) => (
+  documents: DocumentsState
+) => textAdapter.selectById(nodeId)(documents.textNodes);
+
+export const documentsResolver = new Resolver<DocumentsService>({
+  holochain: {
+    'test-instance': new HolochainDocuments()
+  }
+});
+
+export const documentsHolochain = documentsResolver.getResolver(
+  'holochain',
+  'test-instance'
+);

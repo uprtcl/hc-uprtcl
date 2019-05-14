@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "@holochain/holochain-nodejs": "^0.4.6-alpha",
     "faucet": "0.0.1",
     "json3": "*",
     "sleep": "^5.2.3",
@@ -10,3 +9,4 @@
     "test": "tape index.js | faucet"
   }
 }
+

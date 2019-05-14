@@ -1,47 +1,81 @@
 #![feature(try_from)]
+#![warn(unused_extern_crates)]
 #[macro_use]
 extern crate hdk;
+#[macro_use]
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
 extern crate serde_json;
 #[macro_use]
 extern crate holochain_core_types_derive;
 
-use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
-
 use hdk::holochain_core_types::{
-  cas::content::Address, error::HolochainError,
-  json::JsonString,
+    cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
+    json::JsonString,
 };
-use hdk::error::ZomeApiResult;
+use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 
-pub mod document;
+// see https://developer.holochain.org/api/latest/hdk/ for info on using the hdk library
+
+// This is a sample zome that defines an entry type "MyEntry" that can be committed to the
+// agent's chain via the exposed function create_my_entry
+
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
+pub struct TextNode {
+    text: String,
+    links: HashMap<String, Address>,
+}
+
+pub fn handle_create_text_node(node: TextNode) -> ZomeApiResult<Address> {
+    let entry = Entry::App("text_node".into(), node.into());
+    let address = hdk::commit_entry(&entry)?;
+
+    Ok(address)
+}
+
+pub fn handle_get_text_node(address: Address) -> ZomeApiResult<GetEntryResult> {
+    hdk::get_entry_result(&address, GetEntryOptions::default())
+}
+
+fn definition() -> ValidatingEntryType {
+    entry!(
+        name: "text_node",
+        description: "this is a same entry defintion",
+        sharing: Sharing::Public,
+        validation_package: || {
+            hdk::ValidationPackageDefinition::Entry
+        },
+
+        validation: | _validation_data: hdk::EntryValidationData<TextNode>| {
+            Ok(())
+        }
+    )
+}
 
 define_zome! {
-  entries: [
-      document::definition()
-  ]
+    entries: [
+       definition()
+    ]
 
-  genesis: || { Ok(()) }
+    genesis: || { Ok(()) }
 
-  functions: [
+    functions: [
+        create_text_node: {
+            inputs: |node: TextNode|,
+            outputs: |result: ZomeApiResult<Address>|,
+            handler: handle_create_text_node
+        }
+        get_text_node: {
+            inputs: |address: Address|,
+            outputs: |result: ZomeApiResult<GetEntryResult>|,
+            handler: handle_get_text_node
+        }
+    ]
 
-    get_document: {
-      inputs: |address: Address|,
-      outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: document::handle_get_document
+    traits: {
+        hc_public [create_text_node,get_text_node]
     }
-
-    save_document: {
-      inputs: |title: String, content: String|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: document::handle_save_document
-    }
-
-  ]
-
-  traits: {
-    hc_public [get_document, save_document]
-  }
 }
