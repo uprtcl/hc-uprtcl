@@ -222,9 +222,14 @@ const chain = async function(caller, ...actions) {
   };
 };
 
-const parseEntry = function(entry) {
+const parseEntryResult = function(entry) {
   let parseable = entry.Ok ? entry.Ok : entry;
-  return JSON.parse(parseable.result.Single.entry.App[1]);
+  return parseEntry(parseable.result.Single.entry);
+};
+
+const parseEntry = function(entry) {
+  const parseable = entry.Ok ? entry.Ok : entry;
+  return JSON.parse(parseable.App[1]);
 };
 
 module.exports = {
@@ -248,6 +253,7 @@ module.exports = {
   getCommitHistory,
   getContextHeadCommits,
   getContextCurrentContents,
+  parseEntryResult,
   parseEntry,
   CREATOR_ADDRESS
 };

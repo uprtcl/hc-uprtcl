@@ -25,49 +25,57 @@ const SAMPLE_DRAFT_CONTENT2 = {
   sampleContent2: 'sampleContent2'
 };
 
+const { parseEntry } = require('./utils');
+
 scenario1.runTape('get non-existing draft', async (t, { alice }) => {
-  const draft = await alice.callSync('get_draft', {
+  const draft = await alice.callSync('draft', 'get_draft', {
     entry_address: SAMPLE_ADDRESS
   });
-  t.equal(draft.message, 'entry has no drafts');
+  t.equal(draft.Ok.message, 'entry has no drafts');
 });
 
 scenario1.runTape('set draft and get it afterwards', async (t, { alice }) => {
-  const draftAddress = await alice.callSync('set_draft', {
+  const draftAddress = await alice.callSync('draft', 'set_draft', {
     entry_address: SAMPLE_ADDRESS,
-    draft: SAMPLE_DRAFT_CONTENT1
+    draft: JSON.stringify(SAMPLE_DRAFT_CONTENT1)
   });
-  t.equal(draftAddress, 'entry has no drafts');
+  t.equal(draftAddress.Ok, 'QmayiqV3JsC6YR8LdTMavqdnTrFMc8Ak2usQtcDQd2XUo4');
 
-  const draft = await alice.callSync('get_draft', {
+  const draft = await alice.callSync('draft', 'get_draft', {
     entry_address: SAMPLE_ADDRESS
   });
-  t.equal(draft.sampleContent, SAMPLE_DRAFT_CONTENT1.sampleContent);
+  t.deepEqual(draft.Ok, SAMPLE_DRAFT_CONTENT1);
 });
 
 scenario2.runTape(
   'drafts from different people do not conflict',
   async (t, { alice, bob }) => {
-    const aliceDraftAddress = await alice.callSync('set_draft', {
+    const aliceDraftAddress = await alice.callSync('draft', 'set_draft', {
       entry_address: SAMPLE_ADDRESS,
-      draft: SAMPLE_DRAFT_CONTENT1
+      draft: JSON.stringify(SAMPLE_DRAFT_CONTENT1)
     });
-    t.equal(aliceDraftAddress, 'entry has no drafts');
+    t.equal(
+      aliceDraftAddress.Ok,
+      'QmayiqV3JsC6YR8LdTMavqdnTrFMc8Ak2usQtcDQd2XUo4'
+    );
 
-    const noDraft = await bob.callSync('get_draft', {
+    const noDraft = await bob.callSync('draft', 'get_draft', {
       entry_address: SAMPLE_ADDRESS
     });
-    t.equal(noDraft.message, 'entry has no drafts');
+    t.equal(noDraft.Ok.message, 'entry has no drafts');
 
-    const bobDraftAddress = await bob.callSync('set_draft', {
+    const bobDraftAddress = await bob.callSync('draft', 'set_draft', {
       entry_address: SAMPLE_ADDRESS,
-      draft: SAMPLE_DRAFT_CONTENT2
+      draft: JSON.stringify(SAMPLE_DRAFT_CONTENT2)
     });
-    t.equal(bobDraftAddress, 'entry has no drafts');
+    t.equal(
+      bobDraftAddress.Ok,
+      'QmXSBzWRrBujEKCrpArNmiFL1dbXfhUW3mkQ3SCx19uT26'
+    );
 
-    const bobDraft = await bob.callSync('get_draft', {
+    const bobDraft = await bob.callSync('draft', 'get_draft', {
       entry_address: SAMPLE_ADDRESS
     });
-    t.equal(bobDraft.sampleContent, SAMPLE_DRAFT_CONTENT2.sampleContent2);
+    t.deepEqual(bobDraft.Ok, SAMPLE_DRAFT_CONTENT2);
   }
 );

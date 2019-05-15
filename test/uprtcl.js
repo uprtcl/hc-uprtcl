@@ -38,7 +38,7 @@ const {
   getPerspectiveInfo,
   getContextHeadCommits,
   getContextCurrentContents,
-  parseEntry,
+  parseEntryResult,
   getRootContext,
   CREATOR_ADDRESS
 } = require('./utils');
@@ -65,7 +65,7 @@ scenario1.runTape('create context', async (t, { alice }) => {
   });
 
   // Check that context creator is correct
-  const contextInfo = parseEntry(result);
+  const contextInfo = parseEntryResult(result);
   t.equal(contextInfo.creator, CREATOR_ADDRESS);
 
   // check that context has a perspective associated
@@ -224,7 +224,7 @@ scenario1.runTape(
     const { Ok: commitInfoJsonString } = getCommitInfo(mergedCommitAddress)(
       alice
     );
-    const commitInfo = parseEntry(commitInfoJsonString);
+    const commitInfo = parseEntryResult(commitInfoJsonString);
 
     t.deepEqual(commitInfo.parent_commits_addresses, [
       developCommit,
@@ -232,7 +232,7 @@ scenario1.runTape(
     ]);
 
     const commitContentString = getCommitContent(mergedCommitAddress)(alice);
-    const commitContent = parseEntry(commitContentString);
+    const commitContent = parseEntryResult(commitContentString);
 
     t.deepEqual(commitContent, {
       data: null,
