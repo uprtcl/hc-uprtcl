@@ -1,8 +1,21 @@
 export type Address = string;
 
+export type Position = 
+  | {
+      before: Address;
+      after: Address;
+    }
+  | {
+      after: Address;
+    }
 export interface TextNode {
   id?: string;
 
   text: string;
-  links: { [name: string]: Address };
+  links: [
+    {
+      position?: Position;
+      link: Address;
+    }
+  ];
 }
