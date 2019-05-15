@@ -20,10 +20,12 @@ import { lazyReducerEnhancer } from 'pwa-helpers/lazy-reducer-enhancer.js';
 
 import { UprtclState, uprtclReducer } from './uprtcl/state/reducer';
 import { DocumentsState, documentsReducer } from './documents/state/reducer';
+import { WorkingState, workingReducer } from './working/state/reducer';
 
 // Overall state extends static states and partials lazy states.
 export interface RootState {
   documents: DocumentsState;
+  working: WorkingState;
   uprtcl: UprtclState;
 }
 
@@ -46,5 +48,6 @@ export const store = createStore(
 // Initially loaded reducers.
 store.addReducers({
   documents: documentsReducer,
+  working: workingReducer,
   uprtcl: uprtclReducer
 });

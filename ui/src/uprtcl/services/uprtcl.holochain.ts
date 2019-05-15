@@ -6,7 +6,7 @@ import { Perspective, Commit, Context } from '../types';
 import { UprtclService } from './uprtcl.service';
 import { LinkResolver } from '../../services/resolver';
 
-export class HolochainUprtcl implements UprtclService, LinkResolver {
+export class UprtclHolochain implements UprtclService, LinkResolver {
   uprtclZome: HolochainConnection;
 
   constructor() {
@@ -19,21 +19,21 @@ export class HolochainUprtcl implements UprtclService, LinkResolver {
       .then(entry => this.uprtclZome.parseEntryResult(entry));
   }
 
-  getRootContext() {
+  getRootContext(): Promise<Context> {
     return this.uprtclZome
       .call('get_root_context', {})
       .then(result => this.uprtclZome.parseEntryResult<Context>(result).entry);
   }
 
-  getContextId(context: Context) {
+  getContextId(context: Context): Promise<string> {
     return this.uprtclZome.call('get_context_address', context);
   }
 
-  getContext(contextId: string) {
+  getContext(contextId: string): Promise<Context> {
     return this.getEntry(contextId).then(result => result.entry);
   }
 
-  getPerspective(perspectiveId: string) {
+  getPerspective(perspectiveId: string): Promise<Perspective> {
     return Promise.all([
       this.getEntry(perspectiveId),
       this.uprtclZome.call('get_perspective_head', {
@@ -46,11 +46,11 @@ export class HolochainUprtcl implements UprtclService, LinkResolver {
     });
   }
 
-  getCommit(commitId: string) {
+  getCommit(commitId: string): Promise<Commit> {
     return this.getEntry(commitId).then(result => result.entry);
   }
 
-  getContextPerspectives(contextId: string) {
+  getContextPerspectives(contextId: string): Promise<Perspective[]> {
     return this.uprtclZome.call('get_context_perspectives', {
       context_address: contextId
     });
@@ -63,24 +63,24 @@ export class HolochainUprtcl implements UprtclService, LinkResolver {
   createPerspective(
     contextId: string,
     name: string,
-    commitLink: string
+    headLink: string
   ): Promise<string> {
     return this.uprtclZome.call('create_perspective', {
       context_address: contextId,
       name: name,
-      commit_address: commitLink
+      commit_address: headLink
     });
   }
 
   createPerspectiveAndContent(
     context: Context,
     name: string,
-    commit: Commit
+    head: Commit
   ): Promise<string> {
     return this.uprtclZome.call('create_perspective_and_content', {
       context_address: context,
       name: name,
-      commit_address: commit
+      commit_address: head
     });
   }
 

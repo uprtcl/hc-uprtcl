@@ -7,7 +7,7 @@ import { EntityState, createEntityAdapter } from '../../utils/entity';
 import { SET_PERSPECTIVE_HEAD, GET_PERSPECTIVE } from './perspective/actions';
 import { GET_COMMIT } from './commit/actions';
 import { Resolver } from '../../services/resolver';
-import { HolochainUprtcl } from '../services/holochain.uprtcl';
+import { UprtclHolochain } from '../services/uprtcl.holochain';
 import { UprtclService } from '../services/uprtcl.service';
 
 export interface UprtclState {
@@ -81,8 +81,11 @@ export const selectUprtcl = (state: RootState) => state.uprtcl;
 
 export const uprtclResolver = new Resolver<UprtclService>({
   holochain: {
-    'test-instance': new HolochainUprtcl()
+    'test-instance': new UprtclHolochain()
   }
 });
 
-export const uprtclHolochain = uprtclResolver.getResolver('holochain', 'test-instance');
+export const uprtclHolochain = uprtclResolver.getResolver(
+  'holochain',
+  'test-instance'
+);

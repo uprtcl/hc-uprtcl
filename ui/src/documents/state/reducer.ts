@@ -3,7 +3,7 @@ import { TextNode } from '../types';
 import { RootState } from '../../store';
 import { AnyAction } from 'redux';
 import { Resolver } from '../../services/resolver';
-import { HolochainDocuments } from '../services/holochain.documents';
+import { DocumentsHolochain } from '../services/documents.holochain';
 import { GET_DOCUMENT_NODE } from './actions';
 import { DocumentsService } from '../services/document.service';
 
@@ -22,10 +22,7 @@ export function documentsReducer(state = initialState, action: AnyAction) {
     case GET_DOCUMENT_NODE.successType:
       return {
         ...state,
-        textNodes: textAdapter.upsertOne(
-          action.payload,
-          state.textNodes
-        )
+        textNodes: textAdapter.upsertOne(action.payload, state.textNodes)
       };
     default:
       return state;
@@ -34,13 +31,12 @@ export function documentsReducer(state = initialState, action: AnyAction) {
 
 export const selectDocuments = (state: RootState) => state.documents;
 
-export const selectTextNode = (nodeId: string) => (
-  documents: DocumentsState
-) => textAdapter.selectById(nodeId)(documents.textNodes);
+export const selectTextNode = (nodeId: string) => (documents: DocumentsState) =>
+  textAdapter.selectById(nodeId)(documents.textNodes);
 
 export const documentsResolver = new Resolver<DocumentsService>({
   holochain: {
-    'test-instance': new HolochainDocuments()
+    'test-instance': new DocumentsHolochain()
   }
 });
 

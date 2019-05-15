@@ -4,24 +4,23 @@ extern crate hdk;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
 extern crate serde_json;
 #[macro_use]
 extern crate holochain_core_types_derive;
 
-use hdk::holochain_core_types::cas::content::AddressableContent;
-use hdk::holochain_core_types::{
-    cas::content::{Address, Content},
-    dna::entry_types::Sharing,
-    entry::Entry,
-    error::HolochainError,
-    json::JsonString,
-};
 use hdk::{
     entry_definition::ValidatingEntryType,
     error::{ZomeApiError, ZomeApiResult},
+    holochain_core_types::{
+        cas::content::{Address, AddressableContent, Content},
+        dna::entry_types::Sharing,
+        entry::Entry,
+        error::HolochainError,
+        json::JsonString,
+    },
+    AGENT_ADDRESS,
 };
-
-// see https://developer.holochain.org/api/0.0.14-alpha1/hdk/ for info on using the hdk library
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Draft {
@@ -36,36 +35,88 @@ impl Draft {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
+pub struct Workspace {
+    agent_address: Address,
+    entry_address: Address,
+}
+
+impl Workspace {
+    fn from(entry_address: Address) -> Workspace {
+        Workspace {
+            agent_address: AGENT_ADDRESS.to_owned(),
+            entry_address: entry_address.to_owned(),
+        }
+    }
+}
+
+fn workspace_entry(entry_address: Address) -> Entry {
+    Entry::App("workspace".into(), Workspace::from(entry_address).into())
+}
+
+fn workspace_address(entry_address: Address) -> ZomeApiResult<Address> {
+    hdk::entry_address(&workspace_entry(entry_address))
+}
+
+/**
+ * Removes the previous draft from the workspace
+ */
 fn remove_previous_draft(entry_address: &Address) -> ZomeApiResult<()> {
-    let links = hdk::get_links(entry_address, "draft")?;
+    let workspace_address = workspace_address(entry_address.clone())?;
+    let links = hdk::get_links(&workspace_address, "draft")?;
 
     if links.addresses().len() > 0 {
-        hdk::remove_link(entry_address, &links.addresses()[0], "draft")?;
+        hdk::remove_link(&workspace_address, &links.addresses()[0], "draft")?;
         hdk::remove_entry(&links.addresses()[0])?;
     }
 
     Ok(())
 }
 
+/**
+ * Removes the previous draft if existed,
+ * creates or uses the user's workspace for given entry and
+ * stores the given draft
+ */
 pub fn handle_set_draft(entry_address: Address, draft: Content) -> ZomeApiResult<Address> {
     remove_previous_draft(&entry_address)?;
 
     let entry = Entry::App("draft".into(), Draft::new(draft).into());
     let address = hdk::commit_entry(&entry)?;
 
-    hdk::link_entries(&entry_address, &address, "draft")?;
+    let workspace = workspace_entry(entry_address);
+    let workspace_address = hdk::commit_entry(&workspace)?;
+
+    hdk::link_entries(&workspace_address, &address, "draft")?;
 
     Ok(address)
 }
 
+fn not_found_result() -> Content {
+    json!({
+        "message": "entry has no drafts"
+    })
+    .into()
+}
+
+/**
+ * Returns the draft for the given entry_address, failing if it didn't exist
+ */
 pub fn handle_get_draft(entry_address: Address) -> ZomeApiResult<Content> {
-    let links = hdk::get_links_and_load(&entry_address, "draft")?;
+    let workspace_address = workspace_address(entry_address)?;
 
-    if links.len() == 0 {
-        return Err(ZomeApiError::from(String::from("entry has no drafts")));
+    match hdk::get_entry(&workspace_address)? {
+        None => Ok(not_found_result()),
+        Some(_) => {
+            let links = hdk::get_links_and_load(&workspace_address, "draft")?;
+
+            if links.len() == 0 {
+                return Ok(not_found_result());
+            }
+
+            Ok(links[0].to_owned().unwrap().content())
+        }
     }
-
-    Ok(links[0].to_owned().unwrap().content())
 }
 
 fn definition() -> ValidatingEntryType {

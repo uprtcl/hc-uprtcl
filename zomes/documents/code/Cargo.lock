@@ -248,7 +248,7 @@ dependencies = [
 [[package]]
 name = "hdk"
 version = "0.0.15-alpha1"
-source = "git+https://github.com/holochain/holochain-rust?branch=develop#1d36d11c4484f957a510eaa8a33cc5a4e8e3fed4"
+source = "git+https://github.com/holochain/holochain-rust?branch=develop#b7a194ea0b8568815341c70ab3f8119a879cf481"
 dependencies = [
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "holochain_core_types 0.0.15-alpha1 (git+https://github.com/holochain/holochain-rust?branch=develop)",
@@ -264,7 +264,7 @@ dependencies = [
 [[package]]
 name = "holochain_core_types"
 version = "0.0.15-alpha1"
-source = "git+https://github.com/holochain/holochain-rust?branch=develop#1d36d11c4484f957a510eaa8a33cc5a4e8e3fed4"
+source = "git+https://github.com/holochain/holochain-rust?branch=develop#b7a194ea0b8568815341c70ab3f8119a879cf481"
 dependencies = [
  "arrayref 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -294,7 +294,7 @@ dependencies = [
 [[package]]
 name = "holochain_core_types_derive"
 version = "0.0.15-alpha1"
-source = "git+https://github.com/holochain/holochain-rust?branch=develop#1d36d11c4484f957a510eaa8a33cc5a4e8e3fed4"
+source = "git+https://github.com/holochain/holochain-rust?branch=develop#b7a194ea0b8568815341c70ab3f8119a879cf481"
 dependencies = [
  "quote 0.6.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.89 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -305,7 +305,7 @@ dependencies = [
 [[package]]
 name = "holochain_wasm_utils"
 version = "0.0.15-alpha1"
-source = "git+https://github.com/holochain/holochain-rust?branch=develop#1d36d11c4484f957a510eaa8a33cc5a4e8e3fed4"
+source = "git+https://github.com/holochain/holochain-rust?branch=develop#b7a194ea0b8568815341c70ab3f8119a879cf481"
 dependencies = [
  "holochain_core_types 0.0.15-alpha1 (git+https://github.com/holochain/holochain-rust?branch=develop)",
  "holochain_core_types_derive 0.0.15-alpha1 (git+https://github.com/holochain/holochain-rust?branch=develop)",
