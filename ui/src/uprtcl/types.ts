@@ -1,25 +1,24 @@
 export interface Context {
   id?: string;
-  timestamp: string;
-  creator: string;
+  creatorId: string;
+  timestamp: number;
   nonce: number;
 }
 
 export interface Perspective {
   id: string;
+  creatorId: string;
+  timestamp: number;
+  contextId: string;
   name: string;
-  context_address: string;
-
-  head: string;
+  headLink: string;
 }
 
 export interface Commit {
   id: string;
+  creatorId: string;
+  timestamp: number;
   message: string;
-
-  content_address: string;
-  context_address: string;
-  creator: string;
-
-  parent_commits_addresses: Array<string>;
+  parentsLinks: Array<string>;
+  dataLink: string;
 }
