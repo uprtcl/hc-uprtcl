@@ -14,11 +14,11 @@ export const selectPerspectiveHead = (perspectiveId: string) => (
 
 export const selectPerspectiveHeadId = (perspectiveId: string) => (
   state: UprtclState
-) => selectPerspectiveById(perspectiveId)(state).head;
+) => selectPerspectiveById(perspectiveId)(state).headLink;
 
 export const selectContextFromPerspective = (perspectiveId: string) => (
   state: UprtclState
 ) =>
   selectContextById(
-    selectPerspectiveById(perspectiveId)(state).context_address
+    selectPerspectiveById(perspectiveId)(state).contextId
   )(state);

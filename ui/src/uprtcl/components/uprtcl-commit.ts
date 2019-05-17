@@ -16,7 +16,7 @@ export class UprtclCommit extends ReduxLens(store) {
   render() {
     return this.loadingOrContent(
       () => html`
-        <lens-renderer .cid=${this.commit.content_address}></lens-renderer>
+        <lens-renderer .cid=${this.commit.dataLink}></lens-renderer>
       `
     );
   }

@@ -23,8 +23,8 @@ export function createContext() {
   return dispatch =>
     uprtclHolochain
       .createContext({
-        creator: '',
-        timestamp: Date.now().toString(),
+        creatorId: '',
+        timestamp: Date.now(),
         nonce: 0
       })
       .then(contextId => dispatch(CREATE_CONTEXT.success(contextId)));
@@ -59,12 +59,5 @@ export function getContextContent(contextId: string) {
     Promise.all([
       dispatch(getContext(contextId)),
       dispatch(getContextPerspectives(contextId))
-        .then(({links: links}) =>
-          Promise.all(
-            links.map(({ address: perspectiveAddress }) =>
-              dispatch(getPerspective(perspectiveAddress))
-            )
-          )
-        )
     ]);
 }

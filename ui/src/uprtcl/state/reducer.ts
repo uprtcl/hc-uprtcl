@@ -2,7 +2,11 @@ import { AnyAction } from 'redux';
 
 import { Context, Perspective, Commit } from '../types';
 import { RootState } from '../../store';
-import { GET_CONTEXT, GET_ROOT_CONTEXT } from './context/actions';
+import {
+  GET_CONTEXT,
+  GET_ROOT_CONTEXT,
+  GET_CONTEXT_PERSPECTIVES
+} from './context/actions';
 import { EntityState, createEntityAdapter } from '../../utils/entity';
 import { SET_PERSPECTIVE_HEAD, GET_PERSPECTIVE } from './perspective/actions';
 import { GET_COMMIT } from './commit/actions';
@@ -65,9 +69,18 @@ export function uprtclReducer(state = initialState, action: AnyAction) {
           {
             id: action.payload.perspectiveId,
             changes: {
-              head: action.payload.commitId
+              headLink: action.payload.commitId
             }
           },
+          state.perspectives
+        )
+      };
+
+    case GET_CONTEXT_PERSPECTIVES.successType:
+      return {
+        ...state,
+        perspectives: adapters.perspectives.upsertMany(
+          action.payload,
           state.perspectives
         )
       };

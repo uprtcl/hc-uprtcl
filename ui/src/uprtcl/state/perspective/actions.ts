@@ -77,6 +77,6 @@ export function getPerspectiveContext(perspectiveAddress: string) {
         selectUprtcl(getState())
       );
 
-      return dispatch(getContextContent(perspective.context_address));
+      return dispatch(getContextContent(perspective.contextId));
     });
 }

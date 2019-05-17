@@ -36,7 +36,8 @@ export class HolochainConnection {
   }
 
   public parseEntry(entry) {
-    return JSON.parse(entry.App[1]);
+    let parseable = entry.Ok ? entry.Ok : entry;
+    return JSON.parse(parseable.App[1]);
   }
 
   public parseEntryResult<T>(entry): EntryResult<T> {
@@ -49,13 +50,11 @@ export class HolochainConnection {
     };
   }
 
-  protected parseEntries(entryArray: Array<any>) {
+  public parseEntries(entryArray: Array<any>) {
     return entryArray.map(entry => this.parseEntry(entry));
   }
 
-  protected parseEntriesResults<T>(
-    entryArray: Array<any>
-  ): Array<EntryResult<T>> {
+  public parseEntriesResults<T>(entryArray: Array<any>): Array<EntryResult<T>> {
     return entryArray.map(entry =>
       this.parseEntryResult(entry.Ok ? entry.Ok : entry)
     );

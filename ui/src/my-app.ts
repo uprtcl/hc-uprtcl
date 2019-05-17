@@ -41,7 +41,7 @@ export class MyApp extends connect(store)(LitElement) {
                 `
               : html`
                   <uprtcl-context
-                    .cid=${this.perspective.context_address}
+                    .cid=${this.perspective.contextId}
                   ></uprtcl-context>
                 `}
           `

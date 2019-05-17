@@ -19,7 +19,7 @@ export class UprtclPerspective extends ReduxLens(store) {
     return this.loadingOrContent(
       () => html`
         <uprtcl-commit
-          .cid=${this.perspective.head}
+          .cid=${this.perspective.headLink}
           @commit-content=${e => {
             this.createCommit(e.detail.cid);
             e.stopPropagation();

@@ -42,19 +42,21 @@ export class UprtclHolochain implements UprtclService, LinkResolver {
     return this.uprtclZome
       .call('get_root_context', {})
       .then(result => this.uprtclZome.parseEntryResult(result).entry)
-      .then(context => this.formatter.formatServerToUi('context', context));
+      .then(context =>
+        this.formatter.formatServerToUi<Context>('context', context)
+      );
   }
 
   getContextId(context: Context): Promise<string> {
     return this.uprtclZome.call(
       'get_context_address',
-      this.formatter.formatUiToServer('context', context)
+      this.formatter.formatUiToServer<Context>('context', context)
     );
   }
 
   getContext(contextId: string): Promise<Context> {
     return this.getEntry(contextId).then(result =>
-      this.formatter.formatServerToUi('context', result.entry)
+      this.formatter.formatServerToUi<Context>('context', result.entry)
     );
   }
 
@@ -67,13 +69,16 @@ export class UprtclHolochain implements UprtclService, LinkResolver {
     ]).then(([result, headAddress]: [EntryResult, string]) => {
       const perspective = result.entry;
       perspective.head = headAddress;
-      return this.formatter.formatServerToUi('perspective', perspective);
+      return this.formatter.formatServerToUi<Perspective>(
+        'perspective',
+        perspective
+      );
     });
   }
 
   getCommit(commitId: string): Promise<Commit> {
     return this.getEntry(commitId).then(result =>
-      this.formatter.formatServerToUi('commit', result.entry)
+      this.formatter.formatServerToUi<Commit>('commit', result.entry)
     );
   }
 
@@ -82,9 +87,11 @@ export class UprtclHolochain implements UprtclService, LinkResolver {
       .call('get_context_perspectives', {
         context_address: contextId
       })
-      .then((perspectives: Array<any>) =>
-        perspectives.map(p => this.formatter.formatServerToUi('perspective', p))
-      );
+      .then((perspectiveAddresses: { links: Array<{ address: string }> }) =>
+        Promise.all(
+          perspectiveAddresses.links.map(p => this.getPerspective(p.address))
+        )
+      )
   }
 
   createContext(): Promise<string> {

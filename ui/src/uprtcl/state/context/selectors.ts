@@ -13,7 +13,7 @@ export const selectContextPerspectives = (contextId: string) => (
 ) =>
   state.perspectives.ids
     .map(id => state.perspectives.entities[id])
-    .filter(perspective => perspective.context_address === contextId);
+    .filter(perspective => perspective.contextId === contextId);
 
 export const selectDefaultPerspectiveId = (contextId: string) => (
   state: UprtclState
