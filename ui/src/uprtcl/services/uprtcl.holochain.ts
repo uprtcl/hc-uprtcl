@@ -5,12 +5,31 @@ import {
 import { Perspective, Commit, Context } from '../types';
 import { UprtclService } from './uprtcl.service';
 import { LinkResolver } from '../../services/resolver';
+import { ConnectionFormatter } from './connection-formatter';
 
 export class UprtclHolochain implements UprtclService, LinkResolver {
   uprtclZome: HolochainConnection;
+  formatter: ConnectionFormatter;
+
+  objectRelation = {
+    context: {
+      creatorId: 'creator'
+    },
+    perspective: {
+      creatorId: 'creator',
+      contextId: 'context_address',
+      headLink: 'head'
+    },
+    commit: {
+      creatorId: 'creator',
+      parentsLinks: 'parent_commits_links',
+      dataLink: 'content_link'
+    }
+  };
 
   constructor() {
     this.uprtclZome = new HolochainConnection('test-instance', 'uprtcl');
+    this.formatter = new ConnectionFormatter(this.objectRelation);
   }
 
   getEntry(entryId): Promise<EntryResult> {
@@ -22,15 +41,21 @@ export class UprtclHolochain implements UprtclService, LinkResolver {
   getRootContext(): Promise<Context> {
     return this.uprtclZome
       .call('get_root_context', {})
-      .then(result => this.uprtclZome.parseEntryResult<Context>(result).entry);
+      .then(result => this.uprtclZome.parseEntryResult(result).entry)
+      .then(context => this.formatter.formatServerToUi('context', context));
   }
 
   getContextId(context: Context): Promise<string> {
-    return this.uprtclZome.call('get_context_address', context);
+    return this.uprtclZome.call(
+      'get_context_address',
+      this.formatter.formatUiToServer('context', context)
+    );
   }
 
   getContext(contextId: string): Promise<Context> {
-    return this.getEntry(contextId).then(result => result.entry);
+    return this.getEntry(contextId).then(result =>
+      this.formatter.formatServerToUi('context', result.entry)
+    );
   }
 
   getPerspective(perspectiveId: string): Promise<Perspective> {
@@ -39,21 +64,27 @@ export class UprtclHolochain implements UprtclService, LinkResolver {
       this.uprtclZome.call('get_perspective_head', {
         perspective_address: perspectiveId
       })
-    ]).then(([result, headAddress]: [EntryResult<Perspective>, string]) => {
-      const perspective: Perspective = result.entry;
+    ]).then(([result, headAddress]: [EntryResult, string]) => {
+      const perspective = result.entry;
       perspective.head = headAddress;
-      return perspective;
+      return this.formatter.formatServerToUi('perspective', perspective);
     });
   }
 
   getCommit(commitId: string): Promise<Commit> {
-    return this.getEntry(commitId).then(result => result.entry);
+    return this.getEntry(commitId).then(result =>
+      this.formatter.formatServerToUi('commit', result.entry)
+    );
   }
 
   getContextPerspectives(contextId: string): Promise<Perspective[]> {
-    return this.uprtclZome.call('get_context_perspectives', {
-      context_address: contextId
-    });
+    return this.uprtclZome
+      .call('get_context_perspectives', {
+        context_address: contextId
+      })
+      .then((perspectives: Array<any>) =>
+        perspectives.map(p => this.formatter.formatServerToUi('perspective', p))
+      );
   }
 
   createContext(): Promise<string> {
@@ -68,7 +99,7 @@ export class UprtclHolochain implements UprtclService, LinkResolver {
     return this.uprtclZome.call('create_perspective', {
       context_address: contextId,
       name: name,
-      commit_address: headLink
+      head_link: headLink
     });
   }
 
@@ -78,22 +109,22 @@ export class UprtclHolochain implements UprtclService, LinkResolver {
     head: Commit
   ): Promise<string> {
     return this.uprtclZome.call('create_perspective_and_content', {
-      context_address: context,
+      context: this.formatter.formatUiToServer('context', context),
       name: name,
-      commit_address: head
+      head: this.formatter.formatUiToServer('commit', head)
     });
   }
 
   createCommit(
     perspectiveId: string,
     message: string,
-    contentAddress: string
+    contentLink: string
   ): Promise<string> {
     return this.uprtclZome.call('create_commit', {
       perspective_address: perspectiveId,
       message: message,
       timestamp: Date.now(),
-      content_address: contentAddress
+      content_link: contentLink
     });
   }
 

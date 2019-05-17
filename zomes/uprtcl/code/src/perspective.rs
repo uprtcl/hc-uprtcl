@@ -71,14 +71,14 @@ pub fn handle_create_commit(
   perspective_address: Address,
   message: String,
   timestamp: u64,
-  content_address: Address,
+  content_link: Address,
 ) -> ZomeApiResult<Address> {
   let parent_commit_address = hdk::get_links(&perspective_address, "head")?;
 
   let commit_address = crate::commit::create_commit_entry(
     message,
     timestamp,
-    content_address,
+    content_link,
     &parent_commit_address.addresses(),
   )?;
 
@@ -107,7 +107,7 @@ pub fn handle_get_perspective_head(perspective_address: Address) -> ZomeApiResul
 pub fn handle_create_perspective(
   context_address: Address,
   name: String,
-  commit_address: Address,
+  head_link: Address,
 ) -> ZomeApiResult<Address> {
   let perspective_entry = Entry::App(
     "perspective".into(),
@@ -115,7 +115,7 @@ pub fn handle_create_perspective(
   );
   let perspective_address = hdk::commit_entry(&perspective_entry)?;
 
-  hdk::link_entries(&perspective_address, &commit_address, "head")?;
+  hdk::link_entries(&perspective_address, &head_link, "head")?;
 
   link_perspective_to_context(&context_address, &perspective_address)?;
 
@@ -135,11 +135,11 @@ pub struct PerspectiveCreated {
 pub fn handle_create_perspective_and_content(
   context: crate::context::Context,
   name: String,
-  commit: crate::commit::Commit,
+  head: crate::commit::Commit,
 ) -> ZomeApiResult<PerspectiveCreated> {
   let context_address = crate::context::handle_create_context(context)?;
 
-  let commit_address = crate::commit::create_commit(commit)?;
+  let commit_address = crate::commit::create_commit(head)?;
 
   // Create main starting perspective and link it to the newly created context
   let perspective_address =

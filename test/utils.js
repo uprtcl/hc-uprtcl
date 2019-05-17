@@ -11,16 +11,16 @@ const createCommit = function(perspectiveAddress, message, contentAddress) {
       perspective_address: perspectiveAddress,
       message: message,
       timestamp: Date.now(),
-      content_address: contentAddress
+      content_link: contentAddress
     });
 };
 
-const createPerspective = function(contextAddress, commitAddress, name) {
+const createPerspective = function(contextAddress, name, commitAddress) {
   return async caller =>
     await caller.callSync('uprtcl', 'create_perspective', {
       context_address: contextAddress,
-      commit_address: commitAddress,
-      name: name
+      name: name,
+      head_link: commitAddress
     });
 };
 
@@ -50,7 +50,7 @@ const getCommitInfo = function(commitAddress) {
     const entry = caller.call('uprtcl', 'get_commit_info', {
       commit_address: commitAddress
     });
-    return parseEntry(entry);
+    return parseEntryResult(entry);
   };
 };
 
@@ -59,7 +59,7 @@ const getPerspectiveInfo = function(perspectiveAddress) {
     const entry = caller.call('uprtcl', 'get_perspective_info', {
       perspective_address: perspectiveAddress
     });
-    return parseEntry(entry);
+    return parseEntryResult(entry);
   };
 };
 
@@ -79,7 +79,7 @@ const createPerspectiveAndContent = function(context, name, commit) {
     await caller.callSync('uprtcl', 'create_perspective_and_content', {
       context: context,
       name: name,
-      commit: commit
+      head: commit
     });
 };
 
@@ -201,8 +201,8 @@ const buildCommit = function(
     creator: CREATOR_ADDRESS,
     timestamp: Date.now(),
     message: message,
-    content_address: contentAddress,
-    parent_commits_addresses: parentCommitAddresses
+    content_link: contentAddress,
+    parent_commits_links: parentCommitAddresses
   };
 };
 

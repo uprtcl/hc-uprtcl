@@ -98,7 +98,7 @@ define_zome! {
 
     // Perspectives
     create_perspective: {
-      inputs: |context_address: Address, name: String, commit_address: Address|,
+      inputs: |context_address: Address, name: String, head_link: Address|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: perspective::handle_create_perspective
     }
@@ -123,7 +123,7 @@ define_zome! {
 
     // Commits
     create_commit: {
-      inputs: |perspective_address: Address, message: String, timestamp: u64, content_address: Address|,
+      inputs: |perspective_address: Address, message: String, timestamp: u64, content_link: Address|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: perspective::handle_create_commit
     }
@@ -135,7 +135,7 @@ define_zome! {
     }
 
     create_perspective_and_content: {
-      inputs: |context: context::Context, name: String, commit: commit::Commit|,
+      inputs: |context: context::Context, name: String, head: commit::Commit|,
       outputs: |result: ZomeApiResult<perspective::PerspectiveCreated>|,
       handler: perspective::handle_create_perspective_and_content
     }

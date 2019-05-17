@@ -35,6 +35,6 @@ export interface UprtclService extends LinkResolver {
   createCommit(
     perspectiveId: string,
     message: string,
-    contentAddress: string
+    contentLink: string
   ): Promise<string>;
 }

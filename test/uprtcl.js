@@ -86,7 +86,7 @@ scenario1.runTape(
       'master',
       buildCommit(SAMPLE_ADDRESS1, 'Commit message')
     )(alice);
-
+    
     // Check that the context has one perspective named master
     const {
       Ok: { links: perspectiveAddresses }
@@ -103,9 +103,9 @@ scenario1.runTape(
     const { Ok: perspectiveHead } = getPerspectiveHead(masterAddress)(alice);
     // ... and check the commit's structure
     const commitInfo = getCommitInfo(perspectiveHead)(alice);
-    t.equal(commitInfo.parent_commits_addresses.length, 0);
+    t.equal(commitInfo.parent_commits_links.length, 0);
     t.equal(commitInfo.creator, CREATOR_ADDRESS);
-    t.equal(commitInfo.content_address, SAMPLE_ADDRESS1);
+    t.equal(commitInfo.content_link, SAMPLE_ADDRESS1);
     t.equal(commitInfo.message, 'Commit message');
 
     // Create second commit
@@ -121,9 +121,9 @@ scenario1.runTape(
 
     // Check that parent commit of the second commit is the first commit
     const secondCommitInfo = getCommitInfo(secondCommitAddress)(alice);
-    t.equal(secondCommitInfo.parent_commits_addresses[0], perspectiveHead);
+    t.equal(secondCommitInfo.parent_commits_links[0], perspectiveHead);
     // Check new commits content and its content is the new content
-    t.equal(secondCommitInfo.content_address, SAMPLE_ADDRESS2);
+    t.equal(secondCommitInfo.content_link, SAMPLE_ADDRESS2);
   }
 );
 
@@ -146,8 +146,8 @@ scenario1.runTape(
     // Create another perspective pointing to the initial commit
     const { Ok: developAddress } = await createPerspective(
       contextAddress,
-      commitAddress,
-      'develop'
+      'develop',
+      commitAddress
     )(alice);
     const developPerspective = getPerspectiveInfo(developAddress)(alice);
     t.equal(developPerspective.name, 'develop');

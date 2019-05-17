@@ -9,4 +9,3 @@
     "test": "tape index.js | faucet"
   }
 }
-
