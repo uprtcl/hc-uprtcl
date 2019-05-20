@@ -1,4 +1,4 @@
-export type Working = {
+export type Draft = {
   perspectiveId: string;
   dataLink: string;
 };
