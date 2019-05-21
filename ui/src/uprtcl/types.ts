@@ -11,7 +11,7 @@ export interface Perspective {
   timestamp: number;
   contextId: string;
   name: string;
-  headLink: string;
+  headId: string;
 }
 
 export interface Commit {
@@ -19,6 +19,6 @@ export interface Commit {
   creatorId: string;
   timestamp: number;
   message: string;
-  parentsLinks: Array<string>;
-  dataLink: string;
+  parentsIds: Array<string>;
+  dataId: string;
 }

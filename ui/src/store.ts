@@ -18,7 +18,6 @@ import {
 import thunk, { ThunkMiddleware } from 'redux-thunk';
 import { lazyReducerEnhancer } from 'pwa-helpers/lazy-reducer-enhancer.js';
 
-import { UprtclState, uprtclReducer } from './uprtcl/state/reducer';
 import { DocumentsState, documentsReducer } from './documents/state/reducer';
 import { DraftsState, draftReducer } from './draft/state/reducer';
 
@@ -26,7 +25,6 @@ import { DraftsState, draftReducer } from './draft/state/reducer';
 export interface RootState {
   documents: DocumentsState;
   drafts: DraftsState;
-  uprtcl: UprtclState;
 }
 
 // Sets up a Chrome extension for time travel debugging.
@@ -48,6 +46,5 @@ export const store = createStore(
 // Initially loaded reducers.
 store.addReducers({
   documents: documentsReducer,
-  drafts: draftReducer,
-  uprtcl: uprtclReducer
+  drafts: draftReducer
 });

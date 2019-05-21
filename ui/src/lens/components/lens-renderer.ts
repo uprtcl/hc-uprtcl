@@ -12,7 +12,7 @@ export class LensRenderer extends LitElement {
   public element: string;
 
   @property()
-  public dataLink: string;
+  public dataId: string;
 
   @property()
   private lens: Lens = {
@@ -27,7 +27,7 @@ export class LensRenderer extends LitElement {
   }
 
   firstUpdated() {
-    this.shadowRoot.firstElementChild['dataId'] = this.dataLink;
+    this.shadowRoot.firstElementChild['dataId'] = this.dataId;
   }
 
   render() {

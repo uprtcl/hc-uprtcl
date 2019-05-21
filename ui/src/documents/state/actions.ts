@@ -1,6 +1,33 @@
 import { documentsHolochain } from './reducer';
-import { asyncAction } from '../../uprtcl/state/common/actions';
 import { TextNode } from '../types';
+
+export function asyncAction<ParamType, SuccessType>(requestType: string) {
+  const create = (payload: ParamType) => ({
+    type: requestType,
+    payload: payload
+  });
+
+  const successType = requestType + '_SUCCESS';
+  const success = (payload: SuccessType) => ({
+    type: successType,
+    payload: payload
+  });
+
+  const failureType = requestType + '_FAILURE';
+  const failure = payload => ({
+    type: failureType,
+    payload: payload
+  });
+
+  return {
+    create: create,
+    createType: requestType,
+    success: success,
+    successType: successType,
+    failure: failure,
+    failureType: failureType
+  };
+}
 
 export const GET_DOCUMENT_NODE = asyncAction<{ nodeId: string }, TextNode>(
   'GET_DOCUMENT_NODE'

@@ -1,16 +1,11 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 
 import '../../lens/components/lens-renderer';
-import { store, RootState } from '../../store';
 import { Commit } from '../types';
-import { getCommit } from '../state/commit/actions';
-import { selectCommitById } from '../state/commit/selectors';
-import { selectUprtcl } from '../state/reducer';
-import { ReduxLens } from '../../lens/components/redux-lens';
-import { connect } from 'pwa-helpers/connect-mixin';
+import { UprtclHolochain } from '../services/uprtcl.holochain';
 
 @customElement('uprtcl-commit')
-export class UprtclCommit extends connect(store)(LitElement) {
+export class UprtclCommit extends LitElement {
   @property()
   public commitId: string;
 
@@ -20,6 +15,8 @@ export class UprtclCommit extends connect(store)(LitElement) {
   @property()
   private loading: boolean = !this.commitId;
 
+  uprtclHolochain = new UprtclHolochain();
+
   render() {
     return html`
       ${this.loading
@@ -27,14 +24,23 @@ export class UprtclCommit extends connect(store)(LitElement) {
             Loading...
           `
         : html`
-            <lens-renderer .dataLink=${this.commit.dataLink}></lens-renderer>
+            <slot id="data"></slot>
           `}
     `;
   }
 
   loadCommit() {
     this.loading = true;
-    store.dispatch(getCommit(this.commitId)).then(() => (this.loading = false));
+    this.uprtclHolochain.getCommit(this.commitId).then(commit => {
+      this.commit = commit;
+      this.loading = false;
+      const slot = this.shadowRoot.querySelector('slot');
+
+      slot
+        .assignedNodes({ flatten: true })
+        .filter(node => node.nodeType === 1)
+        .forEach(e => (e['dataId'] = commit.dataId));
+    });
   }
 
   firstUpdated() {
@@ -47,9 +53,5 @@ export class UprtclCommit extends connect(store)(LitElement) {
     if (changedProperties.has('commitId')) {
       this.loadCommit();
     }
-  }
-
-  stateChanged(state: RootState) {
-    this.commit = selectCommitById(this.commitId)(selectUprtcl(state));
   }
 }

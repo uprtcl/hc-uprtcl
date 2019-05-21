@@ -1,21 +1,11 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 import { Perspective, Context } from '../types';
-import { connect } from 'pwa-helpers/connect-mixin';
-import { store, RootState } from '../../store';
-import { createPerspective } from '../state/perspective/actions';
-import { selectUprtcl } from '../state/reducer';
-import {
-  selectDefaultPerspectiveId,
-  selectContextPerspectives
-} from '../state/context/selectors';
-import { getContextContent } from '../state/context/actions';
-
-import { ReduxLens } from '../../lens/components/redux-lens';
 
 import './uprtcl-perspective';
+import { UprtclHolochain } from '../services/uprtcl.holochain';
 
 @customElement('uprtcl-context')
-export class UprtclContext extends connect(store)(LitElement) {
+export class UprtclContext extends LitElement {
   @property()
   public contextId: string;
 
@@ -30,6 +20,8 @@ export class UprtclContext extends connect(store)(LitElement) {
 
   @property()
   private loading: boolean = false;
+
+  uprtclHolochain = new UprtclHolochain();
 
   render() {
     return html`
@@ -78,9 +70,14 @@ export class UprtclContext extends connect(store)(LitElement) {
 
   loadContext() {
     this.loading = true;
-    store
-      .dispatch(getContextContent(this.contextId))
-      .then(() => (this.loading = false));
+    this.uprtclHolochain
+      .getContextPerspectives(this.contextId)
+      .then(perspectives => {
+        this.perspectives = perspectives;
+        if (!this.checkoutPerspectiveId) {
+          this.checkoutPerspectiveId = perspectives[0].id;
+        }
+      });
   }
 
   firstUpdated() {
@@ -95,18 +92,6 @@ export class UprtclContext extends connect(store)(LitElement) {
     }
   }
 
-  stateChanged(state: RootState) {
-    if (!this.checkoutPerspectiveId) {
-      this.checkoutPerspectiveId = selectDefaultPerspectiveId(this.contextId)(
-        selectUprtcl(state)
-      );
-    }
-
-    this.perspectives = selectContextPerspectives(this.contextId)(
-      selectUprtcl(state)
-    );
-  }
-
   getCheckoutPerspective(): Perspective {
     return this.perspectives.find(
       perspective => perspective.id === this.checkoutPerspectiveId
@@ -114,13 +99,12 @@ export class UprtclContext extends connect(store)(LitElement) {
   }
 
   createPerspective(name): void {
-    store
-      .dispatch(
-        createPerspective(
-          this.contextId,
-          name,
-          this.getCheckoutPerspective().headLink
-        )
+    this.uprtclHolochain
+      .createPerspective(
+        this.contextId,
+        name,
+        Date.now(),
+        this.getCheckoutPerspective().headId
       )
       .then(() => this.loadContext());
   }

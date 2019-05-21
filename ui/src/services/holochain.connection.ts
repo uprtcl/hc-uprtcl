@@ -13,19 +13,22 @@ export class HolochainConnection {
   constructor(instanceId: string, zome: string) {
     this.connectionReady = connect('ws://localhost:8888').then(
       ({ callZome, close }) => {
-        this.connection = (funcName: string, params: any) =>
-          callZome(instanceId, zome, funcName)(params);
+        this.connection = async (funcName: string, params: any) =>
+          await callZome(instanceId, zome, funcName)(params);
       }
     );
   }
 
   public async call(funcName: string, params: any): Promise<any> {
     await this.ready();
+    console.log('[CALL ZOME FUNCTION]:', funcName, params);
     return this.connection(funcName, params)
       .then(jsonString => JSON.parse(jsonString))
       .then(result => {
-        if (result.Ok) return result.Ok;
         if (result.Err) throw new Error(JSON.stringify(result.Err));
+        if (result.SerializationError) throw new Error(JSON.stringify(result.SerializationError));
+        if (result.Ok) return result.Ok;
+        console.log('[RESULT]:', result);
         return result;
       });
   }

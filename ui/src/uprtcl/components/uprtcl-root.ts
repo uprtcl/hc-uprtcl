@@ -1,19 +1,17 @@
 import { LitElement, html, customElement, property } from 'lit-element';
-import { connect } from 'pwa-helpers/connect-mixin';
-import { store, RootState } from '../../store';
 
-import './uprtcl-context';
-import { getRootPerspective } from '../state/context/actions';
-import { selectUprtcl } from '../state/reducer';
-import { selectRootPerspectiveId } from '../state/context/selectors';
+import { UprtclHolochain } from '../services/uprtcl.holochain';
+import './uprtcl-perspective';
 
 @customElement('uprtcl-root')
-export class UprtclRoot extends connect(store)(LitElement) {
+export class UprtclRoot extends LitElement {
   @property()
   private rootPerspectiveId: string;
 
   @property()
   private loading: boolean = true;
+
+  uprtclHolochain = new UprtclHolochain();
 
   render() {
     return html`
@@ -31,12 +29,9 @@ export class UprtclRoot extends connect(store)(LitElement) {
 
   firstUpdated() {
     this.loading = true;
-    store.dispatch(getRootPerspective()).then(() => {
+    this.uprtclHolochain.getRootPerspective().then(perspective => {
+      this.rootPerspectiveId = perspective.id;
       this.loading = false;
     });
-  }
-
-  stateChanged(state: RootState) {
-    this.rootPerspectiveId = selectRootPerspectiveId(selectUprtcl(state));
   }
 }

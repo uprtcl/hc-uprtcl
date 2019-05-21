@@ -2,25 +2,16 @@ import {
   LitElement,
   html,
   customElement,
-  property,
-  TemplateResult
+  property
 } from 'lit-element';
 import { Perspective } from '../types';
-import { store, RootState } from '../../store';
-
-import { selectUprtcl } from '../state/reducer';
-import {
-  getPerspectiveContent,
-  getPerspective
-} from '../state/perspective/actions';
-import { selectPerspectiveById } from '../state/perspective/selectors';
-import { createCommit } from '../state/commit/actions';
 
 import './uprtcl-commit';
-import { connect } from 'pwa-helpers/connect-mixin';
+import './uprtcl-placeholder';
+import { UprtclHolochain } from '../services/uprtcl.holochain';
 
 @customElement('uprtcl-perspective')
-export class UprtclPerspective extends connect(store)(LitElement) {
+export class UprtclPerspective extends LitElement {
   @property()
   public perspectiveId: string;
 
@@ -30,9 +21,7 @@ export class UprtclPerspective extends connect(store)(LitElement) {
   @property()
   private loading: boolean = true;
 
-  renderEmptyPerspective(): TemplateResult {
-    return html``;
-  }
+  uprtclHolochain = new UprtclHolochain();
 
   renderPerspective() {
     return html`
@@ -42,9 +31,9 @@ export class UprtclPerspective extends connect(store)(LitElement) {
           `
         : html`
             <uprtcl-commit
-              .commitId=${this.perspective.headLink}
+              .commitId=${this.perspective.headId}
               @commit-content=${e => {
-                this.createCommit(e.detail.dataLink);
+                this.createCommit(e.detail.dataId);
                 e.stopPropagation();
               }}
             >
@@ -58,15 +47,20 @@ export class UprtclPerspective extends connect(store)(LitElement) {
     return html`
       ${this.perspectiveId
         ? this.renderPerspective()
-        : this.renderEmptyPerspective()}
+        : html`
+            <uprtcl-placeholder><slot></slot></uprtcl-placeholder>
+          `}
     `;
   }
 
   loadPerspective() {
     this.loading = true;
-    store
-      .dispatch(getPerspective(this.perspectiveId))
-      .then(() => (this.loading = false));
+    this.uprtclHolochain
+      .getPerspective(this.perspectiveId)
+      .then(perspective => {
+        this.perspective = perspective;
+        this.loading = false;
+      });
   }
 
   firstUpdated() {
@@ -81,15 +75,11 @@ export class UprtclPerspective extends connect(store)(LitElement) {
     }
   }
 
-  stateChanged(state: RootState) {
-    this.perspective = selectPerspectiveById(this.perspectiveId)(
-      selectUprtcl(state)
-    );
-  }
-
-  createCommit(dataLink: string) {
-    store
-      .dispatch(createCommit(this.perspectiveId, '', dataLink))
-      .then(() => this.loadPerspective());
+  createCommit(dataId: string) {
+    this.uprtclHolochain
+      .createCommit(Date.now(), '', [this.perspective.headId], dataId)
+      .then(commitId =>
+        this.uprtclHolochain.updateHead(this.perspectiveId, commitId)
+      );
   }
 }

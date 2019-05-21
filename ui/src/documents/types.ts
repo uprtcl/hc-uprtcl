@@ -7,10 +7,8 @@ export interface TextNode {
   id?: string;
 
   text: string;
-  links: [
-    {
-      position?: Position;
-      link: string;
-    }
-  ];
+  links: Array<{
+    position?: Position;
+    link: string;
+  }>;
 }

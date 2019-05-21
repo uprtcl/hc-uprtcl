@@ -23,7 +23,4 @@ export class DocumentsHolochain implements DocumentsService {
     return this.documentsZome.call('create_text_node', node);
   }
 
-  resolve(link: string): Promise<any> {
-    return this.getTextNode(link);
-  }
 }

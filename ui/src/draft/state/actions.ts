@@ -1,6 +1,33 @@
 import { draftsHolochain } from './reducer';
-import { asyncAction } from '../../uprtcl/state/common/actions';
 import { Draft } from '../types';
+
+export function asyncAction<ParamType, SuccessType>(requestType: string) {
+  const create = (payload: ParamType) => ({
+    type: requestType,
+    payload: payload
+  });
+
+  const successType = requestType + '_SUCCESS';
+  const success = (payload: SuccessType) => ({
+    type: successType,
+    payload: payload
+  });
+
+  const failureType = requestType + '_FAILURE';
+  const failure = payload => ({
+    type: failureType,
+    payload: payload
+  });
+
+  return {
+    create: create,
+    createType: requestType,
+    success: success,
+    successType: successType,
+    failure: failure,
+    failureType: failureType
+  };
+}
 
 export const GET_DRAFT = asyncAction<{ perspectiveId: string }, Draft>(
   'GET_DRAFT'

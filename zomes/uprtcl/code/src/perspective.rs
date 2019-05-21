@@ -210,6 +210,7 @@ pub struct AddressResponse {
  * Only to be called at genesis time
  */
 pub fn create_root_perspective() -> ZomeApiResult<Address> {
+  let links: Vec<Address> = Vec::new();
   let json_response = hdk::call(
     hdk::THIS_INSTANCE,
     "documents",
@@ -218,7 +219,7 @@ pub fn create_root_perspective() -> ZomeApiResult<Address> {
     json!({
       "node": {
         "text": "Hi",
-        "links": Vec::new()
+        "links": links
       }
     })
     .into(),

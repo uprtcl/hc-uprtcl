@@ -1,24 +1,33 @@
-import { LitElement, html, customElement, property } from 'lit-element';
+import { LitElement, html, customElement, property, css } from 'lit-element';
 
-import { store, RootState } from '../../store';
-import { ReduxLens } from '../../lens/components/redux-lens';
 import { TextNode } from '../types';
-import { getTextNode } from '../state/actions';
-import { selectDocuments, selectTextNode } from '../state/reducer';
 
 import '../../lens/components/lens-renderer';
-import { connect } from 'pwa-helpers/connect-mixin';
+import { DocumentsHolochain } from '../services/documents.holochain';
 
 @customElement('text-node')
-export class TextNodeElement extends connect(store)(LitElement) {
+export class TextNodeElement extends LitElement {
   @property()
   public dataId: string;
 
   @property()
-  private loading: boolean = true;
+  private loading: boolean = !!this.dataId;
 
   @property()
-  private node: TextNode;
+  private node: TextNode = {
+    text: 'placeholder',
+    links: []
+  };
+
+  documentsHolochain = new DocumentsHolochain();
+
+  static get styles() {
+    return css`
+      .hover:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+    `;
+  }
 
   render() {
     return html`
@@ -27,29 +36,34 @@ export class TextNodeElement extends connect(store)(LitElement) {
             Loading...
           `
         : html`
-            <span contenteditable="true" @keydown=${e => this.onKeyDown(e)}>
-              ${this.node.text}
-            </span>
-            ${Object.keys(this.node.links).map(
-              key => html`
-                <uprtcl-perspective
-                  .perspectiveId=${this.node.links[key]}
-                >
-              
-              </uprtcl-perspective>
-              `
-            )}
+            <div style="display: flex; flex-direction: column;" class="hover">
+              <span contenteditable="true" @keydown=${e => this.onKeyDown(e)}>
+                ${this.node.text}
+              </span>
+              ${this.node.links.map(
+                link => html`
+                  <uprtcl-perspective .perspectiveId=${link.link}>
+                    <text-node></text-node>
+                  </uprtcl-perspective>
+                `
+              )}
+            </div>
           `}
     `;
   }
 
   firstUpdated() {
-    this.loadData();
+    if (this.dataId) {
+      this.loadData();
+    }
   }
 
   loadData() {
     this.loading = true;
-    store.dispatch(getTextNode(this.dataId)).then(() => (this.loading = false));
+    this.documentsHolochain.getTextNode(this.dataId).then(node => {
+      this.node = node;
+      this.loading = false;
+    });
   }
 
   updated(changedProperties) {
@@ -60,14 +74,11 @@ export class TextNodeElement extends connect(store)(LitElement) {
     }
   }
 
-  stateChanged(state: RootState) {
-    this.node = selectTextNode(this.dataId)(selectDocuments(state));
-  }
-
   onKeyDown(event) {
-    console.log(this.node);
-    if (event.code === 'Enter') {
-      this.node.links.push({ link: '' });
+    if (event.key === 'Enter') {
+      this.node.links.push({ link: null });
+      this.requestUpdate();
+      event.preventDefault();
     }
   }
 }
