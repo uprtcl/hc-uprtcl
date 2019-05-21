@@ -19,46 +19,41 @@ const scenario1 = new Scenario([instanceAlice]);
 // Utils variables to facilitate testing code
 
 const {
-  createCommit,
-  createNCommits,
-  createPerspective,
   createContext,
-  getContextPerspectives,
-  createPerspectiveAndContent,
-  buildContext,
-  buildCommit,
-  getCommitInfo,
-  mergePerspectives,
-  perspectiveAndMerge,
-  getPerspectiveHead,
-  chain,
-  getContextHistory,
-  getPerspectiveHistory,
-  getCommitHistory,
+  cloneContext,
+  createPerspective,
+  clonePerspective,
+  getRootPerspective,
   getPerspectiveInfo,
-  getContextHeadCommits,
-  getContextCurrentContents,
+  getContextPerspectives,
+  getPerspectiveHead,
+  updatePerspectiveHead,
+  createCommit,
+  cloneCommit,
+  getCommitInfo,
+  createCommitInPerspective,
+  createContextPerspectiveAndCommit,
+  buildContext,
+  buildPerspective,
+  buildCommit,
   parseEntryResult,
-  getRootContext,
   CREATOR_ADDRESS
 } = require('./utils');
 
 const SAMPLE_ADDRESS1 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const SAMPLE_ADDRESS2 = 'QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE';
 
-/* 
-  
-  TODO: Uncomment when genesis block is executed
-  scenario1.runTape('check root context created', async (t, { alice }) => {
-    const contextAddress = await getRootContext()(alice);
-    t.equal(contextAddress, 'QmcasGWZuCjaUqKoTZtpnvB9GSAtivXoWksJbhxH7RANYR');
-  });
-
- */
+scenario1.runTape('check root perspective created', async (t, { alice }) => {
+  const perspective = await getRootPerspective()(alice);
+  t.equal(
+    perspective.context_address,
+    'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr'
+  );
+});
 
 scenario1.runTape('create context', async (t, { alice }) => {
   // Create context
-  const { Ok: contextAddress } = await createContext()(alice);
+  const contextAddress = await createContext()(alice);
 
   const result = alice.call('uprtcl', 'get_context_info', {
     context_address: contextAddress
@@ -69,9 +64,9 @@ scenario1.runTape('create context', async (t, { alice }) => {
   t.equal(contextInfo.creator, CREATOR_ADDRESS);
 
   // check that context has a perspective associated
-  const {
-    Ok: { links: perspectiveAddresses }
-  } = getContextPerspectives(contextAddress)(alice);
+  const { links: perspectiveAddresses } = getContextPerspectives(
+    contextAddress
+  )(alice);
   t.equal(perspectiveAddresses.length, 0);
 });
 
@@ -80,17 +75,19 @@ scenario1.runTape(
   async (t, { alice }) => {
     // Create new context, perspective and commit
     const {
-      Ok: { context_address: contextAddress }
-    } = await createPerspectiveAndContent(
-      buildContext(),
-      'master',
-      buildCommit(SAMPLE_ADDRESS1, 'Commit message')
+      contextAddress,
+      perspectiveAddress,
+      commitAddress
+    } = await createContextPerspectiveAndCommit(
+      'Commit message',
+      SAMPLE_ADDRESS1,
+      'master'
     )(alice);
-    
+
     // Check that the context has one perspective named master
-    const {
-      Ok: { links: perspectiveAddresses }
-    } = getContextPerspectives(contextAddress)(alice);
+    const { links: perspectiveAddresses } = getContextPerspectives(
+      contextAddress
+    )(alice);
     t.equal(perspectiveAddresses.length, 1);
     const perspective = getPerspectiveInfo(perspectiveAddresses[0].address)(
       alice
@@ -100,30 +97,33 @@ scenario1.runTape(
     const masterAddress = perspectiveAddresses[0].address;
 
     // Check that the perspective points to the previously defined commit
-    const { Ok: perspectiveHead } = getPerspectiveHead(masterAddress)(alice);
+    const perspectiveHead = getPerspectiveHead(masterAddress)(alice);
     // ... and check the commit's structure
     const commitInfo = getCommitInfo(perspectiveHead)(alice);
-    t.equal(commitInfo.parent_commits_links.length, 0);
+    t.equal(commitInfo.parent_commits_addresses.length, 0);
     t.equal(commitInfo.creator, CREATOR_ADDRESS);
-    t.equal(commitInfo.content_link, SAMPLE_ADDRESS1);
+    t.equal(commitInfo.content_address, SAMPLE_ADDRESS1);
     t.equal(commitInfo.message, 'Commit message');
 
     // Create second commit
-    const { Ok: secondCommitAddress } = await createCommit(
-      masterAddress,
+    const secondCommitAddress = await createCommit(
       'second commit',
+      [commitAddress],
       SAMPLE_ADDRESS2
     )(alice);
 
+    // Update perspective head
+    await updatePerspectiveHead(masterAddress, secondCommitAddress)(alice);
+
     // Check that now master points to the new commit
-    const { Ok: perspectiveHead2 } = getPerspectiveHead(masterAddress)(alice);
+    const perspectiveHead2 = getPerspectiveHead(masterAddress)(alice);
     t.equal(perspectiveHead2, secondCommitAddress);
 
     // Check that parent commit of the second commit is the first commit
     const secondCommitInfo = getCommitInfo(secondCommitAddress)(alice);
-    t.equal(secondCommitInfo.parent_commits_links[0], perspectiveHead);
+    t.equal(secondCommitInfo.parent_commits_addresses[0], perspectiveHead);
     // Check new commits content and its content is the new content
-    t.equal(secondCommitInfo.content_link, SAMPLE_ADDRESS2);
+    t.equal(secondCommitInfo.content_address, SAMPLE_ADDRESS2);
   }
 );
 
@@ -132,19 +132,17 @@ scenario1.runTape(
   async (t, { alice }) => {
     // Create new context, perspective and commit
     const {
-      Ok: {
-        context_address: contextAddress,
-        perspective_address: masterAddress,
-        commit_address: commitAddress
-      }
-    } = await createPerspectiveAndContent(
-      buildContext(),
-      'master',
-      buildCommit(SAMPLE_ADDRESS1, 'Commit message')
+      contextAddress,
+      perspectiveAddress,
+      commitAddress
+    } = await createContextPerspectiveAndCommit(
+      'Commit message',
+      SAMPLE_ADDRESS1,
+      'master'
     )(alice);
 
     // Create another perspective pointing to the initial commit
-    const { Ok: developAddress } = await createPerspective(
+    const developAddress = await createPerspective(
       contextAddress,
       'develop',
       commitAddress
@@ -154,155 +152,58 @@ scenario1.runTape(
     t.equal(developPerspective.context_address, contextAddress);
 
     // Check that the context now has the two correct perspectives
-    const {
-      Ok: { links: perspectiveAddresses }
-    } = getContextPerspectives(contextAddress)(alice);
-    t.equal(perspectiveAddresses[0].address, masterAddress);
+    const { links: perspectiveAddresses } = getContextPerspectives(
+      contextAddress
+    )(alice);
+    t.equal(perspectiveAddresses[0].address, perspectiveAddress);
     t.equal(perspectiveAddresses[1].address, developAddress);
 
     // Check that the newly created perspective points to the correct commit
-    const { Ok: perspectiveHead } = getPerspectiveHead(developAddress)(alice);
+    const perspectiveHead = getPerspectiveHead(developAddress)(alice);
     t.equal(perspectiveHead, commitAddress);
 
     // Create second commit in the develop perspective
-    const { Ok: secondCommitAddress } = await createCommit(
+    const secondCommitAddress = await createCommitInPerspective(
       developAddress,
       'second commit',
       SAMPLE_ADDRESS2
     )(alice);
 
     // Check that master still points to the first commit
-    const { Ok: perspectiveHead2 } = getPerspectiveHead(masterAddress)(alice);
+    const perspectiveHead2 = getPerspectiveHead(perspectiveAddress)(alice);
     t.equal(perspectiveHead2, commitAddress);
 
     // Check that develop now points to the newly created commit
-    const { Ok: perspectiveHead3 } = getPerspectiveHead(developAddress)(alice);
+    const perspectiveHead3 = getPerspectiveHead(developAddress)(alice);
     t.equal(perspectiveHead3, secondCommitAddress);
   }
 );
-/* 
+
 scenario1.runTape(
-  'merge two perspectives with no conflict',
+  'clone context, perspective and commit',
   async (t, { alice }) => {
-    const { commitAddress, masterAddress } = await createContextAndCommit(
-      'myNewContext',
-      'first commit',
-      buildObject(null, [
-        { name: 'file1', address: SAMPLE_ADDRESS2 },
-        { name: 'file2', address: SAMPLE_ADDRESS1 }
-      ])
+    // Clone context
+    const contextAddress = await cloneContext(
+      buildContext(CREATOR_ADDRESS, 0, 0)
     )(alice);
-    t.equal(commitAddress, 'QmaECgwN2H2xLXpMYBjDBg6BAyHxpQx1bP2Y862HFyfyuN');
+    t.equal(contextAddress, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
 
-    const { Ok: developAddress } = await createPerspective(
-      commitAddress,
-      'develop'
+    // Clone commit
+    const commitAddress = await cloneCommit(
+      buildCommit(SAMPLE_ADDRESS1, 0, 'commit messages', [])
     )(alice);
-    const { Ok: developCommit } = await createCommit(
-      developAddress,
-      'develop commit',
-      buildObject(null, [
-        {
-          name: 'file1',
-          address: SAMPLE_ADDRESS2
-        },
-        { name: 'file2', address: SAMPLE_ADDRESS2 },
-        { name: 'file3', address: SAMPLE_ADDRESS2 }
-      ])
-    )(alice);
+    t.equal(commitAddress, 'QmWCtDCnbHXhkccaUQeSfsbrPHTvgascdeASSJ1UbvVu2J');
 
-    const { Ok: mergedCommitAddress } = await mergePerspectives(
-      developAddress,
-      masterAddress
-    )(alice);
-
+    // Clone perspective
+    const perspectiveAddress = await clonePerspective({
+      context_address: contextAddress,
+      head_address: commitAddress,
+      name: 'master',
+      creator: CREATOR_ADDRESS
+    })(alice);
     t.equal(
-      mergedCommitAddress,
-      'QmYxeYk1hRvUo2dESjciBThc28DKSiKJ8U9JyiJAbmkmA1'
+      perspectiveAddress,
+      'QmZyL65iikUAk9mU6YFLv3ZP5HKGTK8jYTddBNZXd5F5hR'
     );
-
-    const { Ok: commitInfoJsonString } = getCommitInfo(mergedCommitAddress)(
-      alice
-    );
-    const commitInfo = parseEntryResult(commitInfoJsonString);
-
-    t.deepEqual(commitInfo.parent_commits_addresses, [
-      developCommit,
-      commitAddress
-    ]);
-
-    const commitContentString = getCommitContent(mergedCommitAddress)(alice);
-    const commitContent = parseEntryResult(commitContentString);
-
-    t.deepEqual(commitContent, {
-      data: null,
-      links: [
-        { name: 'file1', address: SAMPLE_ADDRESS2 },
-        { name: 'file2', address: SAMPLE_ADDRESS2 },
-        {
-          name: 'file3',
-          address: SAMPLE_ADDRESS2
-        }
-      ]
-    });
-
-    const { Ok: lastMasterCommitAddress } = await getPerspectiveHead(
-      masterAddress
-    )(alice);
-    t.equal(lastMasterCommitAddress, mergedCommitAddress);
   }
 );
-
-scenario1.runTape(
-  'merge two perspectives with changed content creates conflict',
-  async (t, { alice }) => {
-    const { commitAddress, masterAddress } = await createContextAndCommit(
-      'myNewContext',
-      'first commit',
-      buildObject(null, [
-        {
-          name: 'file1',
-          address: SAMPLE_ADDRESS2
-        },
-        { name: 'file2', address: SAMPLE_ADDRESS1 }
-      ])
-    )(alice);
-    const { Ok: developAddress } = await createPerspective(
-      commitAddress,
-      'develop'
-    )(alice);
-    const { Ok: masterCommit } = await createCommit(
-      masterAddress,
-      'master commit 2',
-      buildObject(null, [
-        {
-          name: 'file1',
-          address: SAMPLE_ADDRESS1
-        },
-        { name: 'file2', address: SAMPLE_ADDRESS1 },
-        { name: 'file3', address: SAMPLE_ADDRESS2 }
-      ])
-    )(alice);
-    const { Ok: developCommit } = await createCommit(
-      developAddress,
-      'develop commit',
-      buildObject(null, [
-        {
-          name: 'file1',
-          address: SAMPLE_ADDRESS3
-        },
-        { name: 'file2', address: SAMPLE_ADDRESS2 },
-        { name: 'file4', address: SAMPLE_ADDRESS2 }
-      ])
-    )(alice);
-
-    const result = await mergePerspectives(developAddress, masterAddress)(
-      alice
-    );
-
-    t.deepEqual(result, {
-      Err: { Internal: 'there was a conflict trying to merge' }
-    });
-  }
-);
- */

@@ -1,40 +1,44 @@
 import { Commit, Perspective, Context } from '../types';
-import { LinkResolver } from '../../services/resolver';
 
-export interface UprtclService extends LinkResolver {
+export interface UprtclService {
   /** Getters */
-
-  getRootContext(): Promise<Context>;
-  
+  /** CRUD getters */
   getContext(contextId: string): Promise<Context>;
-  getContextId(context: Context): Promise<string>;
-
   getPerspective(perspectiveId: string): Promise<Perspective>;
   getCommit(commitId: string): Promise<Commit>;
 
+  /** special getters */
+  getRootPerspective(): Promise<Perspective>;
+  getContextId(context: Context): Promise<string>;
   getContextPerspectives(contextId: string): Promise<Perspective[]>;
 
   /** Modifiers */
 
   // Contexts
-  createContext(context: Context): Promise<string>;
+  /**
+   * Creates the context if necessary and returns its ID
+   */
+  createContext(timestamp: number, nonce: number): Promise<string>;
 
   // Perspectives
   createPerspective(
     contextId: string,
     name: string,
-    headLink: string
-  ): Promise<string>;
-  createPerspectiveAndContent(
-    context: Context,
-    name: string,
-    head: Commit
+    timestamp: number,
+    headId: string
   ): Promise<string>;
 
   // Commit
   createCommit(
-    perspectiveId: string,
+    timestamp: number,
     message: string,
-    contentLink: string
+    parentsIds: string[],
+    dataId: string
   ): Promise<string>;
+
+  cloneContext(context: Context): Promise<string>;
+  clonePerspective(perspective: Perspective): Promise<string>;
+  cloneCommit(commit: Commit): Promise<string>;
+
+  updateHead(perspectiveId: string, commitId: string): Promise<void>;
 }

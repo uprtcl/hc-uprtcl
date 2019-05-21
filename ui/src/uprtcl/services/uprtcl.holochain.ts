@@ -1,13 +1,10 @@
-import {
-  HolochainConnection,
-  EntryResult
-} from '../../services/holochain.connection';
+
 import { Perspective, Commit, Context } from '../types';
 import { UprtclService } from './uprtcl.service';
-import { LinkResolver } from '../../services/resolver';
 import { ConnectionFormatter } from './connection-formatter';
+import { HolochainConnection, EntryResult } from '../../services/holochain.connection';
 
-export class UprtclHolochain implements UprtclService, LinkResolver {
+export class UprtclHolochain implements UprtclService {
   uprtclZome: HolochainConnection;
   formatter: ConnectionFormatter;
 
@@ -18,12 +15,12 @@ export class UprtclHolochain implements UprtclService, LinkResolver {
     perspective: {
       creatorId: 'creator',
       contextId: 'context_address',
-      headLink: 'head'
+      headId: 'head'
     },
     commit: {
       creatorId: 'creator',
-      parentsLinks: 'parent_commits_links',
-      dataLink: 'content_link'
+      parentsIds: 'parent_commits_addresses',
+      dataId: 'content_address'
     }
   };
 
@@ -38,12 +35,12 @@ export class UprtclHolochain implements UprtclService, LinkResolver {
       .then(entry => this.uprtclZome.parseEntryResult(entry));
   }
 
-  getRootContext(): Promise<Context> {
+  getRootPerspective(): Promise<Perspective> {
     return this.uprtclZome
-      .call('get_root_context', {})
+      .call('get_root_perspective', {})
       .then(result => this.uprtclZome.parseEntryResult(result).entry)
-      .then(context =>
-        this.formatter.formatServerToUi<Context>('context', context)
+      .then(perspective =>
+        this.formatter.formatServerToUi<Perspective>('perspective', perspective)
       );
   }
 
@@ -91,51 +88,66 @@ export class UprtclHolochain implements UprtclService, LinkResolver {
         Promise.all(
           perspectiveAddresses.links.map(p => this.getPerspective(p.address))
         )
-      )
+      );
   }
 
-  createContext(): Promise<string> {
-    return this.uprtclZome.call('create_context', { timestamp: Date.now() });
+  createContext(timestamp: number, nonce: number): Promise<string> {
+    return this.uprtclZome.call('create_context', {
+      timestamp: timestamp,
+      nonce: nonce
+    });
   }
 
   createPerspective(
     contextId: string,
     name: string,
-    headLink: string
+    timestamp: number,
+    headId: string
   ): Promise<string> {
     return this.uprtclZome.call('create_perspective', {
       context_address: contextId,
       name: name,
-      head_link: headLink
-    });
-  }
-
-  createPerspectiveAndContent(
-    context: Context,
-    name: string,
-    head: Commit
-  ): Promise<string> {
-    return this.uprtclZome.call('create_perspective_and_content', {
-      context: this.formatter.formatUiToServer('context', context),
-      name: name,
-      head: this.formatter.formatUiToServer('commit', head)
+      timestamp: timestamp,
+      head: headId
     });
   }
 
   createCommit(
-    perspectiveId: string,
+    timestamp: number,
     message: string,
-    contentLink: string
+    parentsIds: string[],
+    dataId: string
   ): Promise<string> {
     return this.uprtclZome.call('create_commit', {
-      perspective_address: perspectiveId,
       message: message,
-      timestamp: Date.now(),
-      content_link: contentLink
+      timestamp: timestamp,
+      parent_commits_addresses: parentsIds,
+      content_address: dataId
     });
   }
 
-  resolve(link: string) {
-    return this.getEntry(link).then(result => result.entry);
+  cloneContext(context: Context): Promise<string> {
+    return this.uprtclZome.call('clone_context', {
+      context
+    });
+  }
+
+  clonePerspective(perspective: Perspective): Promise<string> {
+    return this.uprtclZome.call('clone_perspective', {
+      perspective
+    });
+  }
+
+  cloneCommit(commit: Commit): Promise<string> {
+    return this.uprtclZome.call('clone_commit', {
+      commit
+    });
+  }
+
+  updateHead(perspectiveId: string, commitId: string): Promise<void> {
+    return this.uprtclZome.call('update_perspective_head', {
+      perspective_address: perspectiveId,
+      commit_address: commitId
+    });
   }
 }

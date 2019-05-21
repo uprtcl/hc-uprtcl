@@ -134,7 +134,7 @@ define_zome! {
     }
 
     update_perspective_head: {
-      inputs: |perspective_address: Address, commit_address: Address|,
+      inputs: |perspective_address: Address, head_address: Address|,
       outputs: |result: ZomeApiResult<()>|,
       handler: perspective::handle_update_perspective_head
     }
@@ -162,9 +162,9 @@ define_zome! {
 
   traits: {
     hc_public [
-      get_entry, create_context, get_root_context, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
-      create_perspective, get_context_perspectives, get_perspective_info, get_perspective_head, create_commit,
-      get_commit_info, clone_context, clone_perspective, clone_commit
+      get_entry, create_context, get_root_perspective, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
+      create_perspective, get_context_perspectives, get_perspective_info, get_perspective_head, update_perspective_head,
+      create_commit, get_commit_info, clone_context, clone_perspective, clone_commit
     ]
   }
 

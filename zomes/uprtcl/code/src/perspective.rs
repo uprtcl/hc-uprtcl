@@ -151,7 +151,7 @@ pub fn handle_get_perspective_head(perspective_address: Address) -> ZomeApiResul
  */
 pub fn handle_update_perspective_head(
   perspective_address: Address,
-  commit_address: Address,
+  head_address: Address,
 ) -> ZomeApiResult<()> {
   let previous_head = hdk::get_links(&perspective_address, "head")?;
   if previous_head.addresses().len() != 0 {
@@ -162,7 +162,7 @@ pub fn handle_update_perspective_head(
     )?;
   }
 
-  hdk::link_entries(&perspective_address, &commit_address, "head")?;
+  hdk::link_entries(&perspective_address, &head_address, "head")?;
 
   Ok(())
 }
