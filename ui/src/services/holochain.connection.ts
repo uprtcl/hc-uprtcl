@@ -26,9 +26,11 @@ export class HolochainConnection {
       .then(jsonString => JSON.parse(jsonString))
       .then(result => {
         if (result.Err) throw new Error(JSON.stringify(result.Err));
-        if (result.SerializationError) throw new Error(JSON.stringify(result.SerializationError));
-        if (result.Ok) return result.Ok;
+        if (result.SerializationError) {
+          throw new Error(JSON.stringify(result.SerializationError));
+        }
         console.log('[RESULT]:', result);
+        if (result.Ok) return result.Ok;
         return result;
       });
   }

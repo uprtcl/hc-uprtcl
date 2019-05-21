@@ -108,7 +108,7 @@ export class UprtclHolochain implements UprtclService {
       context_address: contextId,
       name: name,
       timestamp: timestamp,
-      head: headId
+      head_address: headId
     });
   }
 
@@ -144,10 +144,10 @@ export class UprtclHolochain implements UprtclService {
     });
   }
 
-  updateHead(perspectiveId: string, commitId: string): Promise<void> {
+  updateHead(perspectiveId: string, headId: string): Promise<void> {
     return this.uprtclZome.call('update_perspective_head', {
       perspective_address: perspectiveId,
-      commit_address: commitId
+      head_address: headId
     });
   }
 }

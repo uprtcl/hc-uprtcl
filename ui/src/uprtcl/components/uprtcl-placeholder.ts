@@ -8,7 +8,12 @@ export class UprtclPlaceholder extends LitElement {
 
   render() {
     return html`
-      <slot @commit-content=${e => this.createContent(e.target.dataId)}></slot>
+      <slot
+        @commit-content=${e => {
+          this.createContent(e.detail.dataId);
+          e.stopPropagation();
+        }}
+      ></slot>
     `;
   }
 
@@ -20,11 +25,19 @@ export class UprtclPlaceholder extends LitElement {
       [],
       dataId
     );
-    return await this.uprtclHolochain.createPerspective(
+    const perspectiveId = await this.uprtclHolochain.createPerspective(
       contextId,
       'master',
       Date.now(),
       commitId
+    );
+
+    this.dispatchEvent(
+      new CustomEvent('perspective-created', {
+        detail: { perspectiveId: perspectiveId },
+        composed: true,
+        bubbles: true
+      })
     );
   }
 }

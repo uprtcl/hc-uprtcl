@@ -1,9 +1,4 @@
-import {
-  LitElement,
-  html,
-  customElement,
-  property
-} from 'lit-element';
+import { LitElement, html, customElement, property } from 'lit-element';
 import { Perspective } from '../types';
 
 import './uprtcl-commit';
@@ -54,13 +49,15 @@ export class UprtclPerspective extends LitElement {
   }
 
   loadPerspective() {
-    this.loading = true;
-    this.uprtclHolochain
-      .getPerspective(this.perspectiveId)
-      .then(perspective => {
-        this.perspective = perspective;
-        this.loading = false;
-      });
+    if (this.perspectiveId) {
+      this.loading = true;
+      this.uprtclHolochain
+        .getPerspective(this.perspectiveId)
+        .then(perspective => {
+          this.perspective = perspective;
+          this.loading = false;
+        });
+    }
   }
 
   firstUpdated() {

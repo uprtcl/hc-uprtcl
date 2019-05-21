@@ -20,7 +20,6 @@ export class DocumentsHolochain implements DocumentsService {
   }
 
   createTextNode(node: TextNode): Promise<string> {
-    return this.documentsZome.call('create_text_node', node);
+    return this.documentsZome.call('create_text_node', { node });
   }
-
 }

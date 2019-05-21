@@ -15,16 +15,32 @@ export class TextNodeElement extends LitElement {
 
   @property()
   private node: TextNode = {
-    text: 'placeholder',
+    text: '',
     links: []
   };
+
+  @property()
+  mouseover: boolean = false;
+
+  newText: string;
 
   documentsHolochain = new DocumentsHolochain();
 
   static get styles() {
     return css`
-      .hover:hover {
-        background-color: rgba(0, 0, 0, 0.1);
+      .node:hover {
+        background-color: rgba(100, 100, 100, 0.1);
+      }
+      .node {
+        padding: 4px;
+        border-radius: 4px;
+      }
+
+      #text {
+        display: inline-block;
+        content: 'Start typing';
+      }
+      #text:empty:focus::before {
       }
     `;
   }
@@ -36,13 +52,41 @@ export class TextNodeElement extends LitElement {
             Loading...
           `
         : html`
-            <div style="display: flex; flex-direction: column;" class="hover">
-              <span contenteditable="true" @keydown=${e => this.onKeyDown(e)}>
-                ${this.node.text}
-              </span>
+            <div style="display: flex; flex-direction: column;" class="node">
+              <div
+                style="display: flex; flex-direction: row;"
+                @mouseover=${e => (this.mouseover = true)}
+                @mouseleave=${e => (this.mouseover = false)}
+              >
+                <span
+                  id="text"
+                  data-focused-advice="Start typing"
+                  contenteditable="true"
+                  @input=${e => this.updateText()}
+                  @keydown=${e => this.onKeyDown(e)}
+                  style="flex-basis: 100%;"
+                >
+                  ${this.node.text}
+                </span>
+                ${this.mouseover
+                  ? html`
+                      <button class="save-button" @click=${e => this.save()}>
+                        Save
+                      </button>
+                    `
+                  : html``}
+              </div>
               ${this.node.links.map(
-                link => html`
-                  <uprtcl-perspective .perspectiveId=${link.link}>
+                (link, index) => html`
+                  <uprtcl-perspective
+                    .perspectiveId=${link}
+                    @perspective-created=${e => {
+                      this.node.links[index] = e.detail.perspectiveId;
+                      this.save();
+                      this.requestUpdate();
+                      e.stopPropagation();
+                    }}
+                  >
                     <text-node></text-node>
                   </uprtcl-perspective>
                 `
@@ -74,11 +118,31 @@ export class TextNodeElement extends LitElement {
     }
   }
 
+  updateText() {
+    this.newText = this.shadowRoot.getElementById('text').innerText;
+  }
+
   onKeyDown(event) {
     if (event.key === 'Enter') {
-      this.node.links.push({ link: null });
+      this.node.links.push(null);
       this.requestUpdate();
       event.preventDefault();
     }
+  }
+
+  save() {
+    const node: TextNode = { ...this.node };
+    if (this.newText) {
+      node.text = this.newText;
+    }
+    this.documentsHolochain.createTextNode(node).then(nodeId =>
+      this.dispatchEvent(
+        new CustomEvent('commit-content', {
+          detail: { dataId: nodeId },
+          composed: true,
+          bubbles: true
+        })
+      )
+    );
   }
 }
