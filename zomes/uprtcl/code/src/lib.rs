@@ -55,15 +55,15 @@ define_zome! {
 
     // Contexts
     create_context: {
-      inputs: |context: context::Context|,
+      inputs: |timestamp: u128, nonce: u128|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: context::handle_create_context
     }
 
-    get_root_context: {
-      inputs: | |,
-      outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: context::handle_get_root_context
+    clone_context: {
+      inputs: |context: context::Context|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: context::handle_clone_context
     }
 
     get_created_contexts: {
@@ -98,9 +98,21 @@ define_zome! {
 
     // Perspectives
     create_perspective: {
-      inputs: |context_address: Address, name: String, head_link: Address|,
+      inputs: |context_address: Address, name: String, timestamp: u128, head_address: Address|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: perspective::handle_create_perspective
+    }
+
+    clone_perspective: {
+      inputs: |perspective: perspective::ClonedPerspective|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: perspective::handle_clone_perspective
+    }
+
+    get_root_perspective: {
+      inputs: | |,
+      outputs: |result: ZomeApiResult<GetEntryResult>|,
+      handler: perspective::handle_get_root_perspective
     }
 
     get_context_perspectives: {
@@ -121,11 +133,23 @@ define_zome! {
       handler: perspective::handle_get_perspective_head
     }
 
+    update_perspective_head: {
+      inputs: |perspective_address: Address, commit_address: Address|,
+      outputs: |result: ZomeApiResult<()>|,
+      handler: perspective::handle_update_perspective_head
+    }
+
     // Commits
     create_commit: {
-      inputs: |perspective_address: Address, message: String, timestamp: u64, content_link: Address|,
+      inputs: |message: String, timestamp: u128, parent_commits_addresses: Vec<Address>, content_address: Address|,
       outputs: |result: ZomeApiResult<Address>|,
-      handler: perspective::handle_create_commit
+      handler: commit::handle_create_commit
+    }
+
+    clone_commit: {
+      inputs: |commit: commit::Commit|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: commit::handle_clone_commit
     }
 
     get_commit_info: {
@@ -134,19 +158,13 @@ define_zome! {
       handler: commit::handle_get_commit_info
     }
 
-    create_perspective_and_content: {
-      inputs: |context: context::Context, name: String, head: commit::Commit|,
-      outputs: |result: ZomeApiResult<perspective::PerspectiveCreated>|,
-      handler: perspective::handle_create_perspective_and_content
-    }
-
   ]
 
   traits: {
     hc_public [
       get_entry, create_context, get_root_context, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
       create_perspective, get_context_perspectives, get_perspective_info, get_perspective_head, create_commit,
-      get_commit_info, create_perspective_and_content
+      get_commit_info, clone_context, clone_perspective, clone_commit
     ]
   }
 

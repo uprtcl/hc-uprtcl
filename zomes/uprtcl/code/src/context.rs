@@ -1,4 +1,3 @@
-use crate::perspective;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::ZomeApiResult,
@@ -6,27 +5,34 @@ use hdk::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
-  AGENT_ADDRESS, PUBLIC_TOKEN,
+  AGENT_ADDRESS, 
 };
 use holochain_wasm_utils::api_serialization::{
   get_entry::{GetEntryOptions, GetEntryResult},
   get_links::{GetLinksOptions, GetLinksResult},
 };
-use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Context {
   creator: Address,
-  timestamp: u64,
+  timestamp: u128,
   nonce: u128,
 }
 
 impl Context {
-  fn new(timestamp: u64, nonce: u128) -> Context {
+  fn new(timestamp: u128, nonce: u128) -> Context {
     Context {
       creator: AGENT_ADDRESS.to_owned(),
       timestamp: timestamp.to_owned(),
       nonce: nonce.to_owned(),
+    }
+  }
+
+  pub fn root_context() -> Context {
+    Context {
+      creator: AGENT_ADDRESS.to_owned(),
+      timestamp: 0,
+      nonce: 0
     }
   }
 }
@@ -46,16 +52,6 @@ pub fn definition() -> ValidatingEntryType {
     },
 
     links: [
-      from!(
-        "%agent_id",
-        tag: "root",
-        validation_package: || {
-          hdk::ValidationPackageDefinition::ChainFull
-        },
-        validation: |_validation_data: hdk::LinkValidationData | {
-          Ok(())
-        }
-      ),
       from!(
         "%agent_id",
         tag: "created_contexts",
@@ -95,49 +91,15 @@ pub fn definition() -> ValidatingEntryType {
 /**
  * Create a new context with the given name, passing the author and the current time
  */
-pub fn handle_create_context(context: Context) -> ZomeApiResult<Address> {
-  let context_entry = context_entry(context);
-  let context_address = hdk::commit_entry(&context_entry)?;
-
-  hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts")?;
-  hdk::link_entries(
-    &AGENT_ADDRESS, // TODO: change for DNA address
-    &context_address,
-    "all_contexts",
-  )?;
-
-  Ok(context_address)
+pub fn handle_create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Address> {
+  create_context(Context::new(timestamp, nonce))
 }
 
 /**
- * Returns the root context of the agent, created at genesis time
+ * Clones the given context and returns the new address
  */
-pub fn handle_get_root_context() -> ZomeApiResult<GetEntryResult> {
-  let links = hdk::get_links_result(
-    &AGENT_ADDRESS,
-    "root",
-    GetLinksOptions::default(),
-    GetEntryOptions::default(),
-  )?;
-
-  // TODO: Comment when genesis block is executed
-  match links.len() {
-    1 => links[0].clone(),
-    _ => {
-      create_root_context()?;
-      handle_get_root_context()
-    }
-  }
-  /*
-    TODO: Uncomment when genesis block is executed
-  match links.len() {
-      1 => links[0].clone(),
-      _ => Err(ZomeApiError::from(format!(
-        "agent has {} root contexts",
-        links.len()
-      ))),
-    }
-   */
+pub fn handle_clone_context(context: Context) -> ZomeApiResult<Address> {
+  create_context(context)
 }
 
 /**
@@ -205,40 +167,26 @@ pub fn handle_get_context_address(context: Context) -> ZomeApiResult<Address> {
 
 /** Helper functions */
 
+/**
+ * Formats the given context as an entry
+ */
 fn context_entry(context: Context) -> Entry {
   Entry::App("context".into(), context.into())
 }
 
-#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct AddressResponse {
-  Ok: Address,
-}
-
 /**
- * Creates the root context for the agent
- * Only to be called at genesis time
+ * Creates a context and returns its address
  */
-pub fn create_root_context() -> ZomeApiResult<Address> {
-  let json_response = hdk::call(
-    hdk::THIS_INSTANCE,
-    "documents",
-    Address::from(PUBLIC_TOKEN.to_string()),
-    "create_text_node",
-    json!({
-      "node": {
-        "text": "Hi",
-        "links": {}
-      }
-    })
-    .into(),
+pub fn create_context(context: Context) -> ZomeApiResult<Address> {
+  let context_entry = context_entry(context);
+  let context_address = hdk::commit_entry(&context_entry)?;
+
+  hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts")?;
+  hdk::link_entries(
+    &AGENT_ADDRESS, // TODO: change for DNA address
+    &context_address,
+    "all_contexts",
   )?;
-  let response = AddressResponse::try_from(json_response)?;
 
-  let commit = crate::commit::create_initial_commit(&response.Ok);
-
-  let result = crate::perspective::handle_create_perspective_and_content(Context::new(0, 0), String::from("root"), commit)?;
-
-  hdk::link_entries(&AGENT_ADDRESS, &result.context_address, "root")?;
-
-  Ok(result.context_address)
+  Ok(context_address)
 }

@@ -15,7 +15,7 @@ export interface Perspective {
 }
 
 export interface Commit {
-  id: string;
+  id?: string;
   creatorId: string;
   timestamp: number;
   message: string;
