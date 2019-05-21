@@ -4,7 +4,7 @@ import { Context, Perspective, Commit } from '../types';
 import { RootState } from '../../store';
 import {
   GET_CONTEXT,
-  GET_ROOT_CONTEXT,
+  GET_ROOT_PERSPECTIVE,
   GET_CONTEXT_PERSPECTIVES
 } from './context/actions';
 import { EntityState, createEntityAdapter } from '../../utils/entity';
@@ -15,7 +15,7 @@ import { UprtclHolochain } from '../services/uprtcl.holochain';
 import { UprtclService } from '../services/uprtcl.service';
 
 export interface UprtclState {
-  rootContextId: string;
+  rootPerspectiveId: string;
   contexts: EntityState<Context>;
   perspectives: EntityState<Perspective>;
   commits: EntityState<Commit>;
@@ -28,7 +28,7 @@ export const adapters = {
 };
 
 const initialState: UprtclState = {
-  rootContextId: null,
+  rootPerspectiveId: null,
   contexts: adapters.contexts.getInitialState(),
   perspectives: adapters.perspectives.getInitialState(),
   commits: adapters.commits.getInitialState()
@@ -56,11 +56,14 @@ export function uprtclReducer(state = initialState, action: AnyAction) {
         ...state,
         commits: adapters.commits.upsertOne(action.payload, state.commits)
       };
-    case GET_ROOT_CONTEXT.successType:
+    case GET_ROOT_PERSPECTIVE.successType:
       return {
         ...state,
-        contexts: adapters.contexts.upsertOne(action.payload, state.contexts),
-        rootContextId: action.payload.id
+        perspectives: adapters.perspectives.upsertOne(
+          action.payload,
+          state.perspectives
+        ),
+        rootPerspectiveId: action.payload.id
       };
     case SET_PERSPECTIVE_HEAD:
       return {

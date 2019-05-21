@@ -15,7 +15,10 @@ import { ReduxLens } from '../../lens/components/redux-lens';
 import './uprtcl-perspective';
 
 @customElement('uprtcl-context')
-export class UprtclContext extends ReduxLens(store) {
+export class UprtclContext extends connect(store)(LitElement) {
+  @property()
+  public contextId: string;
+
   @property()
   private checkoutPerspectiveId: string;
 
@@ -25,58 +28,81 @@ export class UprtclContext extends ReduxLens(store) {
   @property()
   private newPerspectiveName: string;
 
-  render() {
-    return this.loadingOrContent(
-      () => html`
-        <div style="display: flex; flex-direction: column">
-          <div style="display: flex; flex-direction: row;">
-            <select
-              @change=${e => (this.checkoutPerspectiveId = e.target.value)}
-            >
-              ${this.perspectives.map(
-                perspective =>
-                  html`
-                    <option
-                      value="${perspective.id}"
-                      ?selected=${perspective.id === this.checkoutPerspectiveId}
-                    >
-                      ${perspective.name}
-                    </option>
-                  `
-              )}
-            </select>
+  @property()
+  private loading: boolean = false;
 
-            <input
-              @change=${e => (this.newPerspectiveName = e.target.value)}
-              type="text"
-              style="margin-left: 8px;"
-            />
-            <button
-              @click=${e => this.createPerspective(this.newPerspectiveName)}
-              ?disabled=${!this.newPerspectiveName}
-            >
-              Create perspective
-            </button>
-          </div>
-          <uprtcl-perspective .cid=${this.checkoutPerspectiveId}>
-          </uprtcl-perspective>
-        </div>
-      `
-    );
+  render() {
+    return html`
+      ${this.loading
+        ? html`
+            Loading...
+          `
+        : html`
+            <div style="display: flex; flex-direction: column">
+              <div style="display: flex; flex-direction: row;">
+                <select
+                  @change=${e => (this.checkoutPerspectiveId = e.target.value)}
+                >
+                  ${this.perspectives.map(
+                    perspective =>
+                      html`
+                        <option
+                          value="${perspective.id}"
+                          ?selected=${perspective.id ===
+                            this.checkoutPerspectiveId}
+                        >
+                          ${perspective.name}
+                        </option>
+                      `
+                  )}
+                </select>
+
+                <input
+                  @change=${e => (this.newPerspectiveName = e.target.value)}
+                  type="text"
+                  style="margin-left: 8px;"
+                />
+                <button
+                  @click=${e => this.createPerspective(this.newPerspectiveName)}
+                  ?disabled=${!this.newPerspectiveName}
+                >
+                  Create perspective
+                </button>
+              </div>
+              <uprtcl-perspective .perspectiveId=${this.checkoutPerspectiveId}>
+              </uprtcl-perspective>
+            </div>
+          `}
+    `;
   }
 
-  getLoadAction() {
-    return getContextContent(this.cid);
+  loadContext() {
+    this.loading = true;
+    store
+      .dispatch(getContextContent(this.contextId))
+      .then(() => (this.loading = false));
+  }
+
+  firstUpdated() {
+    this.loadContext();
+  }
+
+  updated(changedProperties) {
+    // Don't forget this or your element won't render!
+    super.updated(changedProperties);
+    if (changedProperties.has('contextId')) {
+      this.loadContext();
+    }
   }
 
   stateChanged(state: RootState) {
     if (!this.checkoutPerspectiveId) {
-      this.checkoutPerspectiveId = selectDefaultPerspectiveId(this.cid)(
+      this.checkoutPerspectiveId = selectDefaultPerspectiveId(this.contextId)(
         selectUprtcl(state)
       );
     }
 
-    this.perspectives = selectContextPerspectives(this.cid)(
+    this.perspectives = selectContextPerspectives(this.contextId)(
       selectUprtcl(state)
     );
   }
@@ -91,11 +117,11 @@ export class UprtclContext extends ReduxLens(store) {
     store
       .dispatch(
         createPerspective(
-          this.cid,
+          this.contextId,
           name,
           this.getCheckoutPerspective().headLink
         )
       )
-      .then(() => this.loadContent());
+      .then(() => this.loadContext());
   }
 }

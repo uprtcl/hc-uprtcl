@@ -6,7 +6,8 @@ export const selectContexts = (state: UprtclState) =>
 export const selectContextById = (contextId: string) => (state: UprtclState) =>
   state.contexts.entities[contextId];
 
-export const selectRootContextId = (state: UprtclState) => state.rootContextId;
+export const selectRootPerspectiveId = (state: UprtclState) =>
+  state.rootPerspectiveId;
 
 export const selectContextPerspectives = (contextId: string) => (
   state: UprtclState

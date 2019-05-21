@@ -26,7 +26,7 @@ use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEnt
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct TextNode {
     text: String,
-    links: HashMap<String, Address>,
+    links: Vec<Address>,
 }
 
 pub fn handle_create_text_node(node: TextNode) -> ZomeApiResult<Address> {

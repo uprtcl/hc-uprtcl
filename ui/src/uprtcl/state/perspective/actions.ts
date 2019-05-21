@@ -1,4 +1,4 @@
-import { Perspective } from '../../types';
+import { Perspective, Commit, Context } from '../../types';
 import { selectPerspectiveHeadId, selectPerspectiveById } from './selectors';
 import { selectUprtcl, uprtclHolochain } from '../reducer';
 import { getContextContent } from '../context/actions';
@@ -8,7 +8,7 @@ import { getCommit } from '../commit/actions';
 /** Main actions */
 
 export const CREATE_PERSPECTIVE = asyncAction<
-  { contextId: string; commitId: string; name: string },
+  { contextId: string; name: string; commitId: string },
   string
 >('create_perspective');
 
@@ -22,6 +22,24 @@ export function createPerspective(
       .createPerspective(contextId, name, commitLink)
       .then(perspectiveId =>
         dispatch(CREATE_PERSPECTIVE.success(perspectiveId))
+      );
+}
+
+export const CREATE_PERSPECTIVE_AND_CONTENT = asyncAction<
+  { context: Context; name: string; commit: Commit },
+  string
+>('create_perspective');
+
+export function createPerspectiveAndContent(
+  context: Context,
+  name: string,
+  commit: Commit
+) {
+  return dispatch =>
+    uprtclHolochain
+      .createPerspectiveAndContent(context, name, commit)
+      .then(perspectiveId =>
+        dispatch(CREATE_PERSPECTIVE_AND_CONTENT.success(perspectiveId))
       );
 }
 

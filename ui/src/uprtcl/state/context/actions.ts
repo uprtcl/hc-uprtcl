@@ -43,13 +43,15 @@ export function getContextPerspectives(contextId: string) {
     });
 }
 
-export const GET_ROOT_CONTEXT = asyncAction<{}, Context>('get_root_context');
+export const GET_ROOT_PERSPECTIVE = asyncAction<{}, Perspective>(
+  'GET_ROOT_PERSPECTIVE'
+);
 
-export function getRootContext() {
+export function getRootPerspective() {
   return dispatch =>
     uprtclHolochain
-      .getRootContext()
-      .then(context => dispatch(GET_ROOT_CONTEXT.success(context)));
+      .getRootPerspective()
+      .then(context => dispatch(GET_ROOT_PERSPECTIVE.success(context)));
 }
 
 /** Helper actions */

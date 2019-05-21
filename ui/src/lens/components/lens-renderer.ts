@@ -1,14 +1,19 @@
 import { LitElement, html, customElement, property } from 'lit-element';
 import { unsafeHTML } from 'lit-html/directives/unsafe-html';
-import { Lens } from '../types';
 
 /** From the id of the content to render and the viewer id */
 
+import { Lens } from '../types';
 import '../../documents/components/text-node';
-import { BaseLens } from './base-lens';
 
 @customElement('lens-renderer')
-export class LensRenderer extends BaseLens {
+export class LensRenderer extends LitElement {
+  @property()
+  public element: string;
+
+  @property()
+  public dataLink: string;
+
   @property()
   private lens: Lens = {
     element: 'text-node'
@@ -21,16 +26,13 @@ export class LensRenderer extends BaseLens {
     `;
   }
 
-  render() {
-    return this.loadingOrContent(
-      () => html`
-        ${unsafeHTML(this.buildElement())}
-      `
-    );
+  firstUpdated() {
+    this.shadowRoot.firstElementChild['dataId'] = this.dataLink;
   }
 
-  loadContent() {
-    //import(this.lens.element).then(() => (this.loading = false));
-    this.shadowRoot.firstElementChild['cid'] = this.cid;
+  render() {
+    return html`
+      ${unsafeHTML(this.buildElement())}
+    `;
   }
 }

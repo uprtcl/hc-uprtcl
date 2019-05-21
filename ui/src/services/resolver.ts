@@ -4,7 +4,7 @@ export interface LinkResolver {
   resolve(link: string): Promise<any>;
 }
 
-export class Resolver<T extends LinkResolver> {
+export class Resolver<T> {
   resolvers: Dictionary<Dictionary<T>>;
 
   constructor(resolvers: Dictionary<Dictionary<T>>) {
@@ -16,10 +16,10 @@ export class Resolver<T extends LinkResolver> {
   }
 
   // Eg: holo://DNA_HASH/PERSP_ID
-  public resolve(link: string) {
+/*   public resolve(link: string) {
     const [protocol, path] = link.split('://');
 
     const [application, address] = path.split('/');
     return this.getResolver(protocol, application).resolve(address);
   }
-}
+ */}

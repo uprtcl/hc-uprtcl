@@ -218,7 +218,7 @@ pub fn create_root_perspective() -> ZomeApiResult<Address> {
     json!({
       "node": {
         "text": "Hi",
-        "links": {}
+        "links": Vec::new()
       }
     })
     .into(),
