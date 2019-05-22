@@ -24,7 +24,7 @@ export class UprtclCommit extends LitElement {
             Loading...
           `
         : html`
-            <slot id="data"></slot>
+            <slot></slot>
           `}
     `;
   }
@@ -34,12 +34,14 @@ export class UprtclCommit extends LitElement {
     this.uprtclHolochain.getCommit(this.commitId).then(commit => {
       this.commit = commit;
       this.loading = false;
-      const slot = this.shadowRoot.querySelector('slot');
+      this.requestUpdate().then(() => {
+        const slot = this.shadowRoot.querySelector('slot');
 
-      slot
-        .assignedNodes({ flatten: true })
-        .filter(node => node.nodeType === 1)
-        .forEach(e => (e['dataId'] = commit.dataId));
+        slot
+          .assignedNodes({ flatten: true })
+          .filter(node => node.nodeType === 1)
+          .forEach(e => (e['dataId'] = commit.dataId));
+      });
     });
   }
 

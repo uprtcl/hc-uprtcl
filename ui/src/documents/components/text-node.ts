@@ -28,8 +28,8 @@ export class TextNodeElement extends LitElement {
 
   static get styles() {
     return css`
-      .node:hover {
-        background-color: rgba(100, 100, 100, 0.1);
+      .hover:hover {
+        background-color: rgba(100, 100, 100, 0.2);
       }
       .node {
         padding: 4px;
@@ -52,7 +52,10 @@ export class TextNodeElement extends LitElement {
             Loading...
           `
         : html`
-            <div style="display: flex; flex-direction: column;" class="node">
+            <div
+              style="display: flex; flex-direction: column;"
+              class=${this.mouseover ? 'hover node' : 'node'}
+            >
               <div
                 style="display: flex; flex-direction: row;"
                 @mouseover=${e => (this.mouseover = true)}
