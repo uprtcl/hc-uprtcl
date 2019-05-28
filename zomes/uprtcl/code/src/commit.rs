@@ -59,9 +59,7 @@ pub fn definition() -> ValidatingEntryType {
 
     validation: |_validation_data: hdk::EntryValidationData<Commit>| {
       Ok(())
-    },
-
-    links: []
+    }
   )
 }
 

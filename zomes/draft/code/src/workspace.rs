@@ -37,9 +37,7 @@ pub fn definition() -> ValidatingEntryType {
 
         validation: | _validation_data: hdk::EntryValidationData<Workspace>| {
             Ok(())
-        },
-    
-        links: []
+        }
     )
 }
 

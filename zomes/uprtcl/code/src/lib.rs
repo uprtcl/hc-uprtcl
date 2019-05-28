@@ -42,7 +42,10 @@ define_zome! {
   ]
 
   genesis: || {
-    Ok(())
+    {
+      perspective::create_root_perspective()
+        .map_err(|err| format!("create root perspective failed: {}",err))
+    }
   }
 
   functions: [

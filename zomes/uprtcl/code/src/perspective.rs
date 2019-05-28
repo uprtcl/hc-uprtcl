@@ -16,6 +16,7 @@ use std::convert::TryFrom;
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Perspective {
   name: String,
+  origin: String,
   creator: Address,
   context_address: Address,
 }
@@ -24,6 +25,7 @@ impl Perspective {
   fn new(name: &str, creator: &Address, context_address: &Address) -> Perspective {
     Perspective {
       name: name.to_owned(),
+      origin: crate::utils::get_origin(),
       creator: creator.to_owned(),
       context_address: context_address.to_owned(),
     }
@@ -34,6 +36,7 @@ impl Perspective {
 pub struct ClonedPerspective {
   name: String,
   creator: Address,
+  origin: String,
   context_address: Address,
   head_address: Address,
 }
@@ -42,6 +45,7 @@ impl ClonedPerspective {
   fn to_perspective(&self) -> Perspective {
     Perspective {
       name: self.name.to_owned(),
+      origin: self.origin.to_owned(),
       creator: self.creator.to_owned(),
       context_address: self.context_address.to_owned(),
     }
@@ -65,7 +69,7 @@ pub fn definition() -> ValidatingEntryType {
     links: [
       to!(
         "commit",
-        tag: "head",
+        link_type: "head",
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
@@ -75,7 +79,7 @@ pub fn definition() -> ValidatingEntryType {
       ),
       from!(
         "%agent_id",
-        tag: "root",
+        link_type: "root",
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
@@ -104,7 +108,7 @@ pub fn handle_create_perspective(
   );
   let perspective_address = hdk::commit_entry(&perspective_entry)?;
 
-  hdk::link_entries(&perspective_address, &head_address, "head")?;
+  hdk::link_entries(&perspective_address, &head_address, "head", "")?;
 
   link_perspective_to_context(&context_address, &perspective_address)?;
 
@@ -115,10 +119,18 @@ pub fn handle_create_perspective(
  * Clones the given perspective, linking it with the appropiate context and commit
  */
 pub fn handle_clone_perspective(cloned_perspective: ClonedPerspective) -> ZomeApiResult<Address> {
-  let perspective_entry = Entry::App("perspective".into(), cloned_perspective.to_perspective().into());
+  let perspective_entry = Entry::App(
+    "perspective".into(),
+    cloned_perspective.to_perspective().into(),
+  );
   let perspective_address = hdk::commit_entry(&perspective_entry)?;
 
-  hdk::link_entries(&perspective_address, &cloned_perspective.head_address, "head")?;
+  hdk::link_entries(
+    &perspective_address,
+    &cloned_perspective.head_address,
+    "head",
+    "",
+  )?;
 
   link_perspective_to_context(&cloned_perspective.context_address, &perspective_address)?;
 
@@ -136,7 +148,7 @@ pub fn handle_get_perspective_info(perspective_address: Address) -> ZomeApiResul
  * Returns the address of the head commit for the given perspective
  */
 pub fn handle_get_perspective_head(perspective_address: Address) -> ZomeApiResult<Address> {
-  let links_result = hdk::get_links(&perspective_address, "head")?;
+  let links_result = hdk::get_links(&perspective_address, Some(String::from("head")), None)?;
 
   if links_result.addresses().len() == 0 {
     return Err(ZomeApiError::from(String::from(
@@ -153,16 +165,17 @@ pub fn handle_update_perspective_head(
   perspective_address: Address,
   head_address: Address,
 ) -> ZomeApiResult<()> {
-  let previous_head = hdk::get_links(&perspective_address, "head")?;
+  let previous_head = hdk::get_links(&perspective_address, Some(String::from("head")), None)?;
   if previous_head.addresses().len() != 0 {
     hdk::remove_link(
       &perspective_address,
       &previous_head.addresses().first().unwrap(),
       "head",
+      "",
     )?;
   }
 
-  hdk::link_entries(&perspective_address, &head_address, "head")?;
+  hdk::link_entries(&perspective_address, &head_address, "head", "")?;
 
   Ok(())
 }
@@ -173,12 +186,14 @@ pub fn handle_update_perspective_head(
 pub fn handle_get_root_perspective() -> ZomeApiResult<GetEntryResult> {
   let links = hdk::get_links_result(
     &AGENT_ADDRESS,
-    "root",
+    Some(String::from("root")),
+    None,
     GetLinksOptions::default(),
     GetEntryOptions::default(),
   )?;
 
   // TODO: Comment when genesis block is executed
+  /*
   match links.len() {
     1 => links[0].clone(),
     _ => {
@@ -186,16 +201,15 @@ pub fn handle_get_root_perspective() -> ZomeApiResult<GetEntryResult> {
       handle_get_root_perspective()
     }
   }
-  /*
     TODO: Uncomment when genesis block is executed
-  match links.len() {
-      1 => links[0].clone(),
-      _ => Err(ZomeApiError::from(format!(
-        "agent has {} root contexts",
-        links.len()
-      ))),
-    }
    */
+  match links.len() {
+    1 => links[0].clone(),
+    _ => Err(ZomeApiError::from(format!(
+      "agent has {} root perspectives",
+      links.len()
+    ))),
+  }
 }
 
 /** Helper functions */
@@ -209,7 +223,7 @@ pub struct AddressResponse {
  * Creates the root perspective for the agent
  * Only to be called at genesis time
  */
-pub fn create_root_perspective() -> ZomeApiResult<Address> {
+pub fn create_root_perspective() -> ZomeApiResult<()> {
   let links: Vec<Address> = Vec::new();
   let json_response = hdk::call(
     hdk::THIS_INSTANCE,
@@ -232,9 +246,9 @@ pub fn create_root_perspective() -> ZomeApiResult<Address> {
   let perspective_address =
     handle_create_perspective(context_address, String::from("root"), 0, commit_address)?;
 
-  hdk::link_entries(&AGENT_ADDRESS, &perspective_address, "root")?;
+  hdk::link_entries(&AGENT_ADDRESS, &perspective_address, "root", "")?;
 
-  Ok(perspective_address)
+  Ok(())
 }
 
 /**
@@ -252,5 +266,5 @@ pub fn link_perspective_to_context(
   context_address: &Address,
   perspective_address: &Address,
 ) -> ZomeApiResult<Address> {
-  hdk::link_entries(context_address, perspective_address, "perspectives")
+  hdk::link_entries(context_address, perspective_address, "perspectives", "")
 }

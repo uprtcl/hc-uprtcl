@@ -40,7 +40,7 @@ pub fn definition() -> ValidatingEntryType {
         links: [
             from!(
                 "workspace",
-                tag: "draft",
+                link_type: "draft",
                 validation_package: || {
                     hdk::ValidationPackageDefinition::ChainFull
                 },
@@ -57,10 +57,10 @@ pub fn definition() -> ValidatingEntryType {
  */
 fn remove_previous_draft(entry_address: &Address) -> ZomeApiResult<()> {
     let workspace_address = crate::workspace::workspace_address(entry_address.clone())?;
-    let links = hdk::get_links(&workspace_address, "draft")?;
+    let links = hdk::get_links(&workspace_address, Some(String::from("draft")), None)?;
 
     if links.addresses().len() > 0 {
-        hdk::remove_link(&workspace_address, &links.addresses()[0], "draft")?;
+        hdk::remove_link(&workspace_address, &links.addresses()[0], "draft", "")?;
         hdk::remove_entry(&links.addresses()[0])?;
     }
 
@@ -81,7 +81,7 @@ pub fn handle_set_draft(entry_address: Address, draft: Content) -> ZomeApiResult
     let workspace = crate::workspace::workspace_entry(entry_address);
     let workspace_address = hdk::commit_entry(&workspace)?;
 
-    hdk::link_entries(&workspace_address, &address, "draft")?;
+    hdk::link_entries(&workspace_address, &address, "draft", "")?;
 
     Ok(address)
 }
@@ -105,7 +105,8 @@ pub fn handle_get_draft(entry_address: Address) -> ZomeApiResult<Content> {
     match hdk::get_entry(&workspace_address)? {
         None => Ok(not_found_result()),
         Some(_) => {
-            let links = hdk::get_links_and_load(&workspace_address, "draft")?;
+            let links =
+                hdk::get_links_and_load(&workspace_address, Some(String::from("draft")), None)?;
 
             if links.len() == 0 {
                 return Ok(not_found_result());

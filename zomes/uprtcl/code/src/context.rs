@@ -5,7 +5,7 @@ use hdk::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
-  AGENT_ADDRESS, 
+  AGENT_ADDRESS, DNA_ADDRESS,
 };
 use holochain_wasm_utils::api_serialization::{
   get_entry::{GetEntryOptions, GetEntryResult},
@@ -32,7 +32,7 @@ impl Context {
     Context {
       creator: AGENT_ADDRESS.to_owned(),
       timestamp: 0,
-      nonce: 0
+      nonce: 0,
     }
   }
 }
@@ -54,7 +54,7 @@ pub fn definition() -> ValidatingEntryType {
     links: [
       from!(
         "%agent_id",
-        tag: "created_contexts",
+        link_type: "created_contexts",
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
@@ -64,7 +64,7 @@ pub fn definition() -> ValidatingEntryType {
       ),
       from!(
         "%agent_id",
-        tag: "all_contexts",
+        link_type: "all_contexts",
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
@@ -74,7 +74,7 @@ pub fn definition() -> ValidatingEntryType {
       ),
       to!(
         "perspective",
-        tag: "perspectives",
+        link_type: "perspectives",
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
@@ -108,7 +108,8 @@ pub fn handle_clone_context(context: Context) -> ZomeApiResult<Address> {
 pub fn handle_get_created_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
   hdk::get_links_result(
     &AGENT_ADDRESS,
-    "created_contexts",
+    Some(String::from("created_contexts")),
+    None,
     GetLinksOptions::default(),
     GetEntryOptions::default(),
   )
@@ -119,8 +120,9 @@ pub fn handle_get_created_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntry
  */
 pub fn handle_get_all_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
   hdk::get_links_result(
-    &AGENT_ADDRESS, // TODO: change for DNA address
-    "all_contexts",
+    &DNA_ADDRESS,
+    Some(String::from("all_contexts")),
+    None,
     GetLinksOptions::default(),
     GetEntryOptions::default(),
   )
@@ -137,7 +139,7 @@ pub fn handle_get_context_info(context_address: Address) -> ZomeApiResult<GetEnt
  * Returns the perspectives of the context
  */
 pub fn handle_get_context_perspectives(context_address: Address) -> ZomeApiResult<GetLinksResult> {
-  hdk::get_links(&context_address, "perspectives")
+  hdk::get_links(&context_address, Some(String::from("perspectives")), None)
 }
 
 /**
@@ -181,12 +183,8 @@ pub fn create_context(context: Context) -> ZomeApiResult<Address> {
   let context_entry = context_entry(context);
   let context_address = hdk::commit_entry(&context_entry)?;
 
-  hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts")?;
-  hdk::link_entries(
-    &AGENT_ADDRESS, // TODO: change for DNA address
-    &context_address,
-    "all_contexts",
-  )?;
+  hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts", "")?;
+  hdk::link_entries(&DNA_ADDRESS, &context_address, "all_contexts", "")?;
 
   Ok(context_address)
 }

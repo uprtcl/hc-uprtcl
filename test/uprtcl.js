@@ -9,12 +9,10 @@ Scenario.setTape(require('tape'));
 const dnaPath = path.join(__dirname, '../dist/hc-uprtcl.dna.json');
 const dna = Config.dna(dnaPath);
 const agentAlice = Config.agent('alice');
-const agentBob = Config.agent('bob');
 
 const instanceAlice = Config.instance(agentAlice, dna);
-const instanceBob = Config.instance(agentBob, dna);
 
-const scenario1 = new Scenario([instanceAlice]);
+const scenario1 = new Scenario([instanceAlice], { debugLog: true });
 
 // Utils variables to facilitate testing code
 
@@ -45,10 +43,9 @@ const SAMPLE_ADDRESS2 = 'QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE';
 
 scenario1.runTape('check root perspective created', async (t, { alice }) => {
   const perspective = await getRootPerspective()(alice);
-  t.equal(
-    perspective.context_address,
-    'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr'
-  );
+  t.equal(perspective, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
+
+  t.equal(perspective.origin.includes('holochain://'), true);
 });
 
 scenario1.runTape('create context', async (t, { alice }) => {
@@ -60,8 +57,8 @@ scenario1.runTape('create context', async (t, { alice }) => {
   });
 
   // Check that context creator is correct
+  t.equal(result, CREATOR_ADDRESS);
   const contextInfo = parseEntryResult(result);
-  t.equal(contextInfo.creator, CREATOR_ADDRESS);
 
   // check that context has a perspective associated
   const { links: perspectiveAddresses } = getContextPerspectives(

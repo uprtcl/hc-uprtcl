@@ -49,7 +49,7 @@ const clonePerspective = function(perspective) {
 
 const getRootPerspective = function() {
   return async caller => {
-    const result = await caller.call('uprtcl', 'get_root_perspective', {});
+    const result = await caller.callSync('uprtcl', 'get_root_perspective', {});
     return parseEntryResult(result);
   };
 };

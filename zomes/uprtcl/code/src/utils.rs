@@ -3,7 +3,7 @@ use hdk::{
   holochain_core_types::{
     cas::content::{Address, Content},
     entry::Entry,
-  },
+  }, DNA_ADDRESS
 };
 
 /**
@@ -27,4 +27,8 @@ pub fn get_entry_content(entry_address: &Address) -> ZomeApiResult<Content> {
     Some(Entry::App(_, entry)) => Ok(entry),
     _ => Err(ZomeApiError::from(String::from("entry does not exist"))),
   }
+}
+
+pub fn get_origin() -> String {
+  String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
 }
