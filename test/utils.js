@@ -2,7 +2,7 @@ const CREATOR_ADDRESS =
   'HcScjwO9ji9633ZYxa6IYubHJHW6ctfoufv5eq4F7ZOxay8wR76FP4xeG9pY3ui';
 
 const parseResponse = function(response) {
-  return response.Ok;
+  return response.Ok ? response.Ok : response;
 };
 
 /** Basic functions which call the zome */
@@ -26,6 +26,22 @@ const cloneContext = function(context) {
     );
 };
 
+const getContextInfo = function(contextAddress) {
+  return caller => {
+    const entry = caller.call('uprtcl', 'get_context_info', {
+      context_address: contextAddress
+    });
+    return parseEntryResult(entry);
+  };
+};
+
+const getRootContextId = function() {
+  return async caller => {
+    const result = await caller.callSync('uprtcl', 'get_root_context_id', {});
+    return result;
+  };
+};
+
 /** Perspective */
 
 const createPerspective = function(contextAddress, name, commitAddress) {
@@ -47,16 +63,9 @@ const clonePerspective = function(perspective) {
     );
 };
 
-const getRootPerspective = function() {
-  return async caller => {
-    const result = await caller.callSync('uprtcl', 'get_root_perspective', {});
-    return parseEntryResult(result);
-  };
-};
-
 const getContextPerspectives = function(contextAddress) {
   return caller =>
-    parseResponse(
+    parseEntriesResult(
       caller.call('uprtcl', 'get_context_perspectives', {
         context_address: contextAddress
       })
@@ -212,22 +221,30 @@ const chain = async function(caller, ...actions) {
   };
 };
 
+const parseEntriesResult = function(entries) {
+  return parseResponse(entries).map(e => parseEntryResult(e));
+};
+
 const parseEntryResult = function(entry) {
-  let parseable = entry.Ok ? entry.Ok : entry;
-  return parseEntry(parseable.result.Single.entry);
+  let parseable = parseResponse(entry);
+  return {
+    ...parseEntry(parseable.result.Single.entry),
+    id: parseable.result.Single.meta.address
+  };
 };
 
 const parseEntry = function(entry) {
-  const parseable = entry.Ok ? entry.Ok : entry;
+  const parseable = parseResponse(entry);
   return JSON.parse(parseable.App[1]);
 };
 
 module.exports = {
+  getContextInfo,
   createContext,
   cloneContext,
   createPerspective,
   clonePerspective,
-  getRootPerspective,
+  getRootContextId,
   getContextPerspectives,
   getPerspectiveInfo,
   getPerspectiveHead,

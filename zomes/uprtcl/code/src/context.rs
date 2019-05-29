@@ -9,7 +9,7 @@ use hdk::{
 };
 use holochain_wasm_utils::api_serialization::{
   get_entry::{GetEntryOptions, GetEntryResult},
-  get_links::{GetLinksOptions, GetLinksResult},
+  get_links::GetLinksOptions,
 };
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
@@ -81,6 +81,16 @@ pub fn definition() -> ValidatingEntryType {
         validation: |_validation_data: hdk::LinkValidationData | {
           Ok(())
         }
+      ),
+      from!(
+        "%agent_id",
+        link_type: "root",
+        validation_package: || {
+          hdk::ValidationPackageDefinition::ChainFull
+        },
+        validation: |_validation_data: hdk::LinkValidationData | {
+          Ok(())
+        }
       )
     ]
   )
@@ -138,25 +148,15 @@ pub fn handle_get_context_info(context_address: Address) -> ZomeApiResult<GetEnt
 /**
  * Returns the perspectives of the context
  */
-pub fn handle_get_context_perspectives(context_address: Address) -> ZomeApiResult<GetLinksResult> {
-  hdk::get_links(&context_address, Some(String::from("perspectives")), None)
-}
-
-/**
- * Returns the commit history from all the perspectives from the given context
- */
-pub fn handle_get_context_history(context_address: Address) -> ZomeApiResult<Vec<GetEntryResult>> {
-  let context_perspectives = handle_get_context_perspectives(context_address)?;
-  Ok(
-    context_perspectives
-      .addresses()
-      .into_iter()
-      .flat_map(|perspective_address| {
-        let perspective_history =
-          crate::perspective::get_perspective_history(perspective_address.to_owned()).unwrap();
-        perspective_history.into_iter()
-      })
-      .collect(),
+pub fn handle_get_context_perspectives(
+  context_address: Address,
+) -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
+  hdk::get_links_result(
+    &context_address,
+    Some(String::from("perspectives")),
+    None,
+    GetLinksOptions::default(),
+    GetEntryOptions::default(),
   )
 }
 
@@ -165,6 +165,32 @@ pub fn handle_get_context_history(context_address: Address) -> ZomeApiResult<Vec
  */
 pub fn handle_get_context_address(context: Context) -> ZomeApiResult<Address> {
   hdk::entry_address(&context_entry(context))
+}
+
+/**
+ * Returns the root perspective of the agent, created at genesis time
+ */
+pub fn handle_get_root_context_id() -> ZomeApiResult<Address> {
+  let links = hdk::get_links(&AGENT_ADDRESS, Some(String::from("root")), None)?;
+
+  // TODO: Comment when genesis block is executed
+  match links.addresses().len() {
+    1 => Ok(links.addresses()[0].clone()),
+    _ => {
+      create_root_context_and_perspective()?;
+      handle_get_root_context_id()
+    }
+  }
+  /*
+    TODO: Uncomment when genesis block is executed
+  match links.addresses().len() {
+    1 => Ok(links.addresses()[0].clone()),
+    _ => Err(ZomeApiError::from(format!(
+      "agent has {} root contexts",
+      links.addresses().len()
+    ))),
+  }
+   */
 }
 
 /** Helper functions */
@@ -184,7 +210,26 @@ pub fn create_context(context: Context) -> ZomeApiResult<Address> {
   let context_address = hdk::commit_entry(&context_entry)?;
 
   hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts", "")?;
-  hdk::link_entries(&DNA_ADDRESS, &context_address, "all_contexts", "")?;
+  hdk::link_entries(&AGENT_ADDRESS, &context_address, "all_contexts", "")?;
 
   Ok(context_address)
+}
+
+/**
+ * Creates the root perspective for the agent
+ * Only to be called at genesis time
+ */
+pub fn create_root_context_and_perspective() -> ZomeApiResult<()> {
+  let context_address = create_context(crate::context::Context::root_context())?;
+
+  crate::perspective::handle_create_perspective(
+    context_address.clone(),
+    String::from("root"),
+    0,
+    None,
+  )?;
+
+  hdk::link_entries(&AGENT_ADDRESS, &context_address, "root", "")?;
+
+  Ok(())
 }

@@ -18,11 +18,6 @@ use hdk::holochain_core_types::{
 use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 
-// see https://developer.holochain.org/api/latest/hdk/ for info on using the hdk library
-
-// This is a sample zome that defines an entry type "MyEntry" that can be committed to the
-// agent's chain via the exposed function create_my_entry
-
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct TextNode {
     text: String,

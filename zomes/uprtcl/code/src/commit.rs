@@ -109,19 +109,6 @@ fn commit_entry(commit: Commit) -> Entry {
 }
 
 /**
- * Creates the initial commit for a context
- */
-pub fn create_initial_commit(content_address: &Address) -> ZomeApiResult<Address> {
-  create_commit(Commit::new(
-    &AGENT_ADDRESS,
-    "Initial commit",
-    0,
-    content_address,
-    &vec![],
-  ))
-}
-
-/**
  * Computes the commit history from the given commit
  */
 pub fn get_commit_history(commit_address: Address) -> ZomeApiResult<Vec<GetEntryResult>> {

@@ -5,26 +5,29 @@ use hdk::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
   },
-  AGENT_ADDRESS, PUBLIC_TOKEN,
+  AGENT_ADDRESS,
 };
-use holochain_wasm_utils::api_serialization::{
-  get_entry::{GetEntryOptions, GetEntryResult},
-  get_links::GetLinksOptions,
-};
-use std::convert::TryFrom;
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Perspective {
   name: String,
   origin: String,
+  timestamp: u128,
   creator: Address,
   context_address: Address,
 }
 
 impl Perspective {
-  fn new(name: &str, creator: &Address, context_address: &Address) -> Perspective {
+  fn new(
+    name: &str,
+    timestamp: &u128,
+    creator: &Address,
+    context_address: &Address,
+  ) -> Perspective {
     Perspective {
       name: name.to_owned(),
+      timestamp: timestamp.to_owned(),
       origin: crate::utils::get_origin(),
       creator: creator.to_owned(),
       context_address: context_address.to_owned(),
@@ -36,6 +39,7 @@ impl Perspective {
 pub struct ClonedPerspective {
   name: String,
   creator: Address,
+  timestamp: u128,
   origin: String,
   context_address: Address,
   head_address: Address,
@@ -45,6 +49,7 @@ impl ClonedPerspective {
   fn to_perspective(&self) -> Perspective {
     Perspective {
       name: self.name.to_owned(),
+      timestamp: self.timestamp.to_owned(),
       origin: self.origin.to_owned(),
       creator: self.creator.to_owned(),
       context_address: self.context_address.to_owned(),
@@ -76,16 +81,6 @@ pub fn definition() -> ValidatingEntryType {
         validation: |_validation_data: hdk::LinkValidationData | {
           Ok(())
         }
-      ),
-      from!(
-        "%agent_id",
-        link_type: "root",
-        validation_package: || {
-          hdk::ValidationPackageDefinition::ChainFull
-        },
-        validation: |_validation_data: hdk::LinkValidationData | {
-          Ok(())
-        }
       )
     ]
   )
@@ -100,15 +95,17 @@ pub fn handle_create_perspective(
   context_address: Address,
   name: String,
   timestamp: u128,
-  head_address: Address,
+  head_address: Option<Address>,
 ) -> ZomeApiResult<Address> {
   let perspective_entry = Entry::App(
     "perspective".into(),
-    Perspective::new(&name, &AGENT_ADDRESS, &context_address).into(),
+    Perspective::new(&name, &timestamp, &AGENT_ADDRESS, &context_address).into(),
   );
   let perspective_address = hdk::commit_entry(&perspective_entry)?;
 
-  hdk::link_entries(&perspective_address, &head_address, "head", "")?;
+  if let Some(head) = head_address {
+    hdk::link_entries(&perspective_address, &head, "head", "")?;
+  }
 
   link_perspective_to_context(&context_address, &perspective_address)?;
 
@@ -180,76 +177,7 @@ pub fn handle_update_perspective_head(
   Ok(())
 }
 
-/**
- * Returns the root perspective of the agent, created at genesis time
- */
-pub fn handle_get_root_perspective() -> ZomeApiResult<GetEntryResult> {
-  let links = hdk::get_links_result(
-    &AGENT_ADDRESS,
-    Some(String::from("root")),
-    None,
-    GetLinksOptions::default(),
-    GetEntryOptions::default(),
-  )?;
-
-  // TODO: Comment when genesis block is executed
-  /*
-  match links.len() {
-    1 => links[0].clone(),
-    _ => {
-      create_root_perspective()?;
-      handle_get_root_perspective()
-    }
-  }
-    TODO: Uncomment when genesis block is executed
-   */
-  match links.len() {
-    1 => links[0].clone(),
-    _ => Err(ZomeApiError::from(format!(
-      "agent has {} root perspectives",
-      links.len()
-    ))),
-  }
-}
-
 /** Helper functions */
-
-#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct AddressResponse {
-  Ok: Address,
-}
-
-/**
- * Creates the root perspective for the agent
- * Only to be called at genesis time
- */
-pub fn create_root_perspective() -> ZomeApiResult<()> {
-  let links: Vec<Address> = Vec::new();
-  let json_response = hdk::call(
-    hdk::THIS_INSTANCE,
-    "documents",
-    Address::from(PUBLIC_TOKEN.to_string()),
-    "create_text_node",
-    json!({
-      "node": {
-        "text": "Hi",
-        "links": links
-      }
-    })
-    .into(),
-  )?;
-  let response = AddressResponse::try_from(json_response)?;
-
-  let context_address = crate::context::create_context(crate::context::Context::root_context())?;
-  let commit_address = crate::commit::create_initial_commit(&response.Ok)?;
-
-  let perspective_address =
-    handle_create_perspective(context_address, String::from("root"), 0, commit_address)?;
-
-  hdk::link_entries(&AGENT_ADDRESS, &perspective_address, "root", "")?;
-
-  Ok(())
-}
 
 /**
  * Returns the commit history for the given perspective

@@ -12,16 +12,17 @@ const agentAlice = Config.agent('alice');
 
 const instanceAlice = Config.instance(agentAlice, dna);
 
-const scenario1 = new Scenario([instanceAlice], { debugLog: true });
+const scenario1 = new Scenario([instanceAlice]);
 
 // Utils variables to facilitate testing code
 
 const {
+  getContextInfo,
   createContext,
   cloneContext,
   createPerspective,
   clonePerspective,
-  getRootPerspective,
+  getRootContextId,
   getPerspectiveInfo,
   getContextPerspectives,
   getPerspectiveHead,
@@ -40,31 +41,33 @@ const {
 
 const SAMPLE_ADDRESS1 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const SAMPLE_ADDRESS2 = 'QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE';
+/* 
+scenario1.runTape('check root context created', async (t, { alice }) => {
+  let contextAddress = await getRootContextId()(alice);
+  t.equal(contextAddress, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
 
-scenario1.runTape('check root perspective created', async (t, { alice }) => {
-  const perspective = await getRootPerspective()(alice);
-  t.equal(perspective, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
+  const perspectives = getContextPerspectives(
+    contextAddress
+  )(alice);
+  t.equal(perspectives.length, 0);
 
-  t.equal(perspective.origin.includes('holochain://'), true);
+  t.equal(perspectives, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
+
+  //t.equal(perspective.origin.includes('holochain://'), true);
 });
-
+ */
 scenario1.runTape('create context', async (t, { alice }) => {
   // Create context
   const contextAddress = await createContext()(alice);
 
-  const result = alice.call('uprtcl', 'get_context_info', {
-    context_address: contextAddress
-  });
+  const result = await getContextInfo(contextAddress)(alice);
 
   // Check that context creator is correct
-  t.equal(result, CREATOR_ADDRESS);
-  const contextInfo = parseEntryResult(result);
+  t.equal(result.creator, CREATOR_ADDRESS);
 
   // check that context has a perspective associated
-  const { links: perspectiveAddresses } = getContextPerspectives(
-    contextAddress
-  )(alice);
-  t.equal(perspectiveAddresses.length, 0);
+  const perspectives = getContextPerspectives(contextAddress)(alice);
+  t.equal(perspectives.length, 0);
 });
 
 scenario1.runTape(
@@ -82,16 +85,13 @@ scenario1.runTape(
     )(alice);
 
     // Check that the context has one perspective named master
-    const { links: perspectiveAddresses } = getContextPerspectives(
+    const perspectives = getContextPerspectives(
       contextAddress
     )(alice);
-    t.equal(perspectiveAddresses.length, 1);
-    const perspective = getPerspectiveInfo(perspectiveAddresses[0].address)(
-      alice
-    );
-    t.equal(perspective.name, 'master');
+    t.equal(perspectives.length, 1);
+    t.equal(perspectives[0].name, 'master');
 
-    const masterAddress = perspectiveAddresses[0].address;
+    const masterAddress = perspectives[0].id;
 
     // Check that the perspective points to the previously defined commit
     const perspectiveHead = getPerspectiveHead(masterAddress)(alice);
@@ -149,11 +149,11 @@ scenario1.runTape(
     t.equal(developPerspective.context_address, contextAddress);
 
     // Check that the context now has the two correct perspectives
-    const { links: perspectiveAddresses } = getContextPerspectives(
+    const perspectives = getContextPerspectives(
       contextAddress
     )(alice);
-    t.equal(perspectiveAddresses[0].address, perspectiveAddress);
-    t.equal(perspectiveAddresses[1].address, developAddress);
+    t.equal(perspectives[0].id, perspectiveAddress);
+    t.equal(perspectives[1].id, developAddress);
 
     // Check that the newly created perspective points to the correct commit
     const perspectiveHead = getPerspectiveHead(developAddress)(alice);
@@ -194,13 +194,15 @@ scenario1.runTape(
     // Clone perspective
     const perspectiveAddress = await clonePerspective({
       context_address: contextAddress,
+      timestamp: 0,
+      origin: 'local',
       head_address: commitAddress,
       name: 'master',
       creator: CREATOR_ADDRESS
     })(alice);
     t.equal(
       perspectiveAddress,
-      'QmZyL65iikUAk9mU6YFLv3ZP5HKGTK8jYTddBNZXd5F5hR'
+      'QmZtLZjF9HoRkLUnhAJE6ZjULZNLP6DZKLE1ZcYcFbTfAe'
     );
   }
 );

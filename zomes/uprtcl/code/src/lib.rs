@@ -6,7 +6,6 @@ extern crate hdk;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate boolinator;
 #[macro_use]
 extern crate serde_json;
 #[macro_use]
@@ -14,12 +13,11 @@ extern crate holochain_core_types_derive;
 
 use hdk::{
   error::ZomeApiResult,
-  holochain_core_types::{cas::content::Address, error::HolochainError, json::JsonString},
+  holochain_core_types::{
+    cas::content::Address, entry::Entry, error::HolochainError, json::JsonString,
+  },
 };
-use holochain_wasm_utils::api_serialization::{
-  get_entry::{GetEntryOptions, GetEntryResult},
-  get_links::GetLinksResult,
-};
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 
 // see https://developer.holochain.org/api/latest/hdk/ for info on using the hdk library
 
@@ -42,10 +40,11 @@ define_zome! {
   ]
 
   genesis: || {
-    {
-      perspective::create_root_perspective()
-        .map_err(|err| format!("create root perspective failed: {}",err))
-    }
+ /*    {
+      perspective::create_root_context_and_perspective()
+        .map_err(|err| format!("create root context failed: {}",err))
+    } */
+    Ok(())
   }
 
   functions: [
@@ -57,6 +56,12 @@ define_zome! {
     }
 
     // Contexts
+    get_root_context_id: {
+      inputs: | |,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: context::handle_get_root_context_id
+    }
+
     create_context: {
       inputs: |timestamp: u128, nonce: u128|,
       outputs: |result: ZomeApiResult<Address>|,
@@ -87,12 +92,6 @@ define_zome! {
       handler: context::handle_get_context_info
     }
 
-    get_context_history: {
-      inputs: |context_address: Address|,
-      outputs: |result: ZomeApiResult<Vec<GetEntryResult>>|,
-      handler: context::handle_get_context_history
-    }
-
     get_context_address: {
       inputs: |context: context::Context|,
       outputs: |result: ZomeApiResult<Address>|,
@@ -101,7 +100,7 @@ define_zome! {
 
     // Perspectives
     create_perspective: {
-      inputs: |context_address: Address, name: String, timestamp: u128, head_address: Address|,
+      inputs: |context_address: Address, name: String, timestamp: u128, head_address: Option<Address>|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: perspective::handle_create_perspective
     }
@@ -112,15 +111,9 @@ define_zome! {
       handler: perspective::handle_clone_perspective
     }
 
-    get_root_perspective: {
-      inputs: | |,
-      outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: perspective::handle_get_root_perspective
-    }
-
     get_context_perspectives: {
       inputs: |context_address: Address|,
-      outputs: |result: ZomeApiResult<GetLinksResult>|,
+      outputs: |result: ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>>|,
       handler: context::handle_get_context_perspectives
     }
 
@@ -165,7 +158,7 @@ define_zome! {
 
   traits: {
     hc_public [
-      get_entry, create_context, get_root_perspective, get_created_contexts, get_all_contexts, get_context_info, get_context_history,
+      get_entry, create_context, get_root_context_id, get_created_contexts, get_all_contexts, get_context_info,
       create_perspective, get_context_perspectives, get_perspective_info, get_perspective_head, update_perspective_head,
       create_commit, get_commit_info, clone_context, clone_perspective, clone_commit
     ]
