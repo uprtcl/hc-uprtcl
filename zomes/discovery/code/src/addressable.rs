@@ -27,7 +27,7 @@ pub fn definition() -> ValidatingEntryType {
           hdk::ValidationPackageDefinition::Entry
       },
 
-      validation: | _validation_data: hdk::EntryValidationData<Entry>| {
+      validation: | _validation_data: hdk::EntryValidationData<Addressable>| {
           Ok(())
       }
   )
@@ -35,7 +35,15 @@ pub fn definition() -> ValidatingEntryType {
 
 /** Helper functions */
 
+pub fn addressable_entry(address: Address) -> Entry {
+  Entry::App("addressable".into(), Addressable::new(address).into())
+}
+
 pub fn create_addressable(address: Address) -> ZomeApiResult<Address> {
-  let entry = Entry::App("addressable".into(), Addressable::new(address).into());
-  hdk::commit_entry(&entry)
+  hdk::commit_entry(&addressable_entry(address))
+}
+
+pub fn addressable_address(address: Address) ->ZomeApiResult<Address> {
+  let addressable_entry = addressable_entry(address);
+  hdk::entry_address(&addressable_entry)
 }

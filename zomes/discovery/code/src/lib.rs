@@ -15,32 +15,37 @@ pub mod addressable;
 pub mod sources;
 
 define_zome! {
-    entries: [
-       addressable::definition(),
-       sources::definition()
-    ]
+  entries: [
+    addressable::definition(),
+    sources::definition()
+  ]
 
-    genesis: || { Ok(()) }
+  genesis: || { Ok(()) }
 
-    functions: [
-        get_known_sources: {
-            inputs: |address: Address|,
-            outputs: |result: ZomeApiResult<Vec<String>>|,
-            handler: sources::handle_get_known_sources
-        }
-        add_known_sources: {
-            inputs: |address: Address, sources: Vec<String>|,
-            outputs: |result: ZomeApiResult<()>|,
-            handler: sources::handle_add_known_sources
-        }
-        remove_known_source: {
-            inputs: |address: Address, source: String|,
-            outputs: |result: ZomeApiResult<()>|,
-            handler: sources::handle_remove_known_sources
-        }
-    ]
-
-    traits: {
-        hc_public [get_known_sources,add_known_sources, remove_known_source]
+  functions: [
+    get_own_source: {
+      inputs: | |,
+      outputs: |result: ZomeApiResult<String>|,
+      handler: sources::handle_get_own_source
     }
+    get_known_sources: {
+      inputs: |address: Address|,
+      outputs: |result: ZomeApiResult<Vec<String>>|,
+      handler: sources::handle_get_known_sources
+    }
+    add_known_sources: {
+      inputs: |address: Address, sources: Vec<String>|,
+      outputs: |result: ZomeApiResult<()>|,
+      handler: sources::handle_add_known_sources
+    }
+    remove_known_source: {
+      inputs: |address: Address, source: String|,
+      outputs: |result: ZomeApiResult<()>|,
+      handler: sources::handle_remove_known_sources
+    }
+  ]
+
+  traits: {
+    hc_public [get_own_source,get_known_sources,add_known_sources, remove_known_source]
+  }
 }

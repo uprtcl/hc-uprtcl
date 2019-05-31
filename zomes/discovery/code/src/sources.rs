@@ -1,8 +1,8 @@
 use hdk::holochain_core_types::{
   cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
-  json::JsonString, validation::EntryValidationData,
+  json::JsonString,
 };
-use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
+use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult, DNA_ADDRESS};
 use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
@@ -46,19 +46,32 @@ pub fn definition() -> ValidatingEntryType {
 }
 
 /** Public handlers */
+pub fn handle_get_own_source() -> ZomeApiResult<String> {
+  Ok(String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned()))
+}
 
 pub fn handle_get_known_sources(address: Address) -> ZomeApiResult<Vec<String>> {
-  let links_result = hdk::get_links_and_load(&address, Some(String::from("known_source")), None)?;
+  match hdk::get_entry(&address)? {
+    Some(_) => Ok(vec![handle_get_own_source()?]),
+    None => {
+      let addressable_address = crate::addressable::addressable_address(address)?;
+      let links_result = hdk::get_links_and_load(
+        &addressable_address,
+        Some(String::from("known_source")),
+        None,
+      )?;
 
-  let mut sources: Vec<String> = Vec::new();
-  for entry_result in links_result.into_iter() {
-    if let Ok(Entry::App(_, entry)) = entry_result {
-      let source = crate::sources::Source::try_from(entry)?;
-      sources.push(source.source);
+      let mut sources: Vec<String> = Vec::new();
+      for entry_result in links_result.into_iter() {
+        if let Ok(Entry::App(_, entry)) = entry_result {
+          let source = crate::sources::Source::try_from(entry)?;
+          sources.push(source.source);
+        }
+      }
+
+      Ok(sources)
     }
   }
-
-  Ok(sources)
 }
 
 pub fn handle_add_known_sources(address: Address, sources: Vec<String>) -> ZomeApiResult<()> {
@@ -76,8 +89,9 @@ pub fn handle_add_known_sources(address: Address, sources: Vec<String>) -> ZomeA
 }
 
 pub fn handle_remove_known_sources(address: Address, source: String) -> ZomeApiResult<()> {
+  let addressable_address = crate::addressable::addressable_address(address)?;
   let source_address = source_address(source)?;
-  hdk::remove_link(&address, &source_address, "known_source", "")?;
+  hdk::remove_link(&addressable_address, &source_address, "known_source", "")?;
 
   Ok(())
 }

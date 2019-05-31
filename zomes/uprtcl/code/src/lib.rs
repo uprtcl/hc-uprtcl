@@ -14,7 +14,7 @@ extern crate holochain_core_types_derive;
 use hdk::{
   error::ZomeApiResult,
   holochain_core_types::{
-    cas::content::Address, entry::Entry, error::HolochainError, json::JsonString,
+    cas::content::Address, error::HolochainError, json::JsonString,
   },
 };
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
