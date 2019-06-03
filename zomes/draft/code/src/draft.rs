@@ -72,24 +72,15 @@ fn remove_link_to_draft(entry_address: &Address) -> ZomeApiResult<()> {
  * stores the given draft in the workspace
  */
 pub fn handle_set_draft(entry_address: Address, draft: Content) -> ZomeApiResult<Address> {
-  hdk::debug("hi1")?;
   remove_link_to_draft(&entry_address)?;
-  hdk::debug("hi2")?;
 
-  let entry = Entry::App("draft".into(), Draft::new(draft).into());
-  let draft_address = hdk::entry_address(&entry)?;
-  if let None = hdk::get_entry(&draft_address)? {
-    hdk::commit_entry(&entry)?;
-  }
+  let draft_entry = Entry::App("draft".into(), Draft::new(draft).into());
+  let draft_address = crate::utils::commit_entry_if_missing(draft_entry)?;
 
-  hdk::debug("hi3")?;
-
-  let workspace = crate::workspace::workspace_entry(entry_address);
-  let workspace_address = hdk::commit_entry(&workspace)?;
-  hdk::debug(format!("hi4 {}", &draft_address))?;
+  let workspace_entry = crate::workspace::workspace_entry(entry_address);
+  let workspace_address = crate::utils::commit_entry_if_missing(workspace_entry)?;
 
   hdk::link_entries(&workspace_address, &draft_address, "draft", "")?;
-  hdk::debug("hi5")?;
 
   Ok(draft_address)
 }
@@ -105,7 +96,7 @@ fn not_found_result() -> Content {
 }
 
 /**
- * Returns the draft for the given entry_address, failing if it didn't exist
+ * Returns the draft for the given entry_address, returning not found result if it didn't exist
  */
 pub fn handle_get_draft(entry_address: Address) -> ZomeApiResult<Content> {
   let workspace_address = crate::workspace::workspace_address(entry_address)?;
