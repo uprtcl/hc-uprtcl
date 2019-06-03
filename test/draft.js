@@ -47,6 +47,18 @@ scenario1.runTape('set draft and get it afterwards', async (t, { alice }) => {
   t.deepEqual(draft.Ok, SAMPLE_DRAFT_CONTENT1);
 });
 
+scenario1.runTape('set draft duplicated is fine', async (t, { alice }) => {
+  let draftAddress = await alice.callSync('draft', 'set_draft', {
+    entry_address: SAMPLE_ADDRESS,
+    draft: JSON.stringify(SAMPLE_DRAFT_CONTENT1)
+  });
+  draftAddress = await alice.callSync('draft', 'set_draft', {
+    entry_address: SAMPLE_ADDRESS,
+    draft: JSON.stringify(SAMPLE_DRAFT_CONTENT1)
+  });
+  t.equal(draftAddress.Ok, 'QmayiqV3JsC6YR8LdTMavqdnTrFMc8Ak2usQtcDQd2XUo4');
+});
+
 scenario2.runTape(
   'drafts from different people do not conflict',
   async (t, { alice, bob }) => {
