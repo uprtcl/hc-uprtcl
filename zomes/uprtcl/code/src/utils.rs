@@ -3,7 +3,10 @@ use hdk::{
   holochain_core_types::{
     cas::content::{Address, Content},
     entry::Entry,
-  }, DNA_ADDRESS
+    signature::Provenance,
+  },
+  holochain_wasm_utils::api_serialization::commit_entry::CommitEntryOptions,
+  DNA_ADDRESS,
 };
 
 /**
@@ -31,4 +34,17 @@ pub fn get_entry_content(entry_address: &Address) -> ZomeApiResult<Content> {
 
 pub fn get_origin() -> String {
   String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
+}
+
+/**
+ * Commits the given entry with the given custom provenance
+ */
+pub fn commit_entry_with_custom_provenance(
+  entry: &Entry,
+  provenance: Provenance,
+) -> ZomeApiResult<Address> {
+  let options = CommitEntryOptions::new(vec![provenance]);
+
+  let entry_result = hdk::commit_entry_result(entry, options)?;
+  Ok(entry_result.address())
 }

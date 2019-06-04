@@ -35,27 +35,30 @@ const {
   buildContext,
   buildPerspective,
   buildCommit,
+  buildProvenance,
   parseEntryResult,
   CREATOR_ADDRESS
 } = require('./utils');
 
 const SAMPLE_ADDRESS1 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const SAMPLE_ADDRESS2 = 'QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE';
+
 /* 
+TODO: Uncomment when root context is created at genesis time
+
 scenario1.runTape('check root context created', async (t, { alice }) => {
   let contextAddress = await getRootContextId()(alice);
   t.equal(contextAddress, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
 
-  const perspectives = getContextPerspectives(
-    contextAddress
-  )(alice);
+  const perspectives = getContextPerspectives(contextAddress)(alice);
   t.equal(perspectives.length, 0);
 
   t.equal(perspectives, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
 
   //t.equal(perspective.origin.includes('holochain://'), true);
 });
- */
+*/
+
 scenario1.runTape('create context', async (t, { alice }) => {
   // Create context
   const contextAddress = await createContext()(alice);
@@ -85,9 +88,7 @@ scenario1.runTape(
     )(alice);
 
     // Check that the context has one perspective named master
-    const perspectives = getContextPerspectives(
-      contextAddress
-    )(alice);
+    const perspectives = getContextPerspectives(contextAddress)(alice);
     t.equal(perspectives.length, 1);
     t.equal(perspectives[0].name, 'master');
 
@@ -149,9 +150,7 @@ scenario1.runTape(
     t.equal(developPerspective.context_address, contextAddress);
 
     // Check that the context now has the two correct perspectives
-    const perspectives = getContextPerspectives(
-      contextAddress
-    )(alice);
+    const perspectives = getContextPerspectives(contextAddress)(alice);
     t.equal(perspectives[0].id, perspectiveAddress);
     t.equal(perspectives[1].id, developAddress);
 
@@ -176,30 +175,72 @@ scenario1.runTape(
   }
 );
 
+scenario1.runTape('clone with invalid keys fails', async (t, { alice }) => {
+  // Clone context
+  let errorMessage = await cloneContext(
+    buildContext(CREATOR_ADDRESS, 0, 0),
+    buildProvenance(CREATOR_ADDRESS, '1UKVugll/HSeZ9pM9Je9z3Y3xFmSSsZ3mprd4ObZnGZ91GEj6LqtjgCZavK19hUcqnJdxU+PBgjBPSYU3v0ZeCA==')
+  )(alice);
+  t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
+
+  // Clone commit
+  errorMessage = await cloneCommit(
+    buildCommit(SAMPLE_ADDRESS1, 0, 'commit messages', []),
+    buildProvenance(CREATOR_ADDRESS, '3PdfvyQ0mn/kVC8B/yD0d1weT8rXs4AmJE7oagmN/xPK4omsXFp4gKLkPo+65cjtOpE3G3FuTnS0jpaYtwCuIBg==')
+  )(alice);
+  t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
+
+  // Clone perspective
+  errorMessage = await clonePerspective(
+    {
+      context_address: SAMPLE_ADDRESS1,
+      timestamp: 0,
+      origin: 'local',
+      name: 'master',
+      creator: CREATOR_ADDRESS
+    },
+    buildProvenance(CREATOR_ADDRESS, 'gGsg87N7yjW4iBP+AMsbIZXas+IEh668UgfgDFZJFh/tT6rTjOHiYhalZoUd6eBzBX8MxxGFYk6z/ZcaXA9sTAw==')
+  )(alice);
+  t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
+});
+
 scenario1.runTape(
   'clone context, perspective and commit',
   async (t, { alice }) => {
     // Clone context
     const contextAddress = await cloneContext(
-      buildContext(CREATOR_ADDRESS, 0, 0)
+      buildContext(CREATOR_ADDRESS, 0, 0),
+      buildProvenance(
+        CREATOR_ADDRESS,
+        '1UKVugll/HSeZ9pM9Je9z3Y3xFmSSZ3mprd4ObZnGZ91GEj6LqtjgCZavK19hUcqnJdxU+PBgjBPSYU3v0ZeCA=='
+      )
     )(alice);
     t.equal(contextAddress, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
 
     // Clone commit
     const commitAddress = await cloneCommit(
-      buildCommit(SAMPLE_ADDRESS1, 0, 'commit messages', [])
+      buildCommit(SAMPLE_ADDRESS1, 0, 'commit messages', []),
+      buildProvenance(
+        CREATOR_ADDRESS,
+        '3PdfvyQ0mn/kVC8B/yD0d1weT8rX4AmJE7oagmN/xPK4omsXFp4gKLkPo+65cjtOpE3G3FuTnS0jpaYtwCuIBg=='
+      )
     )(alice);
     t.equal(commitAddress, 'QmWCtDCnbHXhkccaUQeSfsbrPHTvgascdeASSJ1UbvVu2J');
 
     // Clone perspective
-    const perspectiveAddress = await clonePerspective({
-      context_address: contextAddress,
-      timestamp: 0,
-      origin: 'local',
-      head_address: commitAddress,
-      name: 'master',
-      creator: CREATOR_ADDRESS
-    })(alice);
+    const perspectiveAddress = await clonePerspective(
+      {
+        context_address: contextAddress,
+        timestamp: 0,
+        origin: 'local',
+        name: 'master',
+        creator: CREATOR_ADDRESS
+      },
+      buildProvenance(
+        CREATOR_ADDRESS,
+        'gGsg87N7yjW4iBP+AMbIZXas+IEh668UgfgDFZJFh/tT6rTjOHiYhalZoUd6eBzBX8MxxGFYk6z/ZcaXA9sTAw=='
+      )
+    )(alice);
     t.equal(
       perspectiveAddress,
       'QmZtLZjF9HoRkLUnhAJE6ZjULZNLP6DZKLE1ZcYcFbTfAe'

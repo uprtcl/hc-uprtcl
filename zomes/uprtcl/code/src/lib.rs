@@ -10,10 +10,10 @@ extern crate holochain_core_types_derive;
 use hdk::{
   error::ZomeApiResult,
   holochain_core_types::{
-    cas::content::Address, error::HolochainError, json::JsonString,
+    cas::content::Address, error::HolochainError, json::JsonString, signature::Provenance,
   },
 };
-use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, StatusRequestKind, GetEntryResult};
 
 // see https://developer.holochain.org/api/latest/hdk/ for info on using the hdk library
 
@@ -25,7 +25,15 @@ pub mod utils;
 /** Exposed zome functions */
 
 pub fn handle_get_entry(address: Address) -> ZomeApiResult<GetEntryResult> {
-  hdk::get_entry_result(&address, GetEntryOptions::default())
+  hdk::get_entry_result(
+    &address,
+    GetEntryOptions {
+      status_request: StatusRequestKind::default(),
+      entry: true,
+      headers: true,
+      timeout: Default::default(),
+    },
+  )
 }
 
 define_zome! {
@@ -65,7 +73,7 @@ define_zome! {
     }
 
     clone_context: {
-      inputs: |context: context::Context|,
+      inputs: |context: context::Context, provenance: Provenance|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: context::handle_clone_context
     }
@@ -102,7 +110,7 @@ define_zome! {
     }
 
     clone_perspective: {
-      inputs: |perspective: perspective::ClonedPerspective|,
+      inputs: |perspective: perspective::Perspective, provenance: Provenance|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: perspective::handle_clone_perspective
     }
@@ -139,7 +147,7 @@ define_zome! {
     }
 
     clone_commit: {
-      inputs: |commit: commit::Commit|,
+      inputs: |commit: commit::Commit, provenance: Provenance|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: commit::handle_clone_commit
     }

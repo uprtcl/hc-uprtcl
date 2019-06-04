@@ -3,7 +3,7 @@ use hdk::{
   error::ZomeApiResult,
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
-    json::JsonString,
+    json::JsonString, signature::Provenance,
   },
   AGENT_ADDRESS, DNA_ADDRESS,
 };
@@ -108,8 +108,14 @@ pub fn handle_create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Addr
 /**
  * Clones the given context and returns the new address
  */
-pub fn handle_clone_context(context: Context) -> ZomeApiResult<Address> {
-  create_context(context)
+pub fn handle_clone_context(context: Context, provenance: Provenance) -> ZomeApiResult<Address> {
+  let context_entry = context_entry(context);
+
+  let context_address = crate::utils::commit_entry_with_custom_provenance(&context_entry, provenance)?;
+
+  create_context_links(&context_address)?;
+
+  Ok(context_address)
 }
 
 /**
@@ -209,10 +215,19 @@ pub fn create_context(context: Context) -> ZomeApiResult<Address> {
   let context_entry = context_entry(context);
   let context_address = hdk::commit_entry(&context_entry)?;
 
-  hdk::link_entries(&AGENT_ADDRESS, &context_address, "created_contexts", "")?;
-  hdk::link_entries(&AGENT_ADDRESS, &context_address, "all_contexts", "")?;
+  create_context_links(&context_address)?;
 
   Ok(context_address)
+}
+
+/**
+ * Helper function to create the links of a newly created context 
+ */
+fn create_context_links(context_address: &Address) -> ZomeApiResult<()> {
+  hdk::link_entries(&AGENT_ADDRESS, context_address, "created_contexts", "")?;
+  hdk::link_entries(&AGENT_ADDRESS, context_address, "all_contexts", "")?;
+
+  Ok(())
 }
 
 /**

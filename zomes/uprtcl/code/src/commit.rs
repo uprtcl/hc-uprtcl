@@ -4,6 +4,7 @@ use hdk::{
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString,
+    signature::Provenance
   },
   AGENT_ADDRESS,
 };
@@ -93,8 +94,8 @@ pub fn handle_create_commit(
 /**
  * Clones the given commit in the source chain
  */
-pub fn handle_clone_commit(commit: Commit) -> ZomeApiResult<Address> {
-  create_commit(commit)
+pub fn handle_clone_commit(commit: Commit, provenance: Provenance) -> ZomeApiResult<Address> {
+  crate::utils::commit_entry_with_custom_provenance(&commit_entry(commit), provenance)
 }
 
 /** Helper functions */

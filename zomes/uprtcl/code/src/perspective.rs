@@ -2,8 +2,12 @@ use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::{
-    cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
+    cas::content::Address,
+    dna::entry_types::Sharing,
+    entry::Entry,
+    error::HolochainError,
     json::JsonString,
+    signature::Provenance,
   },
   AGENT_ADDRESS,
 };
@@ -31,28 +35,6 @@ impl Perspective {
       origin: crate::utils::get_origin(),
       creator: creator.to_owned(),
       context_address: context_address.to_owned(),
-    }
-  }
-}
-
-#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct ClonedPerspective {
-  name: String,
-  creator: Address,
-  timestamp: u128,
-  origin: String,
-  context_address: Address,
-  head_address: Address,
-}
-
-impl ClonedPerspective {
-  fn to_perspective(&self) -> Perspective {
-    Perspective {
-      name: self.name.to_owned(),
-      timestamp: self.timestamp.to_owned(),
-      origin: self.origin.to_owned(),
-      creator: self.creator.to_owned(),
-      context_address: self.context_address.to_owned(),
     }
   }
 }
@@ -107,7 +89,7 @@ pub fn handle_create_perspective(
     hdk::link_entries(&perspective_address, &head, "head", "")?;
   }
 
-  link_perspective_to_context(&context_address, &perspective_address)?;
+  hdk::link_entries(&context_address, &perspective_address, "perspectives", "")?;
 
   Ok(perspective_address)
 }
@@ -115,21 +97,14 @@ pub fn handle_create_perspective(
 /**
  * Clones the given perspective, linking it with the appropiate context and commit
  */
-pub fn handle_clone_perspective(cloned_perspective: ClonedPerspective) -> ZomeApiResult<Address> {
+pub fn handle_clone_perspective(cloned_perspective: Perspective, provenance: Provenance) -> ZomeApiResult<Address> {
   let perspective_entry = Entry::App(
     "perspective".into(),
-    cloned_perspective.to_perspective().into(),
+    cloned_perspective.clone().into(),
   );
-  let perspective_address = hdk::commit_entry(&perspective_entry)?;
+  let perspective_address = crate::utils::commit_entry_with_custom_provenance(&perspective_entry, provenance)?;
 
-  hdk::link_entries(
-    &perspective_address,
-    &cloned_perspective.head_address,
-    "head",
-    "",
-  )?;
-
-  link_perspective_to_context(&cloned_perspective.context_address, &perspective_address)?;
+  hdk::link_entries(&cloned_perspective.context_address, &perspective_address, "perspectives", "")?;
 
   Ok(perspective_address)
 }
@@ -175,16 +150,4 @@ pub fn handle_update_perspective_head(
   hdk::link_entries(&perspective_address, &head_address, "head", "")?;
 
   Ok(())
-}
-
-/** Helper functions */
-
-/**
- * Links the given perspective to the given context
- */
-pub fn link_perspective_to_context(
-  context_address: &Address,
-  perspective_address: &Address,
-) -> ZomeApiResult<Address> {
-  hdk::link_entries(context_address, perspective_address, "perspectives", "")
 }

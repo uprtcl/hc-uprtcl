@@ -19,10 +19,10 @@ const createContext = function() {
     );
 };
 
-const cloneContext = function(context) {
+const cloneContext = function(context, provenance) {
   return async caller =>
     parseResponse(
-      await caller.callSync('uprtcl', 'clone_context', { context })
+      await caller.callSync('uprtcl', 'clone_context', { context, provenance })
     );
 };
 
@@ -38,7 +38,7 @@ const getContextInfo = function(contextAddress) {
 const getRootContextId = function() {
   return async caller => {
     const result = await caller.callSync('uprtcl', 'get_root_context_id', {});
-    return result;
+    return parseResponse(result);
   };
 };
 
@@ -56,10 +56,13 @@ const createPerspective = function(contextAddress, name, commitAddress) {
     );
 };
 
-const clonePerspective = function(perspective) {
+const clonePerspective = function(perspective, provenance) {
   return async caller =>
     parseResponse(
-      await caller.callSync('uprtcl', 'clone_perspective', { perspective })
+      await caller.callSync('uprtcl', 'clone_perspective', {
+        perspective,
+        provenance
+      })
     );
 };
 
@@ -112,9 +115,11 @@ const createCommit = function(message, parentCommitsAddresses, contentAddress) {
     );
 };
 
-const cloneCommit = function(commit) {
+const cloneCommit = function(commit, provenance) {
   return async caller =>
-    parseResponse(await caller.callSync('uprtcl', 'clone_commit', { commit }));
+    parseResponse(
+      await caller.callSync('uprtcl', 'clone_commit', { commit, provenance })
+    );
 };
 
 const getCommitInfo = function(commitAddress) {
@@ -205,6 +210,10 @@ const buildCommit = function(
   };
 };
 
+const buildProvenance = function(address, signature) {
+  return [address, signature];
+};
+
 const chain = async function(caller, ...actions) {
   var last = {};
   var all = [];
@@ -257,6 +266,7 @@ module.exports = {
   buildContext,
   buildPerspective,
   buildCommit,
+  buildProvenance,
   chain,
   parseEntryResult,
   parseEntry,
