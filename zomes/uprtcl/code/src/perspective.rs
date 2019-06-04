@@ -180,14 +180,6 @@ pub fn handle_update_perspective_head(
 /** Helper functions */
 
 /**
- * Returns the commit history for the given perspective
- */
-pub fn get_perspective_history(perspective_address: Address) -> ZomeApiResult<Vec<GetEntryResult>> {
-  let perspective_head = handle_get_perspective_head(perspective_address)?;
-  crate::commit::get_commit_history(perspective_head)
-}
-
-/**
  * Links the given perspective to the given context
  */
 pub fn link_perspective_to_context(

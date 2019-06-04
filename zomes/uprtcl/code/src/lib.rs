@@ -3,11 +3,7 @@
 #[macro_use]
 extern crate hdk;
 #[macro_use]
-extern crate serde;
-#[macro_use]
 extern crate serde_derive;
-#[macro_use]
-extern crate serde_json;
 #[macro_use]
 extern crate holochain_core_types_derive;
 
