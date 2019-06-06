@@ -27,7 +27,7 @@ impl Draft {
 pub fn definition() -> ValidatingEntryType {
   entry!(
     name: "draft",
-    description: "this is a same entry defintion",
+    description: "generic draft",
     sharing: Sharing::Public,
     validation_package: || {
       hdk::ValidationPackageDefinition::Entry
@@ -71,18 +71,20 @@ fn remove_link_to_draft(entry_address: &Address) -> ZomeApiResult<()> {
  * creates or uses the user's workspace for given entry address and
  * stores the given draft in the workspace
  */
-pub fn handle_set_draft(entry_address: Address, draft: Content) -> ZomeApiResult<Address> {
+pub fn handle_set_draft(entry_address: Address, draft: Option<Content>) -> ZomeApiResult<()> {
   remove_link_to_draft(&entry_address)?;
 
-  let draft_entry = Entry::App("draft".into(), Draft::new(draft).into());
-  let draft_address = crate::utils::commit_entry_if_missing(draft_entry)?;
+  if let Some(draft_content) = draft {
+    let draft_entry = Entry::App("draft".into(), Draft::new(draft_content).into());
+    let draft_address = crate::utils::commit_entry_if_missing(draft_entry)?;
 
-  let workspace_entry = crate::workspace::workspace_entry(entry_address);
-  let workspace_address = crate::utils::commit_entry_if_missing(workspace_entry)?;
+    let workspace_entry = crate::workspace::workspace_entry(entry_address);
+    let workspace_address = crate::utils::commit_entry_if_missing(workspace_entry)?;
 
-  hdk::link_entries(&workspace_address, &draft_address, "draft", "")?;
+    hdk::link_entries(&workspace_address, &draft_address, "draft", "")?;
+  }
 
-  Ok(draft_address)
+  Ok(())
 }
 
 /**

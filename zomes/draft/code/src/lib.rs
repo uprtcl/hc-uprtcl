@@ -32,8 +32,8 @@ define_zome! {
 
     functions: [
         set_draft: {
-            inputs: |entry_address: Address, draft: Content|,
-            outputs: |result: ZomeApiResult<Address>|,
+            inputs: |entry_address: Address, draft: Option<Content>|,
+            outputs: |result: ZomeApiResult<()>|,
             handler: draft::handle_set_draft
         }
         get_draft: {
