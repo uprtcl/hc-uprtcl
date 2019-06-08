@@ -9,12 +9,8 @@ extern crate serde_json;
 extern crate holochain_core_types_derive;
 
 use hdk::{
-    entry_definition::ValidatingEntryType,
     error::ZomeApiResult,
-    holochain_core_types::{
-        cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
-        json::JsonString, validation::EntryValidationData,
-    },
+    holochain_core_types::{cas::content::Address, error::HolochainError, json::JsonString},
 };
 use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
 
@@ -49,19 +45,20 @@ define_zome! {
             outputs: |result: ZomeApiResult<Address>|,
             handler: proxy::handle_link_from_proxy
         }
-        get_links_from_proxy: {
-            inputs: |proxy_address: Address, link_type: Option<String>, tag: Option<String>|,
-            outputs: |result: ZomeApiResult<Vec<Address>>|,
-            handler: proxy::handle_get_links_from_proxy
-        }
         get_links_to_proxy: {
             inputs: |base_address: Address, link_type: Option<String>, tag: Option<String>|,
             outputs: |result: ZomeApiResult<Vec<Address>>|,
             handler: proxy::handle_get_links_to_proxy
         }
+        get_links_from_proxy: {
+            inputs: |proxy_address: Address, link_type: Option<String>, tag: Option<String>|,
+            outputs: |result: ZomeApiResult<Vec<Address>>|,
+            handler: proxy::handle_get_links_from_proxy
+        }
     ]
 
     traits: {
-        hc_public [set_entry_proxy,get_proxied_entry,link_to_proxy]
+        hc_public [set_entry_proxy,get_proxied_entry,
+            link_to_proxy,link_from_proxy,get_links_from_proxy,get_links_to_proxy]
     }
 }

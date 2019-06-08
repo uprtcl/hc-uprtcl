@@ -1,11 +1,6 @@
 use hdk::{
-  error::{ZomeApiError, ZomeApiResult},
-  holochain_core_types::{
-    cas::content::{Address, Content},
-    entry::Entry,
-    signature::Provenance,
-  },
-  holochain_wasm_utils::api_serialization::commit_entry::CommitEntryOptions,
+  error::ZomeApiResult,
+  holochain_core_types::{cas::content::Address, entry::Entry},
 };
 
 /**

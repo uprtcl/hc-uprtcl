@@ -93,11 +93,11 @@ pub fn handle_create_perspective(
   );
   let perspective_address = hdk::commit_entry(&perspective_entry)?;
 
+  link_context_to_perspective(context_address, perspective_address.clone())?;
+
   if let Some(head) = head_address {
     link_perspective_to_commit(perspective_address.clone(), head)?;
   }
-
-  link_context_to_perspective(context_address, perspective_address.clone())?;
 
   Ok(perspective_address)
 }
@@ -169,7 +169,7 @@ pub fn handle_update_perspective_head(
     )?;
   }
 
-  link_perspective_to_commit(perspective_address, head_address)?;
+  link_perspective_to_commit(perspective_address.clone(), head_address)?;
 
   Ok(())
 }
@@ -183,7 +183,7 @@ pub fn link_perspective_to_commit(
   // Head commit may not exist on this hApp, we have to set its proxy address and use that entry to link
   crate::utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
 
-  hdk::call(
+  let response = hdk::call(
     hdk::THIS_INSTANCE,
     "proxy",
     Address::from(PUBLIC_TOKEN.to_string()),
@@ -191,7 +191,7 @@ pub fn link_perspective_to_commit(
     json!({ "base_address": perspective_address, "proxy_address": commit_address, "link_type": "head", "tag": ""}).into(),
   )?;
 
-  Ok(())
+  crate::utils::response_ok_or_error(response)
 }
 
 pub fn link_context_to_perspective(
@@ -201,7 +201,7 @@ pub fn link_context_to_perspective(
   // Context may not exist on this hApp, we have to set its proxy address and use that entry to link
   crate::utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
 
-  hdk::call(
+  let response = hdk::call(
     hdk::THIS_INSTANCE,
     "proxy",
     Address::from(PUBLIC_TOKEN.to_string()),
@@ -209,5 +209,5 @@ pub fn link_context_to_perspective(
     json!({"proxy_address": context_address, "to_address": perspective_address, "link_type": "perspectives", "tag": ""}).into(),
   )?;
 
-  Ok(())
+  crate::utils::response_ok_or_error(response)
 }

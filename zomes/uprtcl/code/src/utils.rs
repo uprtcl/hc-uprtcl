@@ -56,18 +56,19 @@ pub fn commit_entry_with_custom_provenance(
 pub fn set_entry_proxy(
   proxy_address: Address,
   entry_address: Option<Address>,
-) -> ZomeApiResult<Address> {
-  let args = json!({"proxy_address": proxy_address, "entry_address": entry_address});
-
+) -> ZomeApiResult<()> {
   let response = hdk::call(
     hdk::THIS_INSTANCE,
     "proxy",
     Address::from(PUBLIC_TOKEN.to_string()),
     "set_entry_proxy",
-    args.into(),
+    json!({"proxy_address": proxy_address, "entry_address": entry_address}).into(),
   )?;
 
-  let result: ZomeApiResult<Address> = response.try_into()?;
+  response_ok_or_error(response)
+}
 
-  result
+pub fn response_ok_or_error(response: JsonString) -> ZomeApiResult<()> {
+  let _ok: ZomeApiResult<Address> = response.try_into()?;
+  Ok(())
 }

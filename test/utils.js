@@ -67,12 +67,16 @@ const clonePerspective = function(perspective, provenance) {
 };
 
 const getContextPerspectives = function(contextAddress) {
-  return caller =>
-    parseEntriesResult(
-      caller.call('uprtcl', 'get_context_perspectives', {
+  return async caller => {
+    const perspectives = await caller.callSync(
+      'uprtcl',
+      'get_context_perspectives',
+      {
         context_address: contextAddress
-      })
+      }
     );
+    return parseEntriesResult(perspectives);
+  };
 };
 
 const getPerspectiveInfo = function(perspectiveAddress) {
@@ -85,12 +89,12 @@ const getPerspectiveInfo = function(perspectiveAddress) {
 };
 
 const getPerspectiveHead = function(perspectiveAddress) {
-  return caller =>
-    parseResponse(
-      caller.call('uprtcl', 'get_perspective_head', {
-        perspective_address: perspectiveAddress
-      })
-    );
+  return async caller => {
+    const head = await caller.callSync('uprtcl', 'get_perspective_head', {
+      perspective_address: perspectiveAddress
+    });
+    return parseResponse(head);
+  };
 };
 
 const updatePerspectiveHead = function(perspectiveAddress, headAddress) {

@@ -50,11 +50,11 @@ scenario1.runTape('check root context created', async (t, { alice }) => {
   let contextAddress = await getRootContextId()(alice);
   t.equal(contextAddress, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
 
-  const perspectives = getContextPerspectives(contextAddress)(alice);
+  const perspectives = await getContextPerspectives(contextAddress)(alice);
   t.equal(perspectives.length, 0);
 
   t.equal(perspectives, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
-
+  
   //t.equal(perspective.origin.includes('holochain://'), true);
 });
 */
@@ -62,15 +62,14 @@ scenario1.runTape('check root context created', async (t, { alice }) => {
 scenario1.runTape('create context', async (t, { alice }) => {
   // Create context
   const contextAddress = await createContext()(alice);
-  t.equal(contextAddress, CREATOR_ADDRESS);
-
+  
   const result = await getContextInfo(contextAddress)(alice);
-
+  
   // Check that context creator is correct
   t.equal(result.creator, CREATOR_ADDRESS);
-
+  
   // check that context has a perspective associated
-  const perspectives = getContextPerspectives(contextAddress)(alice);
+  const perspectives = await getContextPerspectives(contextAddress)(alice);
   t.equal(perspectives.length, 0);
 });
 
@@ -89,14 +88,14 @@ scenario1.runTape(
     )(alice);
 
     // Check that the context has one perspective named master
-    const perspectives = getContextPerspectives(contextAddress)(alice);
+    const perspectives = await getContextPerspectives(contextAddress)(alice);
     t.equal(perspectives.length, 1);
     t.equal(perspectives[0].name, 'master');
 
     const masterAddress = perspectives[0].id;
 
     // Check that the perspective points to the previously defined commit
-    const perspectiveHead = getPerspectiveHead(masterAddress)(alice);
+    const perspectiveHead = await getPerspectiveHead(masterAddress)(alice);
     // ... and check the commit's structure
     const commitInfo = getCommitInfo(perspectiveHead)(alice);
     t.equal(commitInfo.parent_commits_addresses.length, 0);
@@ -115,7 +114,9 @@ scenario1.runTape(
     await updatePerspectiveHead(masterAddress, secondCommitAddress)(alice);
 
     // Check that now master points to the new commit
-    const perspectiveHead2 = getPerspectiveHead(masterAddress)(alice);
+    // Double call to avoid network synchronization issues
+    let perspectiveHead2 = await getPerspectiveHead(masterAddress)(alice);
+    perspectiveHead2 = await getPerspectiveHead(masterAddress)(alice);
     t.equal(perspectiveHead2, secondCommitAddress);
 
     // Check that parent commit of the second commit is the first commit
@@ -151,12 +152,12 @@ scenario1.runTape(
     t.equal(developPerspective.context_address, contextAddress);
 
     // Check that the context now has the two correct perspectives
-    const perspectives = getContextPerspectives(contextAddress)(alice);
+    const perspectives = await getContextPerspectives(contextAddress)(alice);
     t.equal(perspectives[0].id, perspectiveAddress);
     t.equal(perspectives[1].id, developAddress);
 
     // Check that the newly created perspective points to the correct commit
-    const perspectiveHead = getPerspectiveHead(developAddress)(alice);
+    const perspectiveHead = await getPerspectiveHead(developAddress)(alice);
     t.equal(perspectiveHead, commitAddress);
 
     // Create second commit in the develop perspective
@@ -167,11 +168,11 @@ scenario1.runTape(
     )(alice);
 
     // Check that master still points to the first commit
-    const perspectiveHead2 = getPerspectiveHead(perspectiveAddress)(alice);
+    const perspectiveHead2 = await getPerspectiveHead(perspectiveAddress)(alice);
     t.equal(perspectiveHead2, commitAddress);
 
     // Check that develop now points to the newly created commit
-    const perspectiveHead3 = getPerspectiveHead(developAddress)(alice);
+    const perspectiveHead3 = await getPerspectiveHead(developAddress)(alice);
     t.equal(perspectiveHead3, secondCommitAddress);
   }
 );
@@ -180,14 +181,20 @@ scenario1.runTape('clone with invalid keys fails', async (t, { alice }) => {
   // Clone context
   let errorMessage = await cloneContext(
     buildContext(CREATOR_ADDRESS, 0, 0),
-    buildProvenance(CREATOR_ADDRESS, '1UKVugll/HSeZ9pM9Je9z3Y3xFmSSsZ3mprd4ObZnGZ91GEj6LqtjgCZavK19hUcqnJdxU+PBgjBPSYU3v0ZeCA==')
+    buildProvenance(
+      CREATOR_ADDRESS,
+      '1UKVugll/HSeZ9pM9Je9z3Y3xFmSSsZ3mprd4ObZnGZ91GEj6LqtjgCZavK19hUcqnJdxU+PBgjBPSYU3v0ZeCA=='
+    )
   )(alice);
   t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
 
   // Clone commit
   errorMessage = await cloneCommit(
     buildCommit(SAMPLE_ADDRESS1, 0, 'commit messages', []),
-    buildProvenance(CREATOR_ADDRESS, '3PdfvyQ0mn/kVC8B/yD0d1weT8rXs4AmJE7oagmN/xPK4omsXFp4gKLkPo+65cjtOpE3G3FuTnS0jpaYtwCuIBg==')
+    buildProvenance(
+      CREATOR_ADDRESS,
+      '3PdfvyQ0mn/kVC8B/yD0d1weT8rXs4AmJE7oagmN/xPK4omsXFp4gKLkPo+65cjtOpE3G3FuTnS0jpaYtwCuIBg=='
+    )
   )(alice);
   t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
 
@@ -200,7 +207,10 @@ scenario1.runTape('clone with invalid keys fails', async (t, { alice }) => {
       name: 'master',
       creator: CREATOR_ADDRESS
     },
-    buildProvenance(CREATOR_ADDRESS, 'gGsg87N7yjW4iBP+AMsbIZXas+IEh668UgfgDFZJFh/tT6rTjOHiYhalZoUd6eBzBX8MxxGFYk6z/ZcaXA9sTAw==')
+    buildProvenance(
+      CREATOR_ADDRESS,
+      'gGsg87N7yjW4iBP+AMsbIZXas+IEh668UgfgDFZJFh/tT6rTjOHiYhalZoUd6eBzBX8MxxGFYk6z/ZcaXA9sTAw=='
+    )
   )(alice);
   t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
 });
@@ -248,3 +258,4 @@ scenario1.runTape(
     );
   }
 );
+ 

@@ -182,11 +182,10 @@ pub fn handle_get_links_from_proxy(
  * Get all links from the given internal proxy address plus all the links from the external proxies associated with it
  */
 fn get_links_from_internal_proxy(
-  internal_proxy_address: Address,
+  internal_proxy_entry_address: Address,
   link_type: Option<String>,
   tag: Option<String>,
 ) -> ZomeApiResult<Vec<Address>> {
-  let internal_proxy_entry_address = hdk::entry_address(&Proxy::entry(internal_proxy_address))?;
   let internal_proxy_links = hdk::get_links(
     &internal_proxy_entry_address,
     link_type.clone(),
@@ -211,7 +210,7 @@ fn get_links_from_internal_proxy(
 }
 
 /**
- * Returns all the links from the given base address to proxies, converting the proxy entry addresses in proxy addresses
+ * Returns all the links from the given base address to proxies addresses
  */
 pub fn handle_get_links_to_proxy(
   base_address: Address,
@@ -222,7 +221,7 @@ pub fn handle_get_links_to_proxy(
 
   let mut proxy_addresses: Vec<Address> = Vec::new();
 
-  for proxy_address in proxy_entries_addresses.addresses() {
+  for proxy_address in proxy_entries_addresses.addresses().into_iter() {
     let proxy_entry: Proxy = hdk::utils::get_as_type(proxy_address)?;
     proxy_addresses.push(proxy_entry.proxy_address);
   }

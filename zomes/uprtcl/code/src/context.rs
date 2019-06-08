@@ -6,12 +6,9 @@ use hdk::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString, signature::Provenance,
   },
-  AGENT_ADDRESS, DNA_ADDRESS,
+  AGENT_ADDRESS,
 };
-use holochain_wasm_utils::api_serialization::{
-  get_entry::{GetEntryOptions, GetEntryResult},
-  get_links::GetLinksOptions,
-};
+use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 use std::convert::TryInto;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
@@ -42,7 +39,7 @@ impl Context {
 pub fn definition() -> ValidatingEntryType {
   entry!(
     name: "context",
-    description: "a context containing different perspectives",
+    description: "a context associated with different perspectives",
     sharing: Sharing::Public,
 
     validation_package: || {
@@ -115,11 +112,14 @@ pub fn handle_get_context_perspectives(
 
   let perspectives_result: ZomeApiResult<Vec<Address>> = response.try_into()?;
   let perspectives_addresses = perspectives_result?;
-  
+
   let mut perspectives: Vec<ZomeApiResult<GetEntryResult>> = Vec::new();
 
   for perspective_address in perspectives_addresses {
-    perspectives.push(hdk::get_entry_result(&perspective_address, GetEntryOptions::default()));
+    perspectives.push(hdk::get_entry_result(
+      &perspective_address,
+      GetEntryOptions::default(),
+    ));
   }
 
   Ok(perspectives)

@@ -41,7 +41,6 @@ impl Folder {
 }
 
 pub fn handle_create_folder(folder: Folder) -> ZomeApiResult<Address> {
-    hdk::debug("holahii3")?;
     let entry = Entry::App("folder".into(), folder.into());
     let address = hdk::commit_entry(&entry)?;
 
