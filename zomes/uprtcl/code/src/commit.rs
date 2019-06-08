@@ -3,8 +3,7 @@ use hdk::{
   error::ZomeApiResult,
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
-    json::JsonString,
-    signature::Provenance
+    json::JsonString, signature::Provenance,
   },
   AGENT_ADDRESS,
 };
@@ -82,27 +81,41 @@ pub fn handle_create_commit(
   parent_commits_addresses: Vec<Address>,
   content_address: Address,
 ) -> ZomeApiResult<Address> {
-  create_commit(Commit::new(
+  let commit = Commit::new(
     &AGENT_ADDRESS,
     &message,
     timestamp,
     &content_address,
     &parent_commits_addresses,
-  ))
+  );
+
+  let commit_address = hdk::commit_entry(&commit_entry(commit))?;
+  crate::utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
+
+  Ok(commit_address)
 }
 
 /**
  * Clones the given commit in the source chain
  */
-pub fn handle_clone_commit(commit: Commit, provenance: Provenance) -> ZomeApiResult<Address> {
-  crate::utils::commit_entry_with_custom_provenance(&commit_entry(commit), provenance)
+pub fn handle_clone_commit(
+  address: Option<Address>,
+  commit: Commit,
+  provenance: Provenance,
+) -> ZomeApiResult<Address> {
+  let commit_address =
+    crate::utils::commit_entry_with_custom_provenance(&commit_entry(commit), provenance)?;
+
+  crate::utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
+
+  if let Some(proxy_address) = address {
+    crate::utils::set_entry_proxy(proxy_address, Some(commit_address.clone()))?;
+  }
+
+  Ok(commit_address)
 }
 
 /** Helper functions */
-
-pub fn create_commit(commit: Commit) -> ZomeApiResult<Address> {
-  hdk::commit_entry(&commit_entry(commit))
-}
 
 fn commit_entry(commit: Commit) -> Entry {
   Entry::App("commit".into(), commit.into())

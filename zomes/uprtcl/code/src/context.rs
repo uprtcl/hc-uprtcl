@@ -1,3 +1,4 @@
+use hdk::PUBLIC_TOKEN;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::ZomeApiResult,
@@ -11,6 +12,7 @@ use holochain_wasm_utils::api_serialization::{
   get_entry::{GetEntryOptions, GetEntryResult},
   get_links::GetLinksOptions,
 };
+use std::convert::TryInto;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Context {
@@ -54,36 +56,6 @@ pub fn definition() -> ValidatingEntryType {
     links: [
       from!(
         "%agent_id",
-        link_type: "created_contexts",
-        validation_package: || {
-          hdk::ValidationPackageDefinition::ChainFull
-        },
-        validation: |_validation_data: hdk::LinkValidationData | {
-          Ok(())
-        }
-      ),
-      from!(
-        "%agent_id",
-        link_type: "all_contexts",
-        validation_package: || {
-          hdk::ValidationPackageDefinition::ChainFull
-        },
-        validation: | _validation_data: hdk::LinkValidationData | {
-          Ok(())
-        }
-      ),
-      to!(
-        "perspective",
-        link_type: "perspectives",
-        validation_package: || {
-          hdk::ValidationPackageDefinition::ChainFull
-        },
-        validation: |_validation_data: hdk::LinkValidationData | {
-          Ok(())
-        }
-      ),
-      from!(
-        "%agent_id",
         link_type: "root",
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
@@ -102,7 +74,10 @@ pub fn definition() -> ValidatingEntryType {
  * Create a new context with the given name, passing the author and the current time
  */
 pub fn handle_create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Address> {
-  create_context(Context::new(timestamp, nonce))
+  let context_address = create_context(Context::new(timestamp, nonce))?;
+  crate::utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
+
+  Ok(context_address)
 }
 
 /**
@@ -110,38 +85,11 @@ pub fn handle_create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Addr
  */
 pub fn handle_clone_context(context: Context, provenance: Provenance) -> ZomeApiResult<Address> {
   let context_entry = context_entry(context);
-
-  let context_address = crate::utils::commit_entry_with_custom_provenance(&context_entry, provenance)?;
-
-  create_context_links(&context_address)?;
+  let context_address =
+    crate::utils::commit_entry_with_custom_provenance(&context_entry, provenance)?;
+  crate::utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
 
   Ok(context_address)
-}
-
-/**
- * Returns a list with all the contexts created by the agent
- */
-pub fn handle_get_created_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
-  hdk::get_links_result(
-    &AGENT_ADDRESS,
-    Some(String::from("created_contexts")),
-    None,
-    GetLinksOptions::default(),
-    GetEntryOptions::default(),
-  )
-}
-
-/**
- * Returns a list with all the contexts created in the app
- */
-pub fn handle_get_all_contexts() -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
-  hdk::get_links_result(
-    &DNA_ADDRESS,
-    Some(String::from("all_contexts")),
-    None,
-    GetLinksOptions::default(),
-    GetEntryOptions::default(),
-  )
 }
 
 /**
@@ -157,13 +105,24 @@ pub fn handle_get_context_info(context_address: Address) -> ZomeApiResult<GetEnt
 pub fn handle_get_context_perspectives(
   context_address: Address,
 ) -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
-  hdk::get_links_result(
-    &context_address,
-    Some(String::from("perspectives")),
-    None,
-    GetLinksOptions::default(),
-    GetEntryOptions::default(),
-  )
+  let response = hdk::call(
+    hdk::THIS_INSTANCE,
+    "proxy",
+    Address::from(PUBLIC_TOKEN.to_string()),
+    "get_links_from_proxy",
+    json!({ "proxy_address": context_address, "link_type": "perspectives", "tag": "" }).into(),
+  )?;
+
+  let perspectives_result: ZomeApiResult<Vec<Address>> = response.try_into()?;
+  let perspectives_addresses = perspectives_result?;
+  
+  let mut perspectives: Vec<ZomeApiResult<GetEntryResult>> = Vec::new();
+
+  for perspective_address in perspectives_addresses {
+    perspectives.push(hdk::get_entry_result(&perspective_address, GetEntryOptions::default()));
+  }
+
+  Ok(perspectives)
 }
 
 /**
@@ -215,19 +174,7 @@ pub fn create_context(context: Context) -> ZomeApiResult<Address> {
   let context_entry = context_entry(context);
   let context_address = hdk::commit_entry(&context_entry)?;
 
-  create_context_links(&context_address)?;
-
   Ok(context_address)
-}
-
-/**
- * Helper function to create the links of a newly created context 
- */
-fn create_context_links(context_address: &Address) -> ZomeApiResult<()> {
-  hdk::link_entries(&AGENT_ADDRESS, context_address, "created_contexts", "")?;
-  hdk::link_entries(&AGENT_ADDRESS, context_address, "all_contexts", "")?;
-
-  Ok(())
 }
 
 /**

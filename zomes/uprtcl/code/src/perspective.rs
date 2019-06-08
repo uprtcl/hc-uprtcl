@@ -1,17 +1,15 @@
+use hdk::PUBLIC_TOKEN;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::{
-    cas::content::Address,
-    dna::entry_types::Sharing,
-    entry::Entry,
-    error::HolochainError,
-    json::JsonString,
-    signature::Provenance,
+    cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
+    json::JsonString, signature::Provenance,
   },
   AGENT_ADDRESS,
 };
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
+use std::convert::TryInto;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Perspective {
@@ -42,7 +40,7 @@ impl Perspective {
 pub fn definition() -> ValidatingEntryType {
   entry!(
     name: "perspective",
-    description: "perspective pointing to a commit",
+    description: "perspective pointing to a proxied commit",
     sharing: Sharing::Public,
 
     validation_package: || {
@@ -55,8 +53,18 @@ pub fn definition() -> ValidatingEntryType {
 
     links: [
       to!(
-        "commit",
+        "proxy",
         link_type: "head",
+        validation_package: || {
+          hdk::ValidationPackageDefinition::ChainFull
+        },
+        validation: |_validation_data: hdk::LinkValidationData | {
+          Ok(())
+        }
+      ),
+      from!(
+        "proxy",
+        link_type: "perspectives",
         validation_package: || {
           hdk::ValidationPackageDefinition::ChainFull
         },
@@ -86,10 +94,10 @@ pub fn handle_create_perspective(
   let perspective_address = hdk::commit_entry(&perspective_entry)?;
 
   if let Some(head) = head_address {
-    hdk::link_entries(&perspective_address, &head, "head", "")?;
+    link_perspective_to_commit(perspective_address.clone(), head)?;
   }
 
-  hdk::link_entries(&context_address, &perspective_address, "perspectives", "")?;
+  link_context_to_perspective(context_address, perspective_address.clone())?;
 
   Ok(perspective_address)
 }
@@ -97,14 +105,18 @@ pub fn handle_create_perspective(
 /**
  * Clones the given perspective, linking it with the appropiate context and commit
  */
-pub fn handle_clone_perspective(cloned_perspective: Perspective, provenance: Provenance) -> ZomeApiResult<Address> {
-  let perspective_entry = Entry::App(
-    "perspective".into(),
-    cloned_perspective.clone().into(),
-  );
-  let perspective_address = crate::utils::commit_entry_with_custom_provenance(&perspective_entry, provenance)?;
+pub fn handle_clone_perspective(
+  cloned_perspective: Perspective,
+  provenance: Provenance,
+) -> ZomeApiResult<Address> {
+  let perspective_entry = Entry::App("perspective".into(), cloned_perspective.clone().into());
+  let perspective_address =
+    crate::utils::commit_entry_with_custom_provenance(&perspective_entry, provenance)?;
 
-  hdk::link_entries(&cloned_perspective.context_address, &perspective_address, "perspectives", "")?;
+  link_context_to_perspective(
+    cloned_perspective.context_address,
+    perspective_address.clone(),
+  )?;
 
   Ok(perspective_address)
 }
@@ -120,14 +132,24 @@ pub fn handle_get_perspective_info(perspective_address: Address) -> ZomeApiResul
  * Returns the address of the head commit for the given perspective
  */
 pub fn handle_get_perspective_head(perspective_address: Address) -> ZomeApiResult<Address> {
-  let links_result = hdk::get_links(&perspective_address, Some(String::from("head")), None)?;
+  let response = hdk::call(
+    hdk::THIS_INSTANCE,
+    "proxy",
+    Address::from(PUBLIC_TOKEN.to_string()),
+    "get_links_to_proxy",
+    json!({ "base_address": perspective_address, "link_type": "head", "tag": ""}).into(),
+  )?;
 
-  if links_result.addresses().len() == 0 {
+  let links_result: ZomeApiResult<Vec<Address>> = response.try_into()?;
+  let links = links_result?;
+
+  if links.len() == 0 {
     return Err(ZomeApiError::from(String::from(
       "given perspective has no commits",
     )));
   }
-  Ok(links_result.addresses().last().unwrap().to_owned())
+
+  Ok(links[0].clone())
 }
 
 /**
@@ -147,7 +169,45 @@ pub fn handle_update_perspective_head(
     )?;
   }
 
-  hdk::link_entries(&perspective_address, &head_address, "head", "")?;
+  link_perspective_to_commit(perspective_address, head_address)?;
+
+  Ok(())
+}
+
+/** Proxy handlers */
+
+pub fn link_perspective_to_commit(
+  perspective_address: Address,
+  commit_address: Address,
+) -> ZomeApiResult<()> {
+  // Head commit may not exist on this hApp, we have to set its proxy address and use that entry to link
+  crate::utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
+
+  hdk::call(
+    hdk::THIS_INSTANCE,
+    "proxy",
+    Address::from(PUBLIC_TOKEN.to_string()),
+    "link_to_proxy",
+    json!({ "base_address": perspective_address, "proxy_address": commit_address, "link_type": "head", "tag": ""}).into(),
+  )?;
+
+  Ok(())
+}
+
+pub fn link_context_to_perspective(
+  context_address: Address,
+  perspective_address: Address,
+) -> ZomeApiResult<()> {
+  // Context may not exist on this hApp, we have to set its proxy address and use that entry to link
+  crate::utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
+
+  hdk::call(
+    hdk::THIS_INSTANCE,
+    "proxy",
+    Address::from(PUBLIC_TOKEN.to_string()),
+    "link_from_proxy",
+    json!({"proxy_address": context_address, "to_address": perspective_address, "link_type": "perspectives", "tag": ""}).into(),
+  )?;
 
   Ok(())
 }

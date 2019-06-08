@@ -3,11 +3,13 @@ use hdk::{
   holochain_core_types::{
     cas::content::{Address, Content},
     entry::Entry,
+    json::JsonString,
     signature::Provenance,
   },
   holochain_wasm_utils::api_serialization::commit_entry::CommitEntryOptions,
-  DNA_ADDRESS,
+  DNA_ADDRESS, PUBLIC_TOKEN,
 };
+use std::convert::TryInto;
 
 /**
  * Stores the given entry in the DHT if it didn't exist before,
@@ -47,4 +49,25 @@ pub fn commit_entry_with_custom_provenance(
 
   let entry_result = hdk::commit_entry_result(entry, options)?;
   Ok(entry_result.address())
+}
+
+/** Proxy handlers */
+
+pub fn set_entry_proxy(
+  proxy_address: Address,
+  entry_address: Option<Address>,
+) -> ZomeApiResult<Address> {
+  let args = json!({"proxy_address": proxy_address, "entry_address": entry_address});
+
+  let response = hdk::call(
+    hdk::THIS_INSTANCE,
+    "proxy",
+    Address::from(PUBLIC_TOKEN.to_string()),
+    "set_entry_proxy",
+    args.into(),
+  )?;
+
+  let result: ZomeApiResult<Address> = response.try_into()?;
+
+  result
 }

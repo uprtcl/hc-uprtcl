@@ -62,6 +62,7 @@ scenario1.runTape('check root context created', async (t, { alice }) => {
 scenario1.runTape('create context', async (t, { alice }) => {
   // Create context
   const contextAddress = await createContext()(alice);
+  t.equal(contextAddress, CREATOR_ADDRESS);
 
   const result = await getContextInfo(contextAddress)(alice);
 

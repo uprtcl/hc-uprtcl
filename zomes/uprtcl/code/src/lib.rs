@@ -3,6 +3,8 @@
 #[macro_use]
 extern crate hdk;
 #[macro_use]
+extern crate serde_json;
+#[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate holochain_core_types_derive;
@@ -13,7 +15,9 @@ use hdk::{
     cas::content::Address, error::HolochainError, json::JsonString, signature::Provenance,
   },
 };
-use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, StatusRequestKind, GetEntryResult};
+use holochain_wasm_utils::api_serialization::get_entry::{
+  GetEntryOptions, GetEntryResult, StatusRequestKind,
+};
 
 // see https://developer.holochain.org/api/latest/hdk/ for info on using the hdk library
 
@@ -78,18 +82,6 @@ define_zome! {
       handler: context::handle_clone_context
     }
 
-    get_created_contexts: {
-      inputs: | |,
-      outputs: |result: ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>>|,
-      handler: context::handle_get_created_contexts
-    }
-
-    get_all_contexts: {
-      inputs: | |,
-      outputs: |result: ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>>|,
-      handler: context::handle_get_all_contexts
-    }
-
     get_context_info: {
       inputs: |context_address: Address|,
       outputs: |result: ZomeApiResult<GetEntryResult>|,
@@ -147,7 +139,7 @@ define_zome! {
     }
 
     clone_commit: {
-      inputs: |commit: commit::Commit, provenance: Provenance|,
+      inputs: |address: Option<Address>, commit: commit::Commit, provenance: Provenance|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: commit::handle_clone_commit
     }
@@ -162,7 +154,7 @@ define_zome! {
 
   traits: {
     hc_public [
-      get_entry, create_context, get_root_context_id, get_created_contexts, get_all_contexts, get_context_info,
+      get_entry, create_context, get_root_context_id, get_context_info,
       create_perspective, get_context_perspectives, get_perspective_info, get_perspective_head, update_perspective_head,
       create_commit, get_commit_info, clone_context, clone_perspective, clone_commit
     ]
