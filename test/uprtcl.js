@@ -62,16 +62,30 @@ scenario1.runTape('check root context created', async (t, { alice }) => {
 scenario1.runTape('create context', async (t, { alice }) => {
   // Create context
   const contextAddress = await createContext()(alice);
-  
+
   const result = await getContextInfo(contextAddress)(alice);
-  
+
   // Check that context creator is correct
   t.equal(result.creator, CREATOR_ADDRESS);
-  
+
   // check that context has a perspective associated
   const perspectives = await getContextPerspectives(contextAddress)(alice);
   t.equal(perspectives.length, 0);
 });
+
+scenario1.runTape(
+  'create perspective with proxy addresses',
+  async (t, { alice }) => {
+    // Create perspective pointing proxy addresses
+    const perspectiveAddress = await createPerspective(
+      'proxy1',
+      'develop',
+      'proxy2'
+    )(alice); 
+    // check that context has a perspective associated
+    t.equal(perspectiveAddress.startsWith('Qm'), true);
+  }
+);
 
 scenario1.runTape(
   'create two commits in master perspective',
@@ -168,7 +182,9 @@ scenario1.runTape(
     )(alice);
 
     // Check that master still points to the first commit
-    const perspectiveHead2 = await getPerspectiveHead(perspectiveAddress)(alice);
+    const perspectiveHead2 = await getPerspectiveHead(perspectiveAddress)(
+      alice
+    );
     t.equal(perspectiveHead2, commitAddress);
 
     // Check that develop now points to the newly created commit
@@ -258,4 +274,3 @@ scenario1.runTape(
     );
   }
 );
- 

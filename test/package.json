@@ -6,6 +6,6 @@
     "tape": "^4.9.1"
   },
   "scripts": {
-    "test": "tape index.js | faucet"
+    "test": "tape draft.js discovery.js proxy.js uprtcl.js | faucet"
   }
 }
