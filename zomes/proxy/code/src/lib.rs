@@ -9,8 +9,8 @@ extern crate serde_json;
 extern crate holochain_core_types_derive;
 
 use hdk::{
-    error::ZomeApiResult,
-    holochain_core_types::{cas::content::Address, error::HolochainError, json::JsonString},
+  error::ZomeApiResult,
+  holochain_core_types::{cas::content::Address, error::HolochainError, json::JsonString},
 };
 use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
 
@@ -18,47 +18,61 @@ pub mod proxy;
 pub mod utils;
 
 define_zome! {
-    entries: [
-       proxy::definition()
-    ]
+  entries: [
+      proxy::definition()
+  ]
 
-    genesis: || { Ok(()) }
+  genesis: || { Ok(()) }
 
-    functions: [
-        set_entry_proxy: {
-            inputs: |proxy_address: Address, entry_address: Option<Address>|,
-            outputs: |result: ZomeApiResult<Address>|,
-            handler: proxy::handle_set_entry_proxy
-        }
-        get_proxied_entry: {
-            inputs: |address: Address|,
-            outputs: |result: ZomeApiResult<GetEntryResult>|,
-            handler: proxy::handle_get_proxied_entry
-        }
-        link_to_proxy: {
-            inputs: |base_address: Address, proxy_address: Address, link_type: String, tag: String|,
-            outputs: |result: ZomeApiResult<Address>|,
-            handler: proxy::handle_link_to_proxy
-        }
-        link_from_proxy: {
-            inputs: |proxy_address: Address, to_address: Address, link_type: String, tag: String|,
-            outputs: |result: ZomeApiResult<Address>|,
-            handler: proxy::handle_link_from_proxy
-        }
-        get_links_to_proxy: {
-            inputs: |base_address: Address, link_type: Option<String>, tag: Option<String>|,
-            outputs: |result: ZomeApiResult<Vec<Address>>|,
-            handler: proxy::handle_get_links_to_proxy
-        }
-        get_links_from_proxy: {
-            inputs: |proxy_address: Address, link_type: Option<String>, tag: Option<String>|,
-            outputs: |result: ZomeApiResult<Vec<Address>>|,
-            handler: proxy::handle_get_links_from_proxy
-        }
-    ]
-
-    traits: {
-        hc_public [set_entry_proxy,get_proxied_entry,
-            link_to_proxy,link_from_proxy,get_links_from_proxy,get_links_to_proxy]
+  functions: [
+    set_entry_proxy: {
+      inputs: |proxy_address: Address, entry_address: Option<Address>|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: proxy::handle_set_entry_proxy
     }
+    get_proxied_entry: {
+      inputs: |address: Address|,
+      outputs: |result: ZomeApiResult<GetEntryResult>|,
+      handler: proxy::handle_get_proxied_entry
+    }
+    link_to_proxy: {
+      inputs: |base_address: Address, proxy_address: Address, link_type: String, tag: String|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: proxy::handle_link_to_proxy
+    }
+    link_from_proxy: {
+      inputs: |proxy_address: Address, to_address: Address, link_type: String, tag: String|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: proxy::handle_link_from_proxy
+    }
+    remove_link_to_proxy: {
+      inputs: |base_address: Address, proxy_address: Address, link_type: String, tag: String|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: proxy::handle_link_to_proxy
+    }
+    remove_link_from_proxy: {
+      inputs: |proxy_address: Address, to_address: Address, link_type: String, tag: String|,
+      outputs: |result: ZomeApiResult<Address>|,
+      handler: proxy::handle_link_from_proxy
+    }
+    get_links_to_proxy: {
+      inputs: |base_address: Address, link_type: Option<String>, tag: Option<String>|,
+      outputs: |result: ZomeApiResult<Vec<Address>>|,
+      handler: proxy::handle_get_links_to_proxy
+    }
+    get_links_from_proxy: {
+      inputs: |proxy_address: Address, link_type: Option<String>, tag: Option<String>|,
+      outputs: |result: ZomeApiResult<Vec<Address>>|,
+      handler: proxy::handle_get_links_from_proxy
+    }
+  ]
+
+  traits: {
+    hc_public [
+      set_entry_proxy,get_proxied_entry,
+      link_to_proxy,link_from_proxy,
+      remove_link_to_proxy,remove_link_from_proxy,
+      get_links_from_proxy,get_links_to_proxy
+    ]
+  }
 }

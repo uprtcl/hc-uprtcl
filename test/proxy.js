@@ -214,3 +214,77 @@ scenario1.runTape(
     t.equal(links.Ok.length, 2);
   }
 );
+
+scenario1.runTape('remove links to proxy is ok', async (t, { alice }) => {
+  const sampleEntryAddress = await createSampleEntry(alice);
+
+  // Create a ghost proxy
+  await alice.callSync('proxy', 'set_entry_proxy', {
+    proxy_address: PROXY_ADDRESS1,
+    entry_address: null
+  });
+  // Create a link to said proxy
+  await alice.callSync('proxy', 'link_to_proxy', {
+    base_address: sampleEntryAddress,
+    proxy_address: PROXY_ADDRESS1,
+    link_type: LINK_TYPE,
+    tag: ''
+  });
+  let links = await alice.callSync('proxy', 'get_links_to_proxy', {
+    base_address: sampleEntryAddress,
+    link_type: LINK_TYPE,
+    tag: ''
+  });
+  t.equal(links.Ok.length, 1);
+
+  // Remove the link
+  await alice.callSync('proxy', 'remove_link_to_proxy', {
+    base_address: sampleEntryAddress,
+    proxy_address: PROXY_ADDRESS1,
+    link_type: LINK_TYPE,
+    tag: ''
+  });
+  links = await alice.callSync('proxy', 'get_links_to_proxy', {
+    base_address: sampleEntryAddress,
+    link_type: LINK_TYPE,
+    tag: ''
+  });
+  t.equal(links.Ok.length, 0);
+});
+
+scenario1.runTape('remove links from proxy is ok', async (t, { alice }) => {
+  const sampleEntryAddress = await createSampleEntry(alice);
+
+  // Create a ghost proxy
+  await alice.callSync('proxy', 'set_entry_proxy', {
+    proxy_address: PROXY_ADDRESS1,
+    entry_address: null
+  });
+  // Create a link to said proxy
+  await alice.callSync('proxy', 'link_from_proxy', {
+    proxy_address: PROXY_ADDRESS1,
+    to_address: sampleEntryAddress,
+    link_type: 'external_proxy',
+    tag: ''
+  });
+  let links = await alice.callSync('proxy', 'get_links_from_proxy', {
+    proxy_address: PROXY_ADDRESS1,
+    link_type: 'external_proxy',
+    tag: ''
+  });
+  t.equal(links.Ok.length, 1);
+
+  // Remove link from said proxy
+  await alice.callSync('proxy', 'remove_link_from_proxy', {
+    proxy_address: PROXY_ADDRESS1,
+    to_address: sampleEntryAddress,
+    link_type: 'external_proxy',
+    tag: ''
+  });
+  links = await alice.callSync('proxy', 'get_links_from_proxy', {
+    proxy_address: PROXY_ADDRESS1,
+    link_type: 'external_proxy',
+    tag: ''
+  });
+  t.equal(links.Ok.length, 0);
+});

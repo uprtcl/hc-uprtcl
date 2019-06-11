@@ -19,13 +19,11 @@ use hdk::{
 };
 
 pub mod draft;
-pub mod workspace;
 pub mod utils;
 
 define_zome! {
     entries: [
-       draft::definition(),
-       workspace::definition()
+       draft::definition()
     ]
 
     genesis: || { Ok(()) }
