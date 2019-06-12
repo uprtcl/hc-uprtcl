@@ -1,3 +1,4 @@
+use crate::utils;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::ZomeApiResult,
@@ -90,7 +91,7 @@ pub fn handle_create_commit(
   );
 
   let commit_address = hdk::commit_entry(&commit_entry(commit))?;
-  crate::utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
+  utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
 
   Ok(commit_address)
 }
@@ -104,12 +105,12 @@ pub fn handle_clone_commit(
   provenance: Provenance,
 ) -> ZomeApiResult<Address> {
   let commit_address =
-    crate::utils::commit_entry_with_custom_provenance(&commit_entry(commit), provenance)?;
+    utils::commit_entry_with_custom_provenance(&commit_entry(commit), provenance)?;
 
   crate::utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
 
   if let Some(proxy_address) = address {
-    crate::utils::set_entry_proxy(proxy_address, Some(commit_address.clone()))?;
+    utils::set_entry_proxy(proxy_address, Some(commit_address.clone()))?;
   }
 
   Ok(commit_address)

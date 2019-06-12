@@ -1,6 +1,8 @@
 
 // Execute all the tests
-require('./uprtcl');
-require('./proxy');
+require('./draft');
+//require('./proxy');
 //require('./discovery');
+//require('./workspace');
 //require('./draft');
+//require('./uprtcl');

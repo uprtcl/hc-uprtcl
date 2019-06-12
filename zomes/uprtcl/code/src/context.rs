@@ -1,10 +1,11 @@
+use crate::utils;
 use hdk::PUBLIC_TOKEN;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::ZomeApiResult,
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
-    json::JsonString, signature::Provenance,
+    json::JsonString, link::LinkMatch, signature::Provenance,
   },
   AGENT_ADDRESS,
 };
@@ -72,7 +73,7 @@ pub fn definition() -> ValidatingEntryType {
  */
 pub fn handle_create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Address> {
   let context_address = create_context(Context::new(timestamp, nonce))?;
-  crate::utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
+  utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
 
   Ok(context_address)
 }
@@ -82,9 +83,8 @@ pub fn handle_create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Addr
  */
 pub fn handle_clone_context(context: Context, provenance: Provenance) -> ZomeApiResult<Address> {
   let context_entry = context_entry(context);
-  let context_address =
-    crate::utils::commit_entry_with_custom_provenance(&context_entry, provenance)?;
-  crate::utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
+  let context_address = utils::commit_entry_with_custom_provenance(&context_entry, provenance)?;
+  utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
 
   Ok(context_address)
 }
@@ -136,7 +136,7 @@ pub fn handle_get_context_address(context: Context) -> ZomeApiResult<Address> {
  * Returns the root perspective of the agent, created at genesis time
  */
 pub fn handle_get_root_context_id() -> ZomeApiResult<Address> {
-  let links = hdk::get_links(&AGENT_ADDRESS, Some(String::from("root")), None)?;
+  let links = hdk::get_links(&AGENT_ADDRESS, LinkMatch::Exactly("root"), LinkMatch::Any)?;
 
   // TODO: Comment when genesis block is executed
   match links.addresses().len() {
@@ -182,7 +182,7 @@ pub fn create_context(context: Context) -> ZomeApiResult<Address> {
  * Only to be called at genesis time
  */
 pub fn create_root_context_and_perspective() -> ZomeApiResult<()> {
-  let context_address = create_context(crate::context::Context::root_context())?;
+  let context_address = create_context(Context::root_context())?;
 
   crate::perspective::handle_create_perspective(
     context_address.clone(),

@@ -1,9 +1,9 @@
-use hdk::holochain_core_types::{
+use hdk::{holochain_core_types::{
   cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
   json::JsonString,
-};
-use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult, DNA_ADDRESS};
-use std::convert::TryFrom;
+}, PUBLIC_TOKEN, entry_definition::ValidatingEntryType, error::ZomeApiResult, DNA_ADDRESS};
+use std::convert::TryInto;
+use crate::utils;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Source {
@@ -32,7 +32,7 @@ pub fn definition() -> ValidatingEntryType {
       },
       links: [
         from!(
-          "addressable",
+          "proxy",
           link_type: "known_source",
           validation_package: || {
             hdk::ValidationPackageDefinition::ChainFull
@@ -50,23 +50,31 @@ pub fn handle_get_own_source() -> ZomeApiResult<String> {
   Ok(String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned()))
 }
 
+/**
+ * Returns the known sources for the given address, as following:
+ * - If we have the entry in our app, return our own source
+ * - If we have stored the proxy and know the source, return that source,
+ * - Otherwise, return empty vector 
+ */
 pub fn handle_get_known_sources(address: Address) -> ZomeApiResult<Vec<String>> {
   match hdk::get_entry(&address)? {
     Some(_) => Ok(vec![handle_get_own_source()?]),
     None => {
-      let addressable_address = crate::addressable::addressable_address(address)?;
-      let links_result = hdk::get_links_and_load(
-        &addressable_address,
-        Some(String::from("known_source")),
-        None,
+      let response = hdk::call(
+        hdk::THIS_INSTANCE,
+        "proxy",
+        Address::from(PUBLIC_TOKEN.to_string()),
+        "get_links_from_proxy",
+        json!({"proxy_address": address, "link_type": "known_source", "tag": ""}).into(),
       )?;
 
+      let links_result: ZomeApiResult<Vec<Address>> = response.try_into()?;
+      let links_addresses = links_result?;
+
       let mut sources: Vec<String> = Vec::new();
-      for entry_result in links_result.into_iter() {
-        if let Ok(Entry::App(_, entry)) = entry_result {
-          let source = crate::sources::Source::try_from(entry)?;
-          sources.push(source.source);
-        }
+      for source_address in links_addresses.into_iter() {
+        let source_entry: Source = hdk::utils::get_as_type(source_address)?;
+        sources.push(source_entry.source);
       }
 
       Ok(sources)
@@ -74,26 +82,46 @@ pub fn handle_get_known_sources(address: Address) -> ZomeApiResult<Vec<String>> 
   }
 }
 
+/**
+ * Add the given source to the list of known source for the given address
+ */
 pub fn handle_add_known_sources(address: Address, sources: Vec<String>) -> ZomeApiResult<()> {
-  let addressable_address = crate::addressable::create_addressable(address)?;
+  utils::set_entry_proxy(address.clone(), None)?;
+
   for source in sources.into_iter() {
     let source_address = create_source(source)?;
-    hdk::link_entries(
-      &addressable_address,
-      &source_address,
-      String::from("known_source"),
-      String::from(""),
-    )?;
+
+    let response = hdk::call(
+        hdk::THIS_INSTANCE,
+        "proxy",
+        Address::from(PUBLIC_TOKEN.to_string()),
+        "link_from_proxy",
+        json!({"proxy_address": address.clone(), "to_address": source_address.clone(), "link_type": "known_source", "tag": ""}).into(),
+      )?;
+
+    // Check that response from proxy zome is ok
+    let _result: ZomeApiResult<Address> = response.try_into()?;
+    let _address = _result?;
   }
   Ok(())
 }
 
+/**
+ * Remove the given source from the list of known sources for the given address
+ */
 pub fn handle_remove_known_sources(address: Address, source: String) -> ZomeApiResult<()> {
-  let addressable_address = crate::addressable::addressable_address(address)?;
   let source_address = source_address(source)?;
-  hdk::remove_link(&addressable_address, &source_address, "known_source", "")?;
 
-  Ok(())
+  let response = hdk::call(
+        hdk::THIS_INSTANCE,
+        "proxy",
+        Address::from(PUBLIC_TOKEN.to_string()),
+        "remove_link_from_proxy",
+        json!({"proxy_address": address.clone(), "to_address": source_address.clone(), "link_type": "known_source", "tag": ""}).into(),
+      )?;
+
+  // Check that response from proxy zome is ok
+  response.try_into()?
 }
 
 /** Helper functions */

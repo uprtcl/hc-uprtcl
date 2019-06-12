@@ -25,8 +25,6 @@ const SAMPLE_DRAFT_CONTENT2 = {
   sampleContent2: 'sampleContent2'
 };
 
-const { parseEntry } = require('./utils');
-
 scenario1.runTape('get non-existing draft', async (t, { alice }) => {
   const draft = await alice.callSync('draft', 'get_draft', {
     entry_address: SAMPLE_ADDRESS

@@ -1,10 +1,11 @@
+use crate::utils;
 use hdk::PUBLIC_TOKEN;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::{ZomeApiError, ZomeApiResult},
   holochain_core_types::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
-    json::JsonString, signature::Provenance,
+    json::JsonString, link::LinkMatch, signature::Provenance,
   },
   AGENT_ADDRESS,
 };
@@ -30,7 +31,7 @@ impl Perspective {
     Perspective {
       name: name.to_owned(),
       timestamp: timestamp.to_owned(),
-      origin: crate::utils::get_origin(),
+      origin: crate::get_origin(),
       creator: creator.to_owned(),
       context_address: context_address.to_owned(),
     }
@@ -111,7 +112,7 @@ pub fn handle_clone_perspective(
 ) -> ZomeApiResult<Address> {
   let perspective_entry = Entry::App("perspective".into(), cloned_perspective.clone().into());
   let perspective_address =
-    crate::utils::commit_entry_with_custom_provenance(&perspective_entry, provenance)?;
+    utils::commit_entry_with_custom_provenance(&perspective_entry, provenance)?;
 
   link_context_to_perspective(
     cloned_perspective.context_address,
@@ -159,7 +160,11 @@ pub fn handle_update_perspective_head(
   perspective_address: Address,
   head_address: Address,
 ) -> ZomeApiResult<()> {
-  let previous_head = hdk::get_links(&perspective_address, Some(String::from("head")), None)?;
+  let previous_head = hdk::get_links(
+    &perspective_address,
+    LinkMatch::Exactly("head"),
+    LinkMatch::Any,
+  )?;
   if previous_head.addresses().len() != 0 {
     hdk::remove_link(
       &perspective_address,
@@ -191,7 +196,10 @@ pub fn link_perspective_to_commit(
     json!({ "base_address": perspective_address, "proxy_address": commit_address, "link_type": "head", "tag": ""}).into(),
   )?;
 
-  crate::utils::response_ok_or_error(response)
+  let _result: ZomeApiResult<Address> = response.try_into()?;
+  let _address = _result?;
+
+  Ok(())
 }
 
 pub fn link_context_to_perspective(
@@ -209,5 +217,8 @@ pub fn link_context_to_perspective(
     json!({"proxy_address": context_address, "to_address": perspective_address, "link_type": "perspectives", "tag": ""}).into(),
   )?;
 
-  crate::utils::response_ok_or_error(response)
+  let _result: ZomeApiResult<Address> = response.try_into()?;
+  let _address = _result?;
+
+  Ok(())
 }

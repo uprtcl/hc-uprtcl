@@ -4,6 +4,7 @@ extern crate hdk;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
 extern crate serde_json;
 #[macro_use]
 extern crate holochain_core_types_derive;
@@ -11,12 +12,11 @@ extern crate holochain_core_types_derive;
 use hdk::error::ZomeApiResult;
 use hdk::holochain_core_types::{cas::content::Address, error::HolochainError, json::JsonString};
 
-pub mod addressable;
 pub mod sources;
+pub mod utils;
 
 define_zome! {
   entries: [
-    addressable::definition(),
     sources::definition()
   ]
 

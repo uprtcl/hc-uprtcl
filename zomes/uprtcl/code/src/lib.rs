@@ -9,6 +9,7 @@ extern crate serde_derive;
 #[macro_use]
 extern crate holochain_core_types_derive;
 
+use hdk::DNA_ADDRESS;
 use hdk::{
   error::ZomeApiResult,
   holochain_core_types::{
@@ -38,6 +39,10 @@ pub fn handle_get_entry(address: Address) -> ZomeApiResult<GetEntryResult> {
       timeout: Default::default(),
     },
   )
+}
+
+pub fn get_origin() -> String {
+  String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
 }
 
 define_zome! {

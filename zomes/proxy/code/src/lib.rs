@@ -4,6 +4,7 @@ extern crate hdk;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
 extern crate serde_json;
 #[macro_use]
 extern crate holochain_core_types_derive;
@@ -47,14 +48,15 @@ define_zome! {
     }
     remove_link_to_proxy: {
       inputs: |base_address: Address, proxy_address: Address, link_type: String, tag: String|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: proxy::handle_link_to_proxy
+      outputs: |result: ZomeApiResult<()>|,
+      handler: proxy::handle_remove_link_to_proxy
     }
     remove_link_from_proxy: {
       inputs: |proxy_address: Address, to_address: Address, link_type: String, tag: String|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: proxy::handle_link_from_proxy
+      outputs: |result: ZomeApiResult<()>|,
+      handler: proxy::handle_remove_link_from_proxy
     }
+    // TODO: change Option<String> to an adaptation of LinkMatch
     get_links_to_proxy: {
       inputs: |base_address: Address, link_type: Option<String>, tag: Option<String>|,
       outputs: |result: ZomeApiResult<Vec<Address>>|,
