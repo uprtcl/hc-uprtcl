@@ -104,16 +104,26 @@ pub fn handle_set_entry_proxy(
  * Returns the entry identified by the given address if it exists in the hApp
  */
 pub fn handle_get_proxied_entry(address: Address) -> ZomeApiResult<GetEntryResult> {
-  let maybe_entry = get_entry_result(&address)?;
+  match handle_get_internal_address(address)? {
+    Some(internal_address) => get_entry_result(&internal_address),
+    None => entry_not_found(),
+  }
+}
+
+/**
+ * Converts the given proxy address to the internal address of the entry in our app
+ */
+pub fn handle_get_internal_address(proxy_address: Address) -> ZomeApiResult<Option<Address>> {
+  let maybe_entry = get_entry_result(&proxy_address)?;
 
   if maybe_entry.found() {
-    return Ok(maybe_entry);
+    return Ok(Some(proxy_address));
   }
 
-  let proxy_entry_address = proxy_entry_address(address)?;
+  let proxy_entry_address = proxy_entry_address(proxy_address)?;
 
   match hdk::get_entry(&proxy_entry_address)? {
-    None => entry_not_found(),
+    None => Ok(None),
     Some(_) => {
       // We have stored the proxy for the given address
       let links = hdk::get_links(
@@ -124,9 +134,9 @@ pub fn handle_get_proxied_entry(address: Address) -> ZomeApiResult<GetEntryResul
       match links.addresses().len() {
         1 => {
           let internal_proxy_entry: Proxy = hdk::utils::get_as_type(links.addresses()[0].clone())?;
-          get_entry_result(&internal_proxy_entry.proxy_address)
+          Ok(Some(internal_proxy_entry.proxy_address))
         }
-        _ => entry_not_found(),
+        _ => Ok(None),
       }
     }
   }

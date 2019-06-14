@@ -36,6 +36,11 @@ define_zome! {
       outputs: |result: ZomeApiResult<GetEntryResult>|,
       handler: proxy::handle_get_proxied_entry
     }
+    get_internal_address: {
+      inputs: |proxy_address: Address|,
+      outputs: |result: ZomeApiResult<Option<Address>>|,
+      handler: proxy::handle_get_internal_address
+    }
     link_to_proxy: {
       inputs: |base_address: Address, proxy_address: Address, link_type: String, tag: String|,
       outputs: |result: ZomeApiResult<Address>|,
@@ -71,7 +76,7 @@ define_zome! {
 
   traits: {
     hc_public [
-      set_entry_proxy,get_proxied_entry,
+      set_entry_proxy,get_proxied_entry,get_internal_address,
       link_to_proxy,link_from_proxy,
       remove_link_to_proxy,remove_link_from_proxy,
       get_links_from_proxy,get_links_to_proxy

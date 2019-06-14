@@ -20,8 +20,6 @@ use holochain_wasm_utils::api_serialization::get_entry::{
   GetEntryOptions, GetEntryResult, StatusRequestKind,
 };
 
-// see https://developer.holochain.org/api/latest/hdk/ for info on using the hdk library
-
 pub mod commit;
 pub mod context;
 pub mod perspective;
@@ -82,7 +80,7 @@ define_zome! {
     }
 
     clone_context: {
-      inputs: |context: context::Context, provenance: Provenance|,
+      inputs: |previous_address: Option<Address>, context: context::Context|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: context::handle_clone_context
     }
@@ -107,7 +105,7 @@ define_zome! {
     }
 
     clone_perspective: {
-      inputs: |perspective: perspective::Perspective, provenance: Provenance|,
+      inputs: |previous_address: Option<Address>, perspective: perspective::Perspective|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: perspective::handle_clone_perspective
     }
@@ -144,7 +142,7 @@ define_zome! {
     }
 
     clone_commit: {
-      inputs: |address: Option<Address>, commit: commit::Commit, provenance: Provenance|,
+      inputs: |previous_address: Option<Address>, commit: commit::Commit|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: commit::handle_clone_commit
     }

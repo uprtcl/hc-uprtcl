@@ -43,21 +43,19 @@ const {
 const SAMPLE_ADDRESS1 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const SAMPLE_ADDRESS2 = 'QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE';
 
-/* 
-TODO: Uncomment when root context is created at genesis time
 
 scenario1.runTape('check root context created', async (t, { alice }) => {
   let contextAddress = await getRootContextId()(alice);
   t.equal(contextAddress, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
 
   const perspectives = await getContextPerspectives(contextAddress)(alice);
-  t.equal(perspectives.length, 0);
+  t.equal(perspectives.length, 1);
 
-  t.equal(perspectives, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
+  t.equal(perspectives[0].id, 'QmXAM9RESJgxs6wTaiPVB4wP9x8AGQmHQJHcMUoRBP2KzW');
   
-  //t.equal(perspective.origin.includes('holochain://'), true);
+  t.equal(perspectives[0].origin.includes('holochain://'), true);
 });
-*/
+
 
 scenario1.runTape('create context', async (t, { alice }) => {
   // Create context
@@ -192,7 +190,7 @@ scenario1.runTape(
     t.equal(perspectiveHead3, secondCommitAddress);
   }
 );
-
+/* 
 scenario1.runTape('clone with invalid keys fails', async (t, { alice }) => {
   // Clone context
   let errorMessage = await cloneContext(
@@ -274,3 +272,4 @@ scenario1.runTape(
     );
   }
 );
+ */

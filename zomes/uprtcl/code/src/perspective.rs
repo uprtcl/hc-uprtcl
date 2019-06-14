@@ -107,17 +107,23 @@ pub fn handle_create_perspective(
  * Clones the given perspective, linking it with the appropiate context and commit
  */
 pub fn handle_clone_perspective(
-  cloned_perspective: Perspective,
-  provenance: Provenance,
+  previous_address: Option<Address>,
+  perspective: Perspective,
 ) -> ZomeApiResult<Address> {
-  let perspective_entry = Entry::App("perspective".into(), cloned_perspective.clone().into());
-  let perspective_address =
-    utils::commit_entry_with_custom_provenance(&perspective_entry, provenance)?;
+  let perspective_entry = Entry::App("perspective".into(), perspective.clone().into());
+  // TODO change for create_entry_custom_provenance
+  let perspective_address = utils::store_entry_if_new(&perspective_entry)?;
 
-  link_context_to_perspective(
-    cloned_perspective.context_address,
+  link_context_to_perspective(perspective.context_address, perspective_address.clone())?;
+
+  utils::set_entry_proxy(
     perspective_address.clone(),
+    Some(perspective_address.clone()),
   )?;
+
+  if let Some(proxy_address) = previous_address {
+    utils::set_entry_proxy(proxy_address.clone(), Some(perspective_address.clone()))?;
+  }
 
   Ok(perspective_address)
 }
@@ -160,33 +166,43 @@ pub fn handle_update_perspective_head(
   perspective_address: Address,
   head_address: Address,
 ) -> ZomeApiResult<()> {
-  let previous_head = hdk::get_links(
-    &perspective_address,
-    LinkMatch::Exactly("head"),
-    LinkMatch::Any,
-  )?;
-  if previous_head.addresses().len() != 0 {
-    hdk::remove_link(
-      &perspective_address,
-      &previous_head.addresses().first().unwrap(),
-      "head",
-      "",
-    )?;
-  }
+  // Perspective address can be a proxy address, get the internal address
+  let internal_perspective_address = get_internal_address(perspective_address)?;
 
-  link_perspective_to_commit(perspective_address.clone(), head_address)?;
+  utils::remove_previous_links(&internal_perspective_address, Some(String::from("head")), None)?;
+
+  link_perspective_to_commit(internal_perspective_address.clone(), head_address)?;
 
   Ok(())
 }
 
 /** Proxy handlers */
 
+fn get_internal_address(perspective_address: Address) -> ZomeApiResult<Address> {
+  let response = hdk::call(
+    hdk::THIS_INSTANCE,
+    "proxy",
+    Address::from(PUBLIC_TOKEN.to_string()),
+    "get_internal_address",
+    json!({ "proxy_address": perspective_address }).into(),
+  )?;
+  let result: ZomeApiResult<Option<Address>> = response.try_into()?;
+
+  match result? {
+    Some(internal_address) => Ok(internal_address),
+    None => Err(ZomeApiError::from(format!(
+      "entry with hash {} does not exist",
+      perspective_address
+    ))),
+  }
+}
+
 pub fn link_perspective_to_commit(
   perspective_address: Address,
   commit_address: Address,
 ) -> ZomeApiResult<()> {
   // Head commit may not exist on this hApp, we have to set its proxy address and use that entry to link
-  crate::utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
+  utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
 
   let response = hdk::call(
     hdk::THIS_INSTANCE,
@@ -207,7 +223,7 @@ pub fn link_context_to_perspective(
   perspective_address: Address,
 ) -> ZomeApiResult<()> {
   // Context may not exist on this hApp, we have to set its proxy address and use that entry to link
-  crate::utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
+  utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
 
   let response = hdk::call(
     hdk::THIS_INSTANCE,

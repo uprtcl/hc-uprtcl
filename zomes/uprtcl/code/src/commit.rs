@@ -1,4 +1,3 @@
-use crate::utils;
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::ZomeApiResult,
@@ -9,6 +8,8 @@ use hdk::{
   AGENT_ADDRESS,
 };
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
+
+use crate::utils;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Commit {
@@ -100,16 +101,16 @@ pub fn handle_create_commit(
  * Clones the given commit in the source chain
  */
 pub fn handle_clone_commit(
-  address: Option<Address>,
-  commit: Commit,
-  provenance: Provenance,
+  previous_address: Option<Address>,
+  commit: Commit
 ) -> ZomeApiResult<Address> {
+  // TODO change for create with custom provenance
   let commit_address =
-    utils::commit_entry_with_custom_provenance(&commit_entry(commit), provenance)?;
+    utils::store_entry_if_new(&commit_entry(commit))?;
 
-  crate::utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
+  utils::set_entry_proxy(commit_address.clone(), Some(commit_address.clone()))?;
 
-  if let Some(proxy_address) = address {
+  if let Some(proxy_address) = previous_address {
     utils::set_entry_proxy(proxy_address, Some(commit_address.clone()))?;
   }
 

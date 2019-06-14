@@ -2,6 +2,7 @@ use hdk::{holochain_core_types::{
   cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
   json::JsonString,
 }, PUBLIC_TOKEN, entry_definition::ValidatingEntryType, error::ZomeApiResult, DNA_ADDRESS};
+use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
 use std::convert::TryInto;
 use crate::utils;
 
@@ -57,9 +58,9 @@ pub fn handle_get_own_source() -> ZomeApiResult<String> {
  * - Otherwise, return empty vector 
  */
 pub fn handle_get_known_sources(address: Address) -> ZomeApiResult<Vec<String>> {
-  match hdk::get_entry(&address)? {
-    Some(_) => Ok(vec![handle_get_own_source()?]),
-    None => {
+  match proxied_entry_exists(&address)? {
+    true => Ok(vec![handle_get_own_source()?]),
+    false => {
       let response = hdk::call(
         hdk::THIS_INSTANCE,
         "proxy",
@@ -136,4 +137,20 @@ fn source_address(source: String) -> ZomeApiResult<Address> {
 
 fn create_source(source: String) -> ZomeApiResult<Address> {
   hdk::commit_entry(&source_entry(source))
+}
+
+fn proxied_entry_exists(address: &Address) -> ZomeApiResult<bool> {
+  let response = hdk::call(
+        hdk::THIS_INSTANCE,
+        "proxy",
+        Address::from(PUBLIC_TOKEN.to_string()),
+        "get_proxied_entry",
+        json!({"address": address.clone()}).into(),
+      )?;
+
+  // Check that response from proxy zome is ok
+  let result: ZomeApiResult<GetEntryResult> = response.try_into()?;
+  let entry_result = result?;
+
+  Ok(entry_result.found())
 }

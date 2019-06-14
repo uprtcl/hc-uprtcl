@@ -81,10 +81,19 @@ pub fn handle_create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Addr
 /**
  * Clones the given context and returns the new address
  */
-pub fn handle_clone_context(context: Context, provenance: Provenance) -> ZomeApiResult<Address> {
+pub fn handle_clone_context(
+  previous_address: Option<Address>,
+  context: Context
+) -> ZomeApiResult<Address> {
   let context_entry = context_entry(context);
-  let context_address = utils::commit_entry_with_custom_provenance(&context_entry, provenance)?;
+  // TODO: change for commit_entry_custom_provenance
+  let context_address = utils::store_entry_if_new(&context_entry)?;
+
   utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
+
+  if let Some(proxy_address) = previous_address {
+    utils::set_entry_proxy(proxy_address.clone(), Some(context_address.clone()))?;
+  }
 
   Ok(context_address)
 }

@@ -80,6 +80,20 @@ scenario1.runTape('get proxied entry is ok', async (t, { alice }) => {
   t.equal(entry.Ok.result.Single.meta.address, entryAddress);
 });
 
+scenario1.runTape('get internal address is ok', async (t, { alice }) => {
+  // Create any entry in the app
+  const entryAddress = await createSampleEntry(alice);
+
+  await alice.callSync('proxy', 'set_entry_proxy', {
+    proxy_address: PROXY_ADDRESS2,
+    entry_address: entryAddress
+  });
+  const address = await alice.callSync('proxy', 'get_internal_address', {
+    proxy_address: PROXY_ADDRESS2
+  });
+  t.equal(address.Ok, entryAddress);
+});
+
 scenario1.runTape('links to proxy is ok', async (t, { alice }) => {
   const sampleEntryAddress = await createSampleEntry(alice);
 

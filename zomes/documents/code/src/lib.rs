@@ -21,7 +21,7 @@ use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEnt
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct TextNode {
     text: String,
-    type: String,
+    r#type: String,
     links: Vec<Address>,
 }
 
