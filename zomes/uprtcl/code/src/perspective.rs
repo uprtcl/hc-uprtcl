@@ -139,12 +139,14 @@ pub fn handle_get_perspective_info(perspective_address: Address) -> ZomeApiResul
  * Returns the address of the head commit for the given perspective
  */
 pub fn handle_get_perspective_head(perspective_address: Address) -> ZomeApiResult<Address> {
+  let internal_perspective_address = get_internal_address(perspective_address)?;
+
   let response = hdk::call(
     hdk::THIS_INSTANCE,
     "proxy",
     Address::from(PUBLIC_TOKEN.to_string()),
     "get_links_to_proxy",
-    json!({ "base_address": perspective_address, "link_type": "head", "tag": ""}).into(),
+    json!({ "base_address": internal_perspective_address, "link_type": "head", "tag": ""}).into(),
   )?;
 
   let links_result: ZomeApiResult<Vec<Address>> = response.try_into()?;

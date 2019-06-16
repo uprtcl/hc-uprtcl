@@ -27,18 +27,6 @@ pub mod utils;
 
 /** Exposed zome functions */
 
-pub fn handle_get_entry(address: Address) -> ZomeApiResult<GetEntryResult> {
-  hdk::get_entry_result(
-    &address,
-    GetEntryOptions {
-      status_request: StatusRequestKind::default(),
-      entry: true,
-      headers: true,
-      timeout: Default::default(),
-    },
-  )
-}
-
 pub fn get_origin() -> String {
   String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
 }
@@ -60,12 +48,6 @@ define_zome! {
 
   functions: [
 
-    get_entry: {
-      inputs: |address: Address|,
-      outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: handle_get_entry
-    }
-
     // Contexts
     get_root_context_id: {
       inputs: | |,
@@ -83,12 +65,6 @@ define_zome! {
       inputs: |previous_address: Option<Address>, context: context::Context|,
       outputs: |result: ZomeApiResult<Address>|,
       handler: context::handle_clone_context
-    }
-
-    get_context_info: {
-      inputs: |context_address: Address|,
-      outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: context::handle_get_context_info
     }
 
     get_context_address: {
@@ -116,12 +92,6 @@ define_zome! {
       handler: context::handle_get_context_perspectives
     }
 
-    get_perspective_info: {
-      inputs: |perspective_address: Address|,
-      outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: perspective::handle_get_perspective_info
-    }
-
     get_perspective_head: {
       inputs: |perspective_address: Address|,
       outputs: |result: ZomeApiResult<Address>|,
@@ -147,19 +117,13 @@ define_zome! {
       handler: commit::handle_clone_commit
     }
 
-    get_commit_info: {
-      inputs: |commit_address: Address|,
-      outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: commit::handle_get_commit_info
-    }
-
   ]
 
   traits: {
     hc_public [
-      get_entry, create_context, get_root_context_id, get_context_info,
-      create_perspective, get_context_perspectives, get_perspective_info, get_perspective_head, update_perspective_head,
-      create_commit, get_commit_info, clone_context, clone_perspective, clone_commit
+      create_context, get_root_context_id,
+      create_perspective, get_context_perspectives, get_perspective_head, update_perspective_head,
+      create_commit, clone_context, clone_perspective, clone_commit
     ]
   }
 
