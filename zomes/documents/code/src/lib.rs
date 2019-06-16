@@ -16,7 +16,6 @@ use hdk::holochain_core_types::{
     json::JsonString,
 };
 use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
-use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 
 pub mod utils;
 
