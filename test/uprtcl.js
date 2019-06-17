@@ -45,7 +45,7 @@ scenario1.runTape('check root context created', async (t, { alice }) => {
   const perspectives = await getContextPerspectives(contextAddress)(alice);
   t.equal(perspectives.length, 1);
 
-  t.equal(perspectives[0].id, 'Qmf79DLDiZ2ZhBQyBmPHyC4R2p7DVffzcpGHcnfmpCz37f');
+  t.equal(perspectives[0].id, 'QmSNDhLvofEz5SkzN7cEwq6DsY3BLdN2juBdCgqBoCXqWU');
 
   t.equal(perspectives[0].origin.includes('holochain://'), true);
 });
@@ -103,7 +103,7 @@ scenario1.runTape(
     const perspectiveHead = await getPerspectiveHead(masterAddress)(alice);
     // ... and check the commit's structure
     const commitInfo = getEntry(perspectiveHead)(alice);
-    t.equal(commitInfo.parentIds.length, 0);
+    t.equal(commitInfo.parentsIds.length, 0);
     t.equal(commitInfo.creatorId, CREATOR_ADDRESS);
     t.equal(commitInfo.dataId, SAMPLE_ADDRESS1);
     t.equal(commitInfo.message, 'Commit message');
@@ -125,7 +125,7 @@ scenario1.runTape(
 
     // Check that parent commit of the second commit is the first commit
     const secondCommitInfo = getEntry(secondCommitAddress)(alice);
-    t.equal(secondCommitInfo.parentIds[0], perspectiveHead);
+    t.equal(secondCommitInfo.parentsIds[0], perspectiveHead);
     // Check new commits content and its content is the new content
     t.equal(secondCommitInfo.dataId, SAMPLE_ADDRESS2);
   }

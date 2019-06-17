@@ -171,7 +171,7 @@ const buildCommit = function(
     timestamp: timestamp,
     message: message,
     dataId: contentAddress,
-    parentIds: parentCommitAddresses
+    parentsIds: parentCommitAddresses
   };
 };
 

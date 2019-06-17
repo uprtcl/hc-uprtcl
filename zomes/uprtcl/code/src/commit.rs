@@ -18,12 +18,12 @@ pub struct Commit {
 
   // Hard links
   dataId: Address,
-  parentIds: Vec<Address>,
+  parentsIds: Vec<Address>,
 }
 
 impl Commit {
   pub fn get_parent_commits_addresses(self) -> Vec<Address> {
-    self.parentIds
+    self.parentsIds
   }
 
   pub fn get_content_address(&self) -> &Address {
