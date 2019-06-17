@@ -1,5 +1,6 @@
 #![feature(try_from)]
 #![warn(unused_extern_crates)]
+#[allow(non_snake_case)]
 #[macro_use]
 extern crate hdk;
 #[macro_use]
@@ -56,15 +57,9 @@ define_zome! {
     }
 
     create_context: {
-      inputs: |timestamp: u128, nonce: u128|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: context::handle_create_context
-    }
-
-    clone_context: {
       inputs: |previous_address: Option<Address>, context: context::Context|,
       outputs: |result: ZomeApiResult<Address>|,
-      handler: context::handle_clone_context
+      handler: context::handle_create_context
     }
 
     get_context_address: {
@@ -75,15 +70,9 @@ define_zome! {
 
     // Perspectives
     create_perspective: {
-      inputs: |context_address: Address, name: String, timestamp: u128, head_address: Option<Address>|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: perspective::handle_create_perspective
-    }
-
-    clone_perspective: {
       inputs: |previous_address: Option<Address>, perspective: perspective::Perspective|,
       outputs: |result: ZomeApiResult<Address>|,
-      handler: perspective::handle_clone_perspective
+      handler: perspective::handle_create_perspective
     }
 
     get_context_perspectives: {
@@ -106,15 +95,9 @@ define_zome! {
 
     // Commits
     create_commit: {
-      inputs: |message: String, timestamp: u128, parent_commits_addresses: Vec<Address>, content_address: Address|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: commit::handle_create_commit
-    }
-
-    clone_commit: {
       inputs: |previous_address: Option<Address>, commit: commit::Commit|,
       outputs: |result: ZomeApiResult<Address>|,
-      handler: commit::handle_clone_commit
+      handler: commit::handle_create_commit
     }
 
   ]
@@ -123,7 +106,7 @@ define_zome! {
     hc_public [
       create_context, get_root_context_id,
       create_perspective, get_context_perspectives, get_perspective_head, update_perspective_head,
-      create_commit, clone_context, clone_perspective, clone_commit
+      create_commit
     ]
   }
 

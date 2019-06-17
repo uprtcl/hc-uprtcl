@@ -17,19 +17,14 @@ const scenario1 = new Scenario([instanceAlice]);
 // Utils variables to facilitate testing code
 
 const {
-  getContextInfo,
+  getEntry,
   createContext,
-  cloneContext,
   createPerspective,
-  clonePerspective,
   getRootContextId,
-  getPerspectiveInfo,
   getContextPerspectives,
   getPerspectiveHead,
   updatePerspectiveHead,
   createCommit,
-  cloneCommit,
-  getCommitInfo,
   createCommitInPerspective,
   createContextPerspectiveAndCommit,
   buildContext,
@@ -43,28 +38,26 @@ const {
 const SAMPLE_ADDRESS1 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const SAMPLE_ADDRESS2 = 'QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE';
 
-
 scenario1.runTape('check root context created', async (t, { alice }) => {
   let contextAddress = await getRootContextId()(alice);
-  t.equal(contextAddress, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
+  t.equal(contextAddress, 'QmbBkX5Bjofs2XSjkgo3rKvzCdr4tefVpHMDbTmjXtRH2E');
 
   const perspectives = await getContextPerspectives(contextAddress)(alice);
   t.equal(perspectives.length, 1);
 
-  t.equal(perspectives[0].id, 'QmXAM9RESJgxs6wTaiPVB4wP9x8AGQmHQJHcMUoRBP2KzW');
-  
+  t.equal(perspectives[0].id, 'Qmf79DLDiZ2ZhBQyBmPHyC4R2p7DVffzcpGHcnfmpCz37f');
+
   t.equal(perspectives[0].origin.includes('holochain://'), true);
 });
 
-
 scenario1.runTape('create context', async (t, { alice }) => {
   // Create context
-  const contextAddress = await createContext()(alice);
+  const contextAddress = await createContext(buildContext())(alice);
 
-  const result = await getContextInfo(contextAddress)(alice);
+  const result = await getEntry(contextAddress)(alice);
 
   // Check that context creator is correct
-  t.equal(result.creator, CREATOR_ADDRESS);
+  t.equal(result.creatorId, CREATOR_ADDRESS);
 
   // check that context has a perspective associated
   const perspectives = await getContextPerspectives(contextAddress)(alice);
@@ -75,13 +68,13 @@ scenario1.runTape(
   'create perspective with proxy addresses',
   async (t, { alice }) => {
     // Create perspective pointing proxy addresses
-    const perspectiveAddress = await createPerspective(
-      'proxy1',
-      'develop',
-      'proxy2'
-    )(alice); 
+    const perspective = buildPerspective('develop', 'proxy1');
+    const perspectiveAddress = await createPerspective(perspective)(alice);
     // check that context has a perspective associated
     t.equal(perspectiveAddress.startsWith('Qm'), true);
+
+    const result = await updatePerspectiveHead(perspectiveAddress, 'proxy2')(alice);
+    t.equal(Object.keys(result).includes('Ok'), true);
   }
 );
 
@@ -109,18 +102,17 @@ scenario1.runTape(
     // Check that the perspective points to the previously defined commit
     const perspectiveHead = await getPerspectiveHead(masterAddress)(alice);
     // ... and check the commit's structure
-    const commitInfo = getCommitInfo(perspectiveHead)(alice);
-    t.equal(commitInfo.parent_commits_addresses.length, 0);
-    t.equal(commitInfo.creator, CREATOR_ADDRESS);
-    t.equal(commitInfo.content_address, SAMPLE_ADDRESS1);
+    const commitInfo = getEntry(perspectiveHead)(alice);
+    t.equal(commitInfo.parentIds.length, 0);
+    t.equal(commitInfo.creatorId, CREATOR_ADDRESS);
+    t.equal(commitInfo.dataId, SAMPLE_ADDRESS1);
     t.equal(commitInfo.message, 'Commit message');
 
     // Create second commit
-    const secondCommitAddress = await createCommit(
-      'second commit',
-      [commitAddress],
-      SAMPLE_ADDRESS2
-    )(alice);
+    const commit = buildCommit(SAMPLE_ADDRESS2, 'second commit', [
+      commitAddress
+    ]);
+    const secondCommitAddress = await createCommit(commit)(alice);
 
     // Update perspective head
     await updatePerspectiveHead(masterAddress, secondCommitAddress)(alice);
@@ -132,10 +124,10 @@ scenario1.runTape(
     t.equal(perspectiveHead2, secondCommitAddress);
 
     // Check that parent commit of the second commit is the first commit
-    const secondCommitInfo = getCommitInfo(secondCommitAddress)(alice);
-    t.equal(secondCommitInfo.parent_commits_addresses[0], perspectiveHead);
+    const secondCommitInfo = getEntry(secondCommitAddress)(alice);
+    t.equal(secondCommitInfo.parentIds[0], perspectiveHead);
     // Check new commits content and its content is the new content
-    t.equal(secondCommitInfo.content_address, SAMPLE_ADDRESS2);
+    t.equal(secondCommitInfo.dataId, SAMPLE_ADDRESS2);
   }
 );
 
@@ -154,19 +146,21 @@ scenario1.runTape(
     )(alice);
 
     // Create another perspective pointing to the initial commit
-    const developAddress = await createPerspective(
-      contextAddress,
-      'develop',
-      commitAddress
-    )(alice);
-    const developPerspective = getPerspectiveInfo(developAddress)(alice);
+    const perspective = buildPerspective('develop', contextAddress);
+    const developAddress = await createPerspective(perspective)(alice);
+
+    // Check perspective info
+    const developPerspective = getEntry(developAddress)(alice);
     t.equal(developPerspective.name, 'develop');
-    t.equal(developPerspective.context_address, contextAddress);
+    t.equal(developPerspective.contextId, contextAddress);
 
     // Check that the context now has the two correct perspectives
     const perspectives = await getContextPerspectives(contextAddress)(alice);
     t.equal(perspectives[0].id, perspectiveAddress);
     t.equal(perspectives[1].id, developAddress);
+
+    // Set perspective head
+    await updatePerspectiveHead(developAddress, commitAddress)(alice);
 
     // Check that the newly created perspective points to the correct commit
     const perspectiveHead = await getPerspectiveHead(developAddress)(alice);
@@ -191,9 +185,9 @@ scenario1.runTape(
   }
 );
 /* 
-scenario1.runTape('clone with invalid keys fails', async (t, { alice }) => {
-  // Clone context
-  let errorMessage = await cloneContext(
+scenario1.runTape('create with invalid provenance fails', async (t, { alice }) => {
+  // create context
+  let errorMessage = await createContext(
     buildContext(CREATOR_ADDRESS, 0, 0),
     buildProvenance(
       CREATOR_ADDRESS,
@@ -202,8 +196,8 @@ scenario1.runTape('clone with invalid keys fails', async (t, { alice }) => {
   )(alice);
   t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
 
-  // Clone commit
-  errorMessage = await cloneCommit(
+  // create commit
+  errorMessage = await createCommit(
     buildCommit(SAMPLE_ADDRESS1, 0, 'commit messages', []),
     buildProvenance(
       CREATOR_ADDRESS,
@@ -212,8 +206,8 @@ scenario1.runTape('clone with invalid keys fails', async (t, { alice }) => {
   )(alice);
   t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
 
-  // Clone perspective
-  errorMessage = await clonePerspective(
+  // create perspective
+  errorMessage = await createPerspective(
     {
       context_address: SAMPLE_ADDRESS1,
       timestamp: 0,
@@ -230,10 +224,10 @@ scenario1.runTape('clone with invalid keys fails', async (t, { alice }) => {
 });
 
 scenario1.runTape(
-  'clone context, perspective and commit',
+  'create with valid custom provenance context, perspective and commit',
   async (t, { alice }) => {
-    // Clone context
-    const contextAddress = await cloneContext(
+    // create context
+    const contextAddress = await createContext(
       buildContext(CREATOR_ADDRESS, 0, 0),
       buildProvenance(
         CREATOR_ADDRESS,
@@ -242,8 +236,8 @@ scenario1.runTape(
     )(alice);
     t.equal(contextAddress, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
 
-    // Clone commit
-    const commitAddress = await cloneCommit(
+    // create commit
+    const commitAddress = await createCommit(
       buildCommit(SAMPLE_ADDRESS1, 0, 'commit messages', []),
       buildProvenance(
         CREATOR_ADDRESS,
@@ -252,8 +246,8 @@ scenario1.runTape(
     )(alice);
     t.equal(commitAddress, 'QmWCtDCnbHXhkccaUQeSfsbrPHTvgascdeASSJ1UbvVu2J');
 
-    // Clone perspective
-    const perspectiveAddress = await clonePerspective(
+    // create perspective
+    const perspectiveAddress = await createPerspective(
       {
         context_address: contextAddress,
         timestamp: 0,

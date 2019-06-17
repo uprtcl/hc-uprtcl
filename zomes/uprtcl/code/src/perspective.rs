@@ -17,12 +17,12 @@ pub struct Perspective {
   name: String,
   origin: String,
   timestamp: u128,
-  creator: Address,
-  context_address: Address,
+  creatorId: Address,
+  contextId: Address,
 }
 
 impl Perspective {
-  fn new(
+  pub fn new(
     name: &str,
     timestamp: &u128,
     creator: &Address,
@@ -32,8 +32,8 @@ impl Perspective {
       name: name.to_owned(),
       timestamp: timestamp.to_owned(),
       origin: crate::get_origin(),
-      creator: creator.to_owned(),
-      context_address: context_address.to_owned(),
+      creatorId: creator.to_owned(),
+      contextId: context_address.to_owned(),
     }
   }
 }
@@ -80,33 +80,10 @@ pub fn definition() -> ValidatingEntryType {
 /** Zome exposed functions */
 
 /**
- * Creates a new perspective in the given context with the head pointing to the given commit
+ * Creates a new perspective with the given properties,
+ * and associates its previous address if present
  */
 pub fn handle_create_perspective(
-  context_address: Address,
-  name: String,
-  timestamp: u128,
-  head_address: Option<Address>,
-) -> ZomeApiResult<Address> {
-  let perspective_entry = Entry::App(
-    "perspective".into(),
-    Perspective::new(&name, &timestamp, &AGENT_ADDRESS, &context_address).into(),
-  );
-  let perspective_address = hdk::commit_entry(&perspective_entry)?;
-
-  link_context_to_perspective(context_address, perspective_address.clone())?;
-
-  if let Some(head) = head_address {
-    link_perspective_to_commit(perspective_address.clone(), head)?;
-  }
-
-  Ok(perspective_address)
-}
-
-/**
- * Clones the given perspective, linking it with the appropiate context and commit
- */
-pub fn handle_clone_perspective(
   previous_address: Option<Address>,
   perspective: Perspective,
 ) -> ZomeApiResult<Address> {
@@ -114,7 +91,7 @@ pub fn handle_clone_perspective(
   // TODO change for create_entry_custom_provenance
   let perspective_address = utils::store_entry_if_new(&perspective_entry)?;
 
-  link_context_to_perspective(perspective.context_address, perspective_address.clone())?;
+  link_context_to_perspective(perspective.contextId, perspective_address.clone())?;
 
   utils::set_entry_proxy(
     perspective_address.clone(),
@@ -171,7 +148,11 @@ pub fn handle_update_perspective_head(
   // Perspective address can be a proxy address, get the internal address
   let internal_perspective_address = get_internal_address(perspective_address)?;
 
-  utils::remove_previous_links(&internal_perspective_address, Some(String::from("head")), None)?;
+  utils::remove_previous_links(
+    &internal_perspective_address,
+    Some(String::from("head")),
+    None,
+  )?;
 
   link_perspective_to_commit(internal_perspective_address.clone(), head_address)?;
 

@@ -1,5 +1,4 @@
-use crate::utils;
-use hdk::PUBLIC_TOKEN;
+use crate::{perspective, utils};
 use hdk::{
   entry_definition::ValidatingEntryType,
   error::ZomeApiResult,
@@ -7,30 +6,22 @@ use hdk::{
     cas::content::Address, dna::entry_types::Sharing, entry::Entry, error::HolochainError,
     json::JsonString, link::LinkMatch, signature::Provenance,
   },
-  AGENT_ADDRESS,
+  AGENT_ADDRESS, PUBLIC_TOKEN,
 };
 use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
 use std::convert::TryInto;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Context {
-  creator: Address,
+  creatorId: Address,
   timestamp: u128,
   nonce: u128,
 }
 
 impl Context {
-  fn new(timestamp: u128, nonce: u128) -> Context {
-    Context {
-      creator: AGENT_ADDRESS.to_owned(),
-      timestamp: timestamp.to_owned(),
-      nonce: nonce.to_owned(),
-    }
-  }
-
   pub fn root_context() -> Context {
     Context {
-      creator: AGENT_ADDRESS.to_owned(),
+      creatorId: AGENT_ADDRESS.to_owned(),
       timestamp: 0,
       nonce: 0,
     }
@@ -69,21 +60,12 @@ pub fn definition() -> ValidatingEntryType {
 /** Zome exposed functions */
 
 /**
- * Create a new context with the given name, passing the author and the current time
+ * Create a new context with the given properties,
+ * and associates its previous address if present
  */
-pub fn handle_create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Address> {
-  let context_address = create_context(Context::new(timestamp, nonce))?;
-  utils::set_entry_proxy(context_address.clone(), Some(context_address.clone()))?;
-
-  Ok(context_address)
-}
-
-/**
- * Clones the given context and returns the new address
- */
-pub fn handle_clone_context(
+pub fn handle_create_context(
   previous_address: Option<Address>,
-  context: Context
+  context: Context,
 ) -> ZomeApiResult<Address> {
   let context_entry = context_entry(context);
   // TODO: change for commit_entry_custom_provenance
@@ -193,12 +175,8 @@ pub fn create_context(context: Context) -> ZomeApiResult<Address> {
 pub fn create_root_context_and_perspective() -> ZomeApiResult<()> {
   let context_address = create_context(Context::root_context())?;
 
-  crate::perspective::handle_create_perspective(
-    context_address.clone(),
-    String::from("root"),
-    0,
-    None,
-  )?;
+  let perspective = perspective::Perspective::new("root", &0, &AGENT_ADDRESS, &context_address);
+  perspective::handle_create_perspective(None, perspective)?;
 
   hdk::link_entries(&AGENT_ADDRESS, &context_address, "root", "")?;
 
