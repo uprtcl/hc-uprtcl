@@ -1,7 +1,8 @@
 #!/bin/bash
 
-TESTS=("uprtcl.js")
+#TESTS=("uprtcl.js")
 
-for test in "${TESTS[@]}"; do
-  tape $test | faucet
-done
+#for test in "${TESTS[@]}"; do
+#done
+ 
+node index.js | faucet

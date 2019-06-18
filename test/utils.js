@@ -6,8 +6,8 @@ const parseResponse = function(response) {
 };
 
 const getEntry = function(address) {
-  return caller => {
-    const entry = caller.call('proxy', 'get_proxied_entry', {
+  return async caller => {
+    const entry = await caller.call('proxy', 'get_proxied_entry', {
       address: address
     });
     return parseEntryResult(entry);

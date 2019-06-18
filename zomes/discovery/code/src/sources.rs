@@ -90,19 +90,22 @@ pub fn handle_add_known_sources(address: Address, sources: Vec<String>) -> ZomeA
   utils::set_entry_proxy(address.clone(), None)?;
 
   for source in sources.into_iter() {
-    let source_address = create_source(source)?;
+    // If the source given is this app, do not add it to the known sources as this can be computed
+    if source != handle_get_own_source()? {
+      let source_address = create_source(source)?;
 
-    let response = hdk::call(
-        hdk::THIS_INSTANCE,
-        "proxy",
-        Address::from(PUBLIC_TOKEN.to_string()),
-        "link_from_proxy",
-        json!({"proxy_address": address.clone(), "to_address": source_address.clone(), "link_type": "known_source", "tag": ""}).into(),
-      )?;
+      let response = hdk::call(
+          hdk::THIS_INSTANCE,
+          "proxy",
+          Address::from(PUBLIC_TOKEN.to_string()),
+          "link_from_proxy",
+          json!({"proxy_address": address.clone(), "to_address": source_address.clone(), "link_type": "known_source", "tag": ""}).into(),
+        )?;
 
-    // Check that response from proxy zome is ok
-    let _result: ZomeApiResult<Address> = response.try_into()?;
-    let _address = _result?;
+      // Check that response from proxy zome is ok
+      let _result: ZomeApiResult<Address> = response.try_into()?;
+      let _address = _result?;
+    }
   }
   Ok(())
 }
