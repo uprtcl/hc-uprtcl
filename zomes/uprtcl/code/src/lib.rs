@@ -40,22 +40,12 @@ define_zome! {
   ]
 
   genesis: || {
- /*    {
-      perspective::create_root_context_and_perspective()
-        .map_err(|err| format!("create root context failed: {}",err))
-    } */
     Ok(())
   }
 
   functions: [
 
     // Contexts
-    get_root_context_id: {
-      inputs: | |,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: context::handle_get_root_context_id
-    }
-
     create_context: {
       inputs: |previous_address: Option<Address>, context: context::Context|,
       outputs: |result: ZomeApiResult<Address>|,
@@ -104,7 +94,7 @@ define_zome! {
 
   traits: {
     hc_public [
-      create_context, get_root_context_id,
+      create_context,
       create_perspective, get_context_perspectives, get_perspective_head, update_perspective_head,
       create_commit
     ]

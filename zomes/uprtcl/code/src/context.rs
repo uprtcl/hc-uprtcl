@@ -18,16 +18,6 @@ pub struct Context {
   nonce: u128,
 }
 
-impl Context {
-  pub fn root_context() -> Context {
-    Context {
-      creatorId: AGENT_ADDRESS.to_owned(),
-      timestamp: 0,
-      nonce: 0,
-    }
-  }
-}
-
 pub fn definition() -> ValidatingEntryType {
   entry!(
     name: "context",
@@ -42,18 +32,7 @@ pub fn definition() -> ValidatingEntryType {
       Ok(())
     },
 
-    links: [
-      from!(
-        "%agent_id",
-        link_type: "root",
-        validation_package: || {
-          hdk::ValidationPackageDefinition::ChainFull
-        },
-        validation: |_validation_data: hdk::LinkValidationData | {
-          Ok(())
-        }
-      )
-    ]
+    links: []
   )
 }
 
@@ -123,32 +102,6 @@ pub fn handle_get_context_address(context: Context) -> ZomeApiResult<Address> {
   hdk::entry_address(&context_entry(context))
 }
 
-/**
- * Returns the root perspective of the agent, created at genesis time
- */
-pub fn handle_get_root_context_id() -> ZomeApiResult<Address> {
-  let links = hdk::get_links(&AGENT_ADDRESS, LinkMatch::Exactly("root"), LinkMatch::Any)?;
-
-  // TODO: Comment when genesis block is executed
-  match links.addresses().len() {
-    1 => Ok(links.addresses()[0].clone()),
-    _ => {
-      create_root_context_and_perspective()?;
-      handle_get_root_context_id()
-    }
-  }
-  /*
-    TODO: Uncomment when genesis block is executed
-  match links.addresses().len() {
-    1 => Ok(links.addresses()[0].clone()),
-    _ => Err(ZomeApiError::from(format!(
-      "agent has {} root contexts",
-      links.addresses().len()
-    ))),
-  }
-   */
-}
-
 /** Helper functions */
 
 /**
@@ -166,19 +119,4 @@ pub fn create_context(context: Context) -> ZomeApiResult<Address> {
   let context_address = hdk::commit_entry(&context_entry)?;
 
   Ok(context_address)
-}
-
-/**
- * Creates the root perspective for the agent
- * Only to be called at genesis time
- */
-pub fn create_root_context_and_perspective() -> ZomeApiResult<()> {
-  let context_address = create_context(Context::root_context())?;
-
-  let perspective = perspective::Perspective::new("root", &0, &AGENT_ADDRESS, &context_address);
-  perspective::handle_create_perspective(None, perspective)?;
-
-  hdk::link_entries(&AGENT_ADDRESS, &context_address, "root", "")?;
-
-  Ok(())
 }
