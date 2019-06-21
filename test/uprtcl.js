@@ -22,21 +22,7 @@ const SAMPLE_ADDRESS1 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const SAMPLE_ADDRESS2 = 'QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE';
 
 module.exports = scenario => {
-/*   scenario('check root context created', async (s, t, { alice }) => {
-    let contextAddress = await getRootContextId()(alice);
-    t.equal(contextAddress, 'QmbBkX5Bjofs2XSjkgo3rKvzCdr4tefVpHMDbTmjXtRH2E');
 
-    const perspectives = await getContextPerspectives(contextAddress)(alice);
-    t.equal(perspectives.length, 1);
-
-    t.equal(
-      perspectives[0].id,
-      'QmSNDhLvofEz5SkzN7cEwq6DsY3BLdN2juBdCgqBoCXqWU'
-    );
-
-    t.equal(perspectives[0].origin.includes('holochain://'), true);
-  });
- */
   scenario('create context', async (s, t, { alice }) => {
     // Create context
     const contextAddress = await createContext(buildContext())(alice);
@@ -56,7 +42,7 @@ module.exports = scenario => {
     const perspective = buildPerspective('develop', 'proxy1');
     const perspectiveAddress = await createPerspective(perspective)(alice);
     // check that context has a perspective associated
-    t.equal(perspectiveAddress, true);
+    t.equal(perspectiveAddress.startsWith('Qm'), true);
 
     const result = await updatePerspectiveHead(perspectiveAddress, 'proxy2')(
       alice
@@ -78,6 +64,7 @@ module.exports = scenario => {
 
     // Check that the context has one perspective named master
     const perspectives = await getContextPerspectives(contextAddress)(alice);
+    t.equal(perspectives, 1);
     t.equal(perspectives.length, 1);
     t.equal(perspectives[0].name, 'master');
 
