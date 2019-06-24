@@ -19,17 +19,17 @@ const diorama = new Diorama({
     alice: dna,
     bob: dna
   },
-  debugLog: true,
+  debugLog: false,
   executor: tapeExecutor(require('tape')),
   middleware: backwardCompatibilityMiddleware
 });
 
 // Execute all the tests
+require('./proxy')(diorama.registerScenario);
 require('./uprtcl')(diorama.registerScenario);
+require('./workspace')(diorama.registerScenario);
 require('./draft')(diorama.registerScenario);
-//require('./proxy')(diorama.registerScenario);
-//require('./discovery')(diorama.registerScenario);
-//require('./workspace')(diorama.registerScenario);
-//require('./draft')(diorama.registerScenario);
+require('./discovery')(diorama.registerScenario);
+require('./lens')(diorama.registerScenario);
 
 diorama.run();

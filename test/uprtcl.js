@@ -56,7 +56,7 @@ module.exports = scenario => {
     const perspective = buildPerspective('develop', 'proxy1');
     const perspectiveAddress = await createPerspective(perspective)(alice);
     // check that context has a perspective associated
-    t.equal(perspectiveAddress, true);
+    t.equal(perspectiveAddress.startsWith('Qm'), true);
 
     const result = await updatePerspectiveHead(perspectiveAddress, 'proxy2')(
       alice
@@ -86,7 +86,7 @@ module.exports = scenario => {
     // Check that the perspective points to the previously defined commit
     const perspectiveHead = await getPerspectiveHead(masterAddress)(alice);
     // ... and check the commit's structure
-    const commitInfo = getEntry(perspectiveHead)(alice);
+    const commitInfo = await getEntry(perspectiveHead)(alice);
     t.equal(commitInfo.parentsIds.length, 0);
     t.equal(commitInfo.creatorId, CREATOR_ADDRESS);
     t.equal(commitInfo.dataId, SAMPLE_ADDRESS1);
@@ -108,7 +108,7 @@ module.exports = scenario => {
     t.equal(perspectiveHead2, secondCommitAddress);
 
     // Check that parent commit of the second commit is the first commit
-    const secondCommitInfo = getEntry(secondCommitAddress)(alice);
+    const secondCommitInfo = await getEntry(secondCommitAddress)(alice);
     t.equal(secondCommitInfo.parentsIds[0], perspectiveHead);
     // Check new commits content and its content is the new content
     t.equal(secondCommitInfo.dataId, SAMPLE_ADDRESS2);
@@ -133,7 +133,7 @@ module.exports = scenario => {
       const developAddress = await createPerspective(perspective)(alice);
 
       // Check perspective info
-      const developPerspective = getEntry(developAddress)(alice);
+      const developPerspective = await getEntry(developAddress)(alice);
       t.equal(developPerspective.name, 'develop');
       t.equal(developPerspective.contextId, contextAddress);
 

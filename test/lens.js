@@ -20,7 +20,7 @@ module.exports = scenario => {
     t.equal(lens.Ok.lens, SAMPLE_LENS);
   });
 
-  scenario2.runTape(
+  scenario(
     "get lens retrieves another user's lens if that user did not set any",
     async (s, t, { alice, bob }) => {
       await alice.callSync('lens', 'set_lens', {
