@@ -13,12 +13,12 @@ use crate::utils;
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Commit {
   creatorId: Address,
-  message: String,
   timestamp: u128,
+  message: String,
 
   // Hard links
-  dataId: Address,
   parentsIds: Vec<Address>,
+  dataId: Address,
 }
 
 impl Commit {

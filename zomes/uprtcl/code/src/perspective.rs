@@ -14,11 +14,11 @@ use std::convert::TryInto;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Perspective {
-  name: String,
   origin: String,
-  timestamp: u128,
   creatorId: Address,
+  timestamp: u128,
   contextId: Address,
+  name: String,
 }
 
 impl Perspective {
@@ -29,11 +29,11 @@ impl Perspective {
     context_address: &Address,
   ) -> Perspective {
     Perspective {
-      name: name.to_owned(),
-      timestamp: timestamp.to_owned(),
       origin: crate::get_origin(),
       creatorId: creator.to_owned(),
+      timestamp: timestamp.to_owned(),
       contextId: context_address.to_owned(),
+      name: name.to_owned(),
     }
   }
 }
