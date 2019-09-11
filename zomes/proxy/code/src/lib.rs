@@ -1,85 +1,362 @@
-#![feature(try_from)]
+#![feature(proc_macro_hygiene)]
 #[macro_use]
 extern crate hdk;
+extern crate hdk_proc_macros;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate serde_json;
-#[macro_use]
-extern crate holochain_core_types_derive;
+extern crate holochain_json_derive;
 
-use hdk::{
-  error::ZomeApiResult,
-  holochain_core_types::{cas::content::Address, error::HolochainError, json::JsonString},
+use hdk::holochain_core_types::{dna::entry_types::Sharing, entry::Entry, link::LinkMatch};
+use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
+use holochain_wasm_utils::api_serialization::{
+    get_entry::{GetEntryOptions, GetEntryResult, StatusRequestKind},
+    get_links::GetLinksResult,
 };
-use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
 
-pub mod proxy;
-pub mod utils;
+use hdk::holochain_json_api::json::JsonString;
 
-define_zome! {
-  entries: [
-      proxy::definition()
-  ]
+use hdk::holochain_persistence_api::cas::content::Address;
 
-  genesis: || { Ok(()) }
+use hdk_proc_macros::zome;
 
-  functions: [
-    set_entry_proxy: {
-      inputs: |proxy_address: Address, entry_address: Option<Address>|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: proxy::handle_set_entry_proxy
-    }
-    get_proxied_entry: {
-      inputs: |address: Address|,
-      outputs: |result: ZomeApiResult<GetEntryResult>|,
-      handler: proxy::handle_get_proxied_entry
-    }
-    get_internal_address: {
-      inputs: |proxy_address: Address|,
-      outputs: |result: ZomeApiResult<Option<Address>>|,
-      handler: proxy::handle_get_internal_address
-    }
-    link_to_proxy: {
-      inputs: |base_address: Address, proxy_address: Address, link_type: String, tag: String|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: proxy::handle_link_to_proxy
-    }
-    link_from_proxy: {
-      inputs: |proxy_address: Address, to_address: Address, link_type: String, tag: String|,
-      outputs: |result: ZomeApiResult<Address>|,
-      handler: proxy::handle_link_from_proxy
-    }
-    remove_link_to_proxy: {
-      inputs: |base_address: Address, proxy_address: Address, link_type: String, tag: String|,
-      outputs: |result: ZomeApiResult<()>|,
-      handler: proxy::handle_remove_link_to_proxy
-    }
-    remove_link_from_proxy: {
-      inputs: |proxy_address: Address, to_address: Address, link_type: String, tag: String|,
-      outputs: |result: ZomeApiResult<()>|,
-      handler: proxy::handle_remove_link_from_proxy
-    }
-    // TODO: change Option<String> to an adaptation of LinkMatch
-    get_links_to_proxy: {
-      inputs: |base_address: Address, link_type: Option<String>, tag: Option<String>|,
-      outputs: |result: ZomeApiResult<Vec<Address>>|,
-      handler: proxy::handle_get_links_to_proxy
-    }
-    get_links_from_proxy: {
-      inputs: |proxy_address: Address, link_type: Option<String>, tag: Option<String>|,
-      outputs: |result: ZomeApiResult<Vec<Address>>|,
-      handler: proxy::handle_get_links_from_proxy
-    }
-  ]
+// see https://developer.holochain.org/api/latest/hdk/ for info on using the hdk library
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
+pub enum AuxLinkMatch<S: Into<String>> {
+    Any,
+    Exactly(S),
+    Regex(S),
+}
 
-  traits: {
-    hc_public [
-      set_entry_proxy,get_proxied_entry,get_internal_address,
-      link_to_proxy,link_from_proxy,
-      remove_link_to_proxy,remove_link_from_proxy,
-      get_links_from_proxy,get_links_to_proxy
-    ]
-  }
+#[zome]
+mod my_zome {
+
+    #[init]
+    fn init() {
+        Ok(())
+    }
+
+    #[validate_agent]
+    pub fn validate_agent(validation_data: EntryValidationData<AgentId>) {
+        Ok(())
+    }
+
+    #[entry_def]
+    fn proxy_def() -> ValidatingEntryType {
+        entry!(
+            name: "proxy",
+            description: "proxy to substitute any entry that wouldn't be present in the hApp",
+            sharing: Sharing::Public,
+            validation_package: || {
+                hdk::ValidationPackageDefinition::Entry
+            },
+            validation: | _validation_data: hdk::EntryValidationData<Address>| {
+                Ok(())
+            },
+                links: [
+            to!(
+                "proxy",
+                link_type: "external_proxy",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: |_validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
+            ),
+            to!(
+                "proxy",
+                link_type: "internal_proxy",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: |_validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
+            )
+        ]
+
+            )
+    }
+
+    /**
+     * Sets the given proxy pointing to the given address
+     */
+    #[zome_fn("hc_public")]
+    pub fn set_entry_proxy(
+        proxy_address: Address,
+        entry_address: Option<Address>,
+    ) -> ZomeApiResult<Address> {
+        // Store the given proxy as an entry
+        let proxy_entry_address = hdk::commit_entry(&proxy_entry(proxy_address.clone()))?;
+
+        if let Some(address) = entry_address {
+            if proxy_address != address {
+                // We are setting an external proxy: set the internal and setup the links
+                let internal_proxy_entry_address =
+                    hdk::commit_entry(&proxy_entry(address.to_owned()))?;
+                hdk::link_entries(
+                    &proxy_entry_address,
+                    &internal_proxy_entry_address,
+                    "internal_proxy",
+                    "",
+                )?;
+                hdk::link_entries(
+                    &internal_proxy_entry_address,
+                    &proxy_entry_address,
+                    "external_proxy",
+                    "",
+                )?;
+            }
+        }
+
+        Ok(proxy_entry_address)
+    }
+
+    /**
+     * Returns the entry identified by the given address if it exists in the hApp
+     */
+    #[zome_fn("hc_public")]
+    pub fn get_proxied_entry(address: Address) -> ZomeApiResult<GetEntryResult> {
+        match get_internal_address(address)? {
+            Some(internal_address) => get_entry_result(&internal_address),
+            None => entry_not_found(),
+        }
+    }
+
+    /** Create link */
+
+    /**
+     * Links the given base entry to the proxy identified by the proxy_address
+     */
+    #[zome_fn("hc_public")]
+    pub fn link_to_proxy(
+        base_address: Address,
+        proxy_address: Address,
+        link_type: String,
+        tag: String,
+    ) -> ZomeApiResult<Address> {
+        let proxy_entry_address = proxy_entry_address(proxy_address)?;
+        hdk::link_entries(&base_address, &proxy_entry_address, link_type, tag)
+    }
+
+    /**
+     * Links the proxy identified by the proxy_address to the given base entry
+     */
+    #[zome_fn("hc_public")]
+    pub fn link_from_proxy(
+        proxy_address: Address,
+        to_address: Address,
+        link_type: String,
+        tag: String,
+    ) -> ZomeApiResult<Address> {
+        let proxy_entry_address = proxy_entry_address(proxy_address)?;
+        hdk::link_entries(&proxy_entry_address, &to_address, link_type, tag)
+    }
+
+    /** Remove link */
+
+    #[zome_fn("hc_public")]
+    pub fn remove_link_to_proxy(
+        base_address: Address,
+        proxy_address: Address,
+        link_type: String,
+        tag: String,
+    ) -> ZomeApiResult<()> {
+        let proxy_entry_address = proxy_entry_address(proxy_address)?;
+        hdk::remove_link(&base_address, &proxy_entry_address, link_type, tag)
+    }
+
+    /**
+     * Links the proxy identified by the proxy_address to the given base entry
+     */
+    #[zome_fn("hc_public")]
+    pub fn remove_link_from_proxy(
+        proxy_address: Address,
+        to_address: Address,
+        link_type: String,
+        tag: String,
+    ) -> ZomeApiResult<()> {
+        let proxy_entry_address = proxy_entry_address(proxy_address)?;
+        hdk::remove_link(&proxy_entry_address, &to_address, link_type, tag)
+    }
+
+    /** Get links */
+
+    /**
+     * Get all links from the given proxy address and the proxies that represent the same identity
+     */
+    #[zome_fn("hc_public")]
+    pub fn get_links_from_proxy(
+        proxy_address: Address,
+        link_type: AuxLinkMatch<String>,
+        tag: AuxLinkMatch<String>,
+    ) -> ZomeApiResult<Vec<Address>> {
+        let proxy_entry_address = proxy_entry_address(proxy_address.clone())?;
+
+        let internal_proxy_links = hdk::get_links(
+            &proxy_entry_address,
+            LinkMatch::Exactly("internal_proxy"),
+            LinkMatch::Any,
+        )?;
+
+        match internal_proxy_links.addresses().len() {
+            1 => get_links_from_internal_proxy(
+                internal_proxy_links.addresses()[0].clone(),
+                link_type,
+                tag,
+            ),
+            _ => get_links_from_internal_proxy(proxy_entry_address, link_type, tag),
+        }
+    }
+
+    /**
+     * Returns all the links from the given base address to proxies addresses
+     */
+    #[zome_fn("hc_public")]
+    pub fn get_links_to_proxy(
+        base_address: Address,
+        link_type: AuxLinkMatch<String>,
+        tag: AuxLinkMatch<String>,
+    ) -> ZomeApiResult<Vec<Address>> {
+        let proxy_entries_addresses = get_links(&base_address, link_type, tag)?;
+
+        let mut proxy_addresses: Vec<Address> = Vec::new();
+
+        for proxy_entry_address in proxy_entries_addresses.addresses().into_iter() {
+            let proxy_address: Address = hdk::utils::get_as_type(proxy_entry_address)?;
+            proxy_addresses.push(proxy_address);
+        }
+
+        Ok(proxy_addresses)
+    }
+
+}
+
+/** Helpers */
+
+/**
+ * Converts the given proxy address to the internal address of the entry in our app
+ */
+fn get_internal_address(proxy_address: Address) -> ZomeApiResult<Option<Address>> {
+    let maybe_entry = get_entry_result(&proxy_address)?;
+
+    if maybe_entry.found() {
+        return Ok(Some(proxy_address));
+    }
+
+    let proxy_entry_address = proxy_entry_address(proxy_address)?;
+
+    match hdk::get_entry(&proxy_entry_address)? {
+        None => Ok(None),
+        Some(_) => {
+            // We have stored the proxy for the given address
+            let links = hdk::get_links(
+                &proxy_entry_address,
+                LinkMatch::Exactly("internal_proxy"),
+                LinkMatch::Any,
+            )?;
+            match links.addresses().len() {
+                1 => {
+                    let internal_proxy: Address =
+                        hdk::utils::get_as_type(links.addresses()[0].clone())?;
+                    Ok(Some(internal_proxy))
+                }
+                _ => Ok(None),
+            }
+        }
+    }
+}
+
+/**
+ * Get all links from the given internal proxy address plus all the links from the external proxies associated with it
+ */
+fn get_links_from_internal_proxy(
+    internal_proxy_entry_address: Address,
+    link_type: AuxLinkMatch<String>,
+    tag: AuxLinkMatch<String>,
+) -> ZomeApiResult<Vec<Address>> {
+    let internal_proxy_links = get_links(
+        &internal_proxy_entry_address,
+        link_type.clone(),
+        tag.clone(),
+    )?;
+
+    let mut links: Vec<Address> = internal_proxy_links.addresses();
+
+    let external_proxies_addresses = hdk::get_links(
+        &internal_proxy_entry_address,
+        LinkMatch::Exactly("external_proxy"),
+        LinkMatch::Any,
+    )?;
+
+    for external_proxy_address in external_proxies_addresses.addresses() {
+        let external_proxy_links =
+            get_links(&external_proxy_address, link_type.clone(), tag.clone())?;
+        links.append(&mut external_proxy_links.addresses());
+    }
+
+    Ok(links)
+}
+
+fn get_entry_result(address: &Address) -> ZomeApiResult<GetEntryResult> {
+    hdk::get_entry_result(
+        address,
+        GetEntryOptions {
+            status_request: StatusRequestKind::default(),
+            entry: true,
+            headers: true,
+            timeout: Default::default(),
+        },
+    )
+}
+
+fn entry_not_found() -> ZomeApiResult<GetEntryResult> {
+    Ok(GetEntryResult::new(StatusRequestKind::default(), None))
+}
+
+fn proxy_entry(proxy_address: Address) -> Entry {
+    Entry::App("proxy".into(), proxy_address.into())
+}
+
+fn proxy_entry_address(proxy_address: Address) -> ZomeApiResult<Address> {
+    hdk::entry_address(&proxy_entry(proxy_address))
+}
+
+fn get_links(
+    base_address: &Address,
+    link_type: AuxLinkMatch<String>,
+    tag: AuxLinkMatch<String>,
+) -> ZomeApiResult<GetLinksResult> {
+    let mut _string1 = String::new();
+    let mut _string2 = String::new();
+    let mut _string3 = String::new();
+    let mut _string4 = String::new();
+    let new_link_type = match link_type {
+        AuxLinkMatch::Exactly(expr) => {
+            _string1 = expr.to_owned();
+            LinkMatch::Exactly(_string1.as_str())
+        }
+        AuxLinkMatch::Regex(expr) => {
+            _string2 = expr.to_owned();
+
+            LinkMatch::Regex(_string2.as_str())
+        }
+        AuxLinkMatch::Any => LinkMatch::Any,
+    };
+    let new_link_tag = match tag {
+        AuxLinkMatch::Exactly(expr) => {
+            _string3 = expr.to_owned();
+            LinkMatch::Exactly(_string1.as_str())
+        }
+        AuxLinkMatch::Regex(expr) => {
+            _string4 = expr.to_owned();
+
+            LinkMatch::Regex(_string2.as_str())
+        }
+        AuxLinkMatch::Any => LinkMatch::Any,
+    };
+
+    hdk::get_links(base_address, new_link_type, new_link_tag)
 }

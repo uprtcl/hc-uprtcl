@@ -1,5 +1,5 @@
 dist/
 node_modules/
 target/
-bundle.json
-.hc/
+.hc
+.cargo
