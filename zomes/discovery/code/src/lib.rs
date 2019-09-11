@@ -85,7 +85,15 @@ mod my_zome {
                     "proxy",
                     Address::from(PUBLIC_TOKEN.to_string()),
                     "get_links_from_proxy",
-                    json!({"proxy_address": address, "link_type": "known_source", "tag": ""})
+                    json!({"proxy_address": address, "link_type": {
+                        "LinkMatch": {
+                            "Exactly": "known_source"
+                        }
+                    }, "tag": {
+                        "LinkMatch": {
+                            "Any": ""
+                        }
+                    }})
                         .into(),
                 )?;
 
@@ -120,7 +128,15 @@ mod my_zome {
           "proxy",
           Address::from(PUBLIC_TOKEN.to_string()),
           "link_from_proxy",
-          json!({"proxy_address": address.clone(), "to_address": source_address.clone(), "link_type": "known_source", "tag": ""}).into(),
+          json!({"proxy_address": address.clone(), "to_address": source_address.clone(), "link_type": {
+                        "LinkMatch": {
+                            "Exactly": "known_source"
+                        }
+                    }, "tag": {
+                        "LinkMatch": {
+                            "Any": ""
+                        }
+                    }}).into(),
         )?;
 
                 // Check that response from proxy zome is ok

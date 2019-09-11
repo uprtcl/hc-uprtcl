@@ -26,10 +26,10 @@ const diorama = new Diorama({
 
 // Execute all the tests
 require('./proxy')(diorama.registerScenario);
-require('./uprtcl')(diorama.registerScenario);
-require('./workspace')(diorama.registerScenario);
-require('./draft')(diorama.registerScenario);
 require('./discovery')(diorama.registerScenario);
-require('./lens')(diorama.registerScenario);
+//require('./workspace')(diorama.registerScenario);
+//require('./uprtcl')(diorama.registerScenario);
+//require('./draft')(diorama.registerScenario);
+//require('./lens')(diorama.registerScenario);
 
 diorama.run();

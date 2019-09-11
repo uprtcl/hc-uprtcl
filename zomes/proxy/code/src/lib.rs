@@ -119,10 +119,15 @@ mod my_zome {
      */
     #[zome_fn("hc_public")]
     pub fn get_proxied_entry(address: Address) -> ZomeApiResult<GetEntryResult> {
-        match get_internal_address(address)? {
+        match handle_get_internal_address(address)? {
             Some(internal_address) => get_entry_result(&internal_address),
             None => entry_not_found(),
         }
+    }
+
+    #[zome_fn("hc_public")]
+    pub fn get_internal_address(proxy_address: Address) -> ZomeApiResult<Option<Address>> {
+        handle_get_internal_address(proxy_address)
     }
 
     /** Create link */
@@ -239,7 +244,7 @@ mod my_zome {
 /**
  * Converts the given proxy address to the internal address of the entry in our app
  */
-fn get_internal_address(proxy_address: Address) -> ZomeApiResult<Option<Address>> {
+fn handle_get_internal_address(proxy_address: Address) -> ZomeApiResult<Option<Address>> {
     let maybe_entry = get_entry_result(&proxy_address)?;
 
     if maybe_entry.found() {
