@@ -97,8 +97,10 @@ module.exports = scenario => {
     });
     let links = await alice.callSync('proxy', 'get_links_to_proxy', {
       base_address: sampleEntryAddress,
-      link_type: LINK_TYPE,
-      tag: ''
+      link_type: {
+        Exactly: LINK_TYPE
+      },
+      tag: 'Any'
     });
     t.equal(links.Ok.length, 1);
 
@@ -129,8 +131,9 @@ module.exports = scenario => {
     // And now we get both previously set links
     links = await alice.callSync('proxy', 'get_links_to_proxy', {
       base_address: sampleEntryAddress,
-      link_type: LINK_TYPE,
-      tag: ''
+      link_type: {
+        Exactly: LINK_TYPE},
+      tag: 'Any'
     });
     t.equal(links.Ok.length, 2);
   });
@@ -152,8 +155,10 @@ module.exports = scenario => {
     });
     let links = await alice.callSync('proxy', 'get_links_from_proxy', {
       proxy_address: PROXY_ADDRESS1,
-      link_type: 'external_proxy',
-      tag: ''
+      link_type: {
+        Exactly: 'external_proxy'
+      },
+      tag: 'Any'
     });
     t.equal(links.Ok.length, 1);
   });
@@ -177,8 +182,10 @@ module.exports = scenario => {
       });
       let links = await alice.callSync('proxy', 'get_links_from_proxy', {
         proxy_address: PROXY_ADDRESS1,
-        link_type: LINK_TYPE,
-        tag: ''
+        link_type: {
+          Exactly: LINK_TYPE
+        },
+        tag: 'Any'
       });
 
       // Create second ghost proxy
@@ -208,8 +215,10 @@ module.exports = scenario => {
       // And now we get both previously set links
       links = await alice.callSync('proxy', 'get_links_from_proxy', {
         proxy_address: PROXY_ADDRESS1,
-        link_type: LINK_TYPE,
-        tag: ''
+        link_type: {
+          Exactly: LINK_TYPE
+        },
+        tag: 'Any'
       });
       t.equal(links.Ok.length, 2);
     }
@@ -232,8 +241,10 @@ module.exports = scenario => {
     });
     let links = await alice.callSync('proxy', 'get_links_to_proxy', {
       base_address: sampleEntryAddress,
-      link_type: LINK_TYPE,
-      tag: ''
+      link_type: {
+        Exactly: LINK_TYPE
+      },
+      tag: 'Any'
     });
     t.equal(links.Ok.length, 1);
 
@@ -246,8 +257,10 @@ module.exports = scenario => {
     });
     links = await alice.callSync('proxy', 'get_links_to_proxy', {
       base_address: sampleEntryAddress,
-      link_type: LINK_TYPE,
-      tag: ''
+      link_type: {
+        Exactly: LINK_TYPE
+      },
+      tag: 'Any'
     });
     t.equal(links.Ok.length, 0);
   });
@@ -269,8 +282,10 @@ module.exports = scenario => {
     });
     let links = await alice.callSync('proxy', 'get_links_from_proxy', {
       proxy_address: PROXY_ADDRESS1,
-      link_type: 'external_proxy',
-      tag: ''
+      link_type: {
+        Exactly: 'external_proxy'
+      },
+      tag: 'Any'
     });
     t.equal(links.Ok.length, 1);
 
@@ -283,8 +298,10 @@ module.exports = scenario => {
     });
     links = await alice.callSync('proxy', 'get_links_from_proxy', {
       proxy_address: PROXY_ADDRESS1,
-      link_type: 'external_proxy',
-      tag: ''
+      link_type: {
+        Exactly: 'external_proxy'
+      },
+      tag: 'Any'
     });
     t.equal(links.Ok.length, 0);
   });

@@ -8,7 +8,7 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate holochain_json_derive;
 
-use hdk::holochain_core_types::{dna::entry_types::Sharing, entry::Entry, link::LinkMatch};
+use hdk::holochain_core_types::{dna::entry_types::Sharing, entry::Entry, link::LinkMatch as HdkLinkMatch};
 use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
 use holochain_wasm_utils::api_serialization::{
     get_entry::{GetEntryOptions, GetEntryResult, StatusRequestKind},
@@ -23,7 +23,7 @@ use hdk_proc_macros::zome;
 
 // see https://developer.holochain.org/api/latest/hdk/ for info on using the hdk library
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
-pub enum AuxLinkMatch<S: Into<String>> {
+pub enum LinkMatch<S: Into<String>> {
     Any,
     Exactly(S),
     Regex(S),
@@ -195,15 +195,15 @@ mod my_zome {
     #[zome_fn("hc_public")]
     pub fn get_links_from_proxy(
         proxy_address: Address,
-        link_type: AuxLinkMatch<String>,
-        tag: AuxLinkMatch<String>,
+        link_type: LinkMatch<String>,
+        tag: LinkMatch<String>,
     ) -> ZomeApiResult<Vec<Address>> {
         let proxy_entry_address = proxy_entry_address(proxy_address.clone())?;
 
         let internal_proxy_links = hdk::get_links(
             &proxy_entry_address,
-            LinkMatch::Exactly("internal_proxy"),
-            LinkMatch::Any,
+            HdkLinkMatch::Exactly("internal_proxy"),
+            HdkLinkMatch::Any,
         )?;
 
         match internal_proxy_links.addresses().len() {
@@ -222,8 +222,8 @@ mod my_zome {
     #[zome_fn("hc_public")]
     pub fn get_links_to_proxy(
         base_address: Address,
-        link_type: AuxLinkMatch<String>,
-        tag: AuxLinkMatch<String>,
+        link_type: LinkMatch<String>,
+        tag: LinkMatch<String>,
     ) -> ZomeApiResult<Vec<Address>> {
         let proxy_entries_addresses = get_links(&base_address, link_type, tag)?;
 
@@ -259,8 +259,8 @@ fn handle_get_internal_address(proxy_address: Address) -> ZomeApiResult<Option<A
             // We have stored the proxy for the given address
             let links = hdk::get_links(
                 &proxy_entry_address,
-                LinkMatch::Exactly("internal_proxy"),
-                LinkMatch::Any,
+                HdkLinkMatch::Exactly("internal_proxy"),
+                HdkLinkMatch::Any,
             )?;
             match links.addresses().len() {
                 1 => {
@@ -279,8 +279,8 @@ fn handle_get_internal_address(proxy_address: Address) -> ZomeApiResult<Option<A
  */
 fn get_links_from_internal_proxy(
     internal_proxy_entry_address: Address,
-    link_type: AuxLinkMatch<String>,
-    tag: AuxLinkMatch<String>,
+    link_type: LinkMatch<String>,
+    tag: LinkMatch<String>,
 ) -> ZomeApiResult<Vec<Address>> {
     let internal_proxy_links = get_links(
         &internal_proxy_entry_address,
@@ -292,8 +292,8 @@ fn get_links_from_internal_proxy(
 
     let external_proxies_addresses = hdk::get_links(
         &internal_proxy_entry_address,
-        LinkMatch::Exactly("external_proxy"),
-        LinkMatch::Any,
+        HdkLinkMatch::Exactly("external_proxy"),
+        HdkLinkMatch::Any,
     )?;
 
     for external_proxy_address in external_proxies_addresses.addresses() {
@@ -331,36 +331,36 @@ fn proxy_entry_address(proxy_address: Address) -> ZomeApiResult<Address> {
 
 fn get_links(
     base_address: &Address,
-    link_type: AuxLinkMatch<String>,
-    tag: AuxLinkMatch<String>,
+    link_type: LinkMatch<String>,
+    tag: LinkMatch<String>,
 ) -> ZomeApiResult<GetLinksResult> {
     let mut _string1 = String::new();
     let mut _string2 = String::new();
     let mut _string3 = String::new();
     let mut _string4 = String::new();
     let new_link_type = match link_type {
-        AuxLinkMatch::Exactly(expr) => {
+        LinkMatch::Exactly(expr) => {
             _string1 = expr.to_owned();
-            LinkMatch::Exactly(_string1.as_str())
+            HdkLinkMatch::Exactly(_string1.as_str())
         }
-        AuxLinkMatch::Regex(expr) => {
+        LinkMatch::Regex(expr) => {
             _string2 = expr.to_owned();
 
-            LinkMatch::Regex(_string2.as_str())
+            HdkLinkMatch::Regex(_string2.as_str())
         }
-        AuxLinkMatch::Any => LinkMatch::Any,
+        LinkMatch::Any => HdkLinkMatch::Any,
     };
     let new_link_tag = match tag {
-        AuxLinkMatch::Exactly(expr) => {
+        LinkMatch::Exactly(expr) => {
             _string3 = expr.to_owned();
-            LinkMatch::Exactly(_string1.as_str())
+            HdkLinkMatch::Exactly(_string1.as_str())
         }
-        AuxLinkMatch::Regex(expr) => {
+        LinkMatch::Regex(expr) => {
             _string4 = expr.to_owned();
 
-            LinkMatch::Regex(_string2.as_str())
+            HdkLinkMatch::Regex(_string2.as_str())
         }
-        AuxLinkMatch::Any => LinkMatch::Any,
+        LinkMatch::Any => HdkLinkMatch::Any,
     };
 
     hdk::get_links(base_address, new_link_type, new_link_tag)

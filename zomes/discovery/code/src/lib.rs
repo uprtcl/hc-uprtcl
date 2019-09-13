@@ -41,29 +41,30 @@ mod my_zome {
     #[entry_def]
     fn source_def() -> ValidatingEntryType {
         entry!(
-              name: "source",
-              description: "represents an external source from which to retrieve entries from known addresses",
-              sharing: Sharing::Public,
-              validation_package: || {
-                  hdk::ValidationPackageDefinition::Entry
-              },
-              validation: | _validation_data: hdk::EntryValidationData<String>| {
-                  Ok(())
-              },
-              links: [
-          from!(
-            "proxy",
-            link_type: "known_source",
+            name: "source",
+            description: "represents an external source from which to retrieve entries from known addresses",
+            sharing: Sharing::Public,
             validation_package: || {
-              hdk::ValidationPackageDefinition::Entry
+                hdk::ValidationPackageDefinition::Entry
             },
-            validation: | _validation_data: hdk::LinkValidationData | {
-              Ok(())
-            }
-          )
-        ]
-          )
+            validation: | _validation_data: hdk::EntryValidationData<String>| {
+                Ok(())
+            },
+            links: [
+                from!(
+                    "proxy",
+                    link_type: "known_source",
+                    validation_package: || {
+                        hdk::ValidationPackageDefinition::Entry
+                    },
+                    validation: | _validation_data: hdk::LinkValidationData | {
+                        Ok(())
+                    }
+                )
+            ]
+        )
     }
+
     #[zome_fn("hc_public")]
     fn get_own_source() -> ZomeApiResult<String> {
         Ok(own_source())
@@ -85,16 +86,13 @@ mod my_zome {
                     "proxy",
                     Address::from(PUBLIC_TOKEN.to_string()),
                     "get_links_from_proxy",
-                    json!({"proxy_address": address, "link_type": {
-                        "LinkMatch": {
+                    json!({
+                        "proxy_address": address, 
+                        "link_type": {
                             "Exactly": "known_source"
-                        }
-                    }, "tag": {
-                        "LinkMatch": {
-                            "Any": ""
-                        }
-                    }})
-                        .into(),
+                        }, 
+                        "tag": "Any"
+                    }).into(),
                 )?;
 
                 let links_result: ZomeApiResult<Vec<Address>> = response.try_into()?;
@@ -124,20 +122,17 @@ mod my_zome {
                 let source_address = create_source(source)?;
 
                 let response = hdk::call(
-          hdk::THIS_INSTANCE,
-          "proxy",
-          Address::from(PUBLIC_TOKEN.to_string()),
-          "link_from_proxy",
-          json!({"proxy_address": address.clone(), "to_address": source_address.clone(), "link_type": {
-                        "LinkMatch": {
-                            "Exactly": "known_source"
-                        }
-                    }, "tag": {
-                        "LinkMatch": {
-                            "Any": ""
-                        }
-                    }}).into(),
-        )?;
+                    hdk::THIS_INSTANCE,
+                    "proxy",
+                    Address::from(PUBLIC_TOKEN.to_string()),
+                    "link_from_proxy",
+                    json!({
+                        "proxy_address": address.clone(), 
+                        "to_address": source_address.clone(),
+                        "link_type": "known_source", 
+                        "tag": ""
+                    }).into(),
+                )?;
 
                 // Check that response from proxy zome is ok
                 let _result: ZomeApiResult<Address> = response.try_into()?;
@@ -152,12 +147,17 @@ mod my_zome {
         let source_address = source_address(source)?;
 
         let response = hdk::call(
-        hdk::THIS_INSTANCE,
-        "proxy",
-        Address::from(PUBLIC_TOKEN.to_string()),
-        "remove_link_from_proxy",
-        json!({"proxy_address": address.clone(), "to_address": source_address.clone(), "link_type": "known_source", "tag": ""}).into(),
-      )?;
+            hdk::THIS_INSTANCE,
+            "proxy",
+            Address::from(PUBLIC_TOKEN.to_string()),
+            "remove_link_from_proxy",
+            json!({
+                "proxy_address": address.clone(), 
+                "to_address": source_address.clone(), 
+                "link_type": "known_source", 
+                "tag": ""
+            }).into(),
+        )?;
 
         // Check that response from proxy zome is ok
         response.try_into()?

@@ -140,10 +140,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "folder"
 version = "0.1.0"
 dependencies = [
- "hdk 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)",
- "hdk-proc-macros 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)",
+ "hdk 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)",
+ "hdk-proc-macros 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)",
  "holochain_json_derive 0.0.1-alpha2 (registry+https://github.com/rust-lang/crates.io-index)",
- "holochain_wasm_utils 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)",
+ "holochain_wasm_utils 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)",
  "serde 1.0.89 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.89 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -237,15 +237,15 @@ dependencies = [
 
 [[package]]
 name = "hdk"
-version = "0.0.28-alpha1"
-source = "git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1#882be9cd0ec96aee13b235fcd98e382aeb1b9814"
+version = "0.0.29-alpha2"
+source = "git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2#7d38b3363f9e39daf19feca02bee9dc7d0eb96ab"
 dependencies = [
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "holochain_core_types 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)",
+ "holochain_core_types 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)",
  "holochain_json_api 0.0.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "holochain_json_derive 0.0.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "holochain_persistence_api 0.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "holochain_wasm_utils 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)",
+ "holochain_wasm_utils 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)",
  "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pretty_assertions 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.89 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -255,10 +255,10 @@ dependencies = [
 
 [[package]]
 name = "hdk-proc-macros"
-version = "0.0.28-alpha1"
-source = "git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1#882be9cd0ec96aee13b235fcd98e382aeb1b9814"
+version = "0.0.29-alpha2"
+source = "git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2#7d38b3363f9e39daf19feca02bee9dc7d0eb96ab"
 dependencies = [
- "hdk 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)",
+ "hdk 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)",
  "proc-macro2 0.4.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.31 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -266,8 +266,8 @@ dependencies = [
 
 [[package]]
 name = "holochain_core_types"
-version = "0.0.28-alpha1"
-source = "git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1#882be9cd0ec96aee13b235fcd98e382aeb1b9814"
+version = "0.0.29-alpha2"
+source = "git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2#7d38b3363f9e39daf19feca02bee9dc7d0eb96ab"
 dependencies = [
  "arrayref 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "base64 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -379,10 +379,10 @@ dependencies = [
 
 [[package]]
 name = "holochain_wasm_utils"
-version = "0.0.28-alpha1"
-source = "git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1#882be9cd0ec96aee13b235fcd98e382aeb1b9814"
+version = "0.0.29-alpha2"
+source = "git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2#7d38b3363f9e39daf19feca02bee9dc7d0eb96ab"
 dependencies = [
- "holochain_core_types 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)",
+ "holochain_core_types 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)",
  "holochain_json_api 0.0.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "holochain_json_derive 0.0.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "holochain_persistence_api 0.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -918,14 +918,14 @@ dependencies = [
 "checksum futures-util-preview 0.3.0-alpha.17 (registry+https://github.com/rust-lang/crates.io-index)" = "af8198c48b222f02326940ce2b3aa9e6e91a32886eeaad7ca3b8e4c70daa3f4e"
 "checksum generic-array 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ef25c5683767570c2bbd7deba372926a55eaae9982d7726ee2a1050239d45b9d"
 "checksum hcid 0.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "9e5ea27f6b17df2ded5dcfc492ecd0db719d00b144dbaaf2df1658a7e38cfd2e"
-"checksum hdk 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)" = "<none>"
-"checksum hdk-proc-macros 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)" = "<none>"
-"checksum holochain_core_types 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)" = "<none>"
+"checksum hdk 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)" = "<none>"
+"checksum hdk-proc-macros 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)" = "<none>"
+"checksum holochain_core_types 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)" = "<none>"
 "checksum holochain_json_api 0.0.17 (registry+https://github.com/rust-lang/crates.io-index)" = "7411832f446f09ea53ce2ca789fd2acd86ad29cc08d6d3c903474c2fada54ca5"
 "checksum holochain_json_derive 0.0.1-alpha2 (registry+https://github.com/rust-lang/crates.io-index)" = "57d7eb950d0154f032b0cbabdcb9f5d4bd10795b4606cf9df8330642896a2bbd"
 "checksum holochain_json_derive 0.0.17 (registry+https://github.com/rust-lang/crates.io-index)" = "b82510813b7164094ca380651f81350d461fb695f4580c4d25d9f52bcc5e1f5d"
 "checksum holochain_persistence_api 0.0.7 (registry+https://github.com/rust-lang/crates.io-index)" = "1518588717c2b5960dd08244d10f2f8b2b40021f0bbcd63ca5858ef81e0d3374"
-"checksum holochain_wasm_utils 0.0.28-alpha1 (git+https://github.com/holochain/holochain-rust?tag=0.0.28-alpha1)" = "<none>"
+"checksum holochain_wasm_utils 0.0.29-alpha2 (git+https://github.com/holochain/holochain-rust?tag=0.0.29-alpha2)" = "<none>"
 "checksum indexmap 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a61202fbe46c4a951e9404a720a0180bcf3212c750d735cb5c4ba4dc551299f3"
 "checksum itertools 0.7.11 (registry+https://github.com/rust-lang/crates.io-index)" = "0d47946d458e94a1b7bcabbf6521ea7c037062c81f534615abcad76e84d4970d"
 "checksum itoa 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)" = "501266b7edd0174f8530248f87f99c88fbe60ca4ef3dd486835b8d8d53136f7f"
