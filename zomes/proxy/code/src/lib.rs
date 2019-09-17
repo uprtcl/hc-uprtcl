@@ -5,10 +5,12 @@ extern crate hdk_proc_macros;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
 extern crate holochain_json_derive;
+extern crate serde_json;
 
-use hdk::holochain_core_types::{dna::entry_types::Sharing, entry::Entry, link::LinkMatch as HdkLinkMatch};
+use hdk::holochain_core_types::{
+    dna::entry_types::Sharing, entry::Entry, link::LinkMatch as HdkLinkMatch,
+};
 use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
 use holochain_wasm_utils::api_serialization::{
     get_entry::{GetEntryOptions, GetEntryResult, StatusRequestKind},
@@ -53,31 +55,30 @@ mod my_zome {
             },
             validation: | _validation_data: hdk::EntryValidationData<Address>| {
                 Ok(())
-            },
-                links: [
-            to!(
-                "proxy",
-                link_type: "external_proxy",
-                validation_package: || {
-                    hdk::ValidationPackageDefinition::Entry
-                },
-                validation: |_validation_data: hdk::LinkValidationData | {
-                    Ok(())
-                }
-            ),
-            to!(
-                "proxy",
-                link_type: "internal_proxy",
-                validation_package: || {
-                    hdk::ValidationPackageDefinition::Entry
-                },
-                validation: |_validation_data: hdk::LinkValidationData | {
-                    Ok(())
-                }
-            )
-        ]
-
-            )
+            },  
+            links: [
+                to!(
+                    "proxy",
+                    link_type: "external_proxy",
+                    validation_package: || {
+                        hdk::ValidationPackageDefinition::Entry
+                    },
+                    validation: |_validation_data: hdk::LinkValidationData | {
+                        Ok(())
+                    }
+                ),
+                to!(
+                    "proxy",
+                    link_type: "internal_proxy",
+                    validation_package: || {
+                        hdk::ValidationPackageDefinition::Entry
+                    },
+                    validation: |_validation_data: hdk::LinkValidationData | {
+                        Ok(())
+                    }
+                )
+            ]
+        )
     }
 
     /**
@@ -85,17 +86,23 @@ mod my_zome {
      */
     #[zome_fn("hc_public")]
     pub fn set_entry_proxy(
-        proxy_address: Address,
+        proxy_address: Option<Address>,
         entry_address: Option<Address>,
-    ) -> ZomeApiResult<Address> {
+    ) -> ZomeApiResult<()> {
         // Store the given proxy as an entry
-        let proxy_entry_address = hdk::commit_entry(&proxy_entry(proxy_address.clone()))?;
+        let maybe_proxy_entry_address = match proxy_address {
+            None => None,
+            Some(address) => Some(hdk::commit_entry(&proxy_entry(address.clone()))?)
+        };
 
-        if let Some(address) = entry_address {
-            if proxy_address != address {
+        let maybe_internal_proxy_entry_address = match entry_address {
+            None => None,
+            Some(address) => Some(hdk::commit_entry(&proxy_entry(address.clone()))?)
+        };
+
+        if let (Some(proxy_entry_address), Some(internal_proxy_entry_address)) = (maybe_proxy_entry_address, maybe_internal_proxy_entry_address) {
+            if proxy_entry_address != internal_proxy_entry_address {
                 // We are setting an external proxy: set the internal and setup the links
-                let internal_proxy_entry_address =
-                    hdk::commit_entry(&proxy_entry(address.to_owned()))?;
                 hdk::link_entries(
                     &proxy_entry_address,
                     &internal_proxy_entry_address,
@@ -111,7 +118,7 @@ mod my_zome {
             }
         }
 
-        Ok(proxy_entry_address)
+        Ok(())
     }
 
     /**

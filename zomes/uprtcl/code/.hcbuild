@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {
+      "command": "cargo",
+      "arguments": [
+        "build",
+        "--release",
+        "--target=wasm32-unknown-unknown",
+        "--target-dir=/home/guillem/nix-holochain/uprtcl/target"
+      ]
+    }
+  ],
+  "artifact": "/home/guillem/nix-holochain/uprtcl/target/wasm32-unknown-unknown/release/uprtcl.wasm"
+}
