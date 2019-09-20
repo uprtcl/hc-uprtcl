@@ -88,7 +88,7 @@ mod my_zome {
     pub fn set_entry_proxy(
         proxy_address: Option<Address>,
         entry_address: Option<Address>,
-    ) -> ZomeApiResult<()> {
+    ) -> ZomeApiResult<Option<Address>> {
         // Store the given proxy as an entry
         let maybe_proxy_entry_address = match proxy_address {
             None => None,
@@ -100,7 +100,7 @@ mod my_zome {
             Some(address) => Some(hdk::commit_entry(&proxy_entry(address.clone()))?)
         };
 
-        if let (Some(proxy_entry_address), Some(internal_proxy_entry_address)) = (maybe_proxy_entry_address, maybe_internal_proxy_entry_address) {
+        if let (Some(proxy_entry_address), Some(internal_proxy_entry_address)) = (maybe_proxy_entry_address.clone(), maybe_internal_proxy_entry_address) {
             if proxy_entry_address != internal_proxy_entry_address {
                 // We are setting an external proxy: set the internal and setup the links
                 hdk::link_entries(
@@ -118,7 +118,7 @@ mod my_zome {
             }
         }
 
-        Ok(())
+        Ok(maybe_proxy_entry_address)
     }
 
     /**

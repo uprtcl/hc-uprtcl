@@ -56,20 +56,20 @@ mod uprtcl {
     // Create entries
 
     #[zome_fn("hc_public")]
-    fn create_commit(commit_data: commit::CommitData) -> ZomeApiResult<Address> {
-        commit::create_commit(commit_data)
+    fn create_commit(dataId: Address, parentsIds: Vec<Address>, message: String, timestamp: u128) -> ZomeApiResult<Address> {
+        commit::create_commit(dataId, parentsIds, message, timestamp)
     }
 
     #[zome_fn("hc_public")]
     fn create_perspective(
-        perspective_data: perspective::PerspectiveData,
+        name: String, timestamp: u128
     ) -> ZomeApiResult<Address> {
-        perspective::create_perspective(perspective_data)
+        perspective::create_perspective(name, timestamp)
     }
 
     #[zome_fn("hc_public")]
-    fn create_context(context_data: context::ContextData) -> ZomeApiResult<Address> {
-        context::create_context(context_data)
+    fn create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Address> {
+        context::create_context(timestamp, nonce)
     }
 
     // Clone entries
@@ -100,8 +100,13 @@ mod uprtcl {
     // Getters
 
     #[zome_fn("hc_public")]
-    fn get_head(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
-        perspective::get_head(perspective_address)
+    fn get_perspective_head(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
+        perspective::get_perspective_head(perspective_address)
+    }
+
+    #[zome_fn("hc_public")]
+    fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
+        perspective::get_perspective_context(perspective_address)
     }
 
     #[zome_fn("hc_public")]
@@ -113,8 +118,8 @@ mod uprtcl {
 
     // Setters
     #[zome_fn("hc_public")]
-    fn update_head(perspective_address: Address, head_address: Address) -> ZomeApiResult<()> {
-        perspective::update_head(perspective_address, head_address)
+    fn update_perspective_head(perspective_address: Address, head_address: Address) -> ZomeApiResult<()> {
+        perspective::update_perspective_head(perspective_address, head_address)
     }
 
     #[zome_fn("hc_public")]

@@ -5,11 +5,14 @@ const PROXY_ADDRESS1 = 'zb2rhe5P4gXftAwvA4eXQ5HJwsER2owDyS9sKaQRRVQPn93bA';
 const PROXY_ADDRESS2 = 'z8mWaJHXieAVxxLagBpdaNWFEBKVWmMiE';
 
 const createSampleEntry = async function(caller) {
-  const entry = await caller.callSync('proxy', 'set_entry_proxy', {
-    proxy_address: 'PROXY' + Date.now(),
+  const proxyAddress = 'PROXY' + Date.now();
+  
+  const sampleEntryAddress = await caller.callSync('proxy', 'set_entry_proxy', {
+    proxy_address: proxyAddress,
     entry_address: null
   });
-  return entry.Ok;
+  
+  return sampleEntryAddress.Ok;
 };
 
 module.exports = scenario => {
@@ -18,7 +21,7 @@ module.exports = scenario => {
       proxy_address: PROXY_ADDRESS1,
       entry_address: null
     });
-    t.equal(proxyEntryAddress.Ok !== null, true);
+    t.equal(Object.keys(proxyEntryAddress).includes('Ok'), true);
   });
 
   scenario(
@@ -32,7 +35,7 @@ module.exports = scenario => {
           entry_address: SAMPLE_ADDRESS
         }
       );
-      t.equal(proxyEntryAddress.Ok !== null, true);
+      t.equal(Object.keys(proxyEntryAddress).includes('Ok'), true);
     }
   );
 
@@ -43,12 +46,12 @@ module.exports = scenario => {
         proxy_address: PROXY_ADDRESS1,
         entry_address: SAMPLE_ADDRESS
       });
-      t.equal(proxyEntryAddress.Ok !== null, true);
+      t.equal(Object.keys(proxyEntryAddress).includes('Ok'), true);
       proxyEntryAddress = await alice.callSync('proxy', 'set_entry_proxy', {
         proxy_address: PROXY_ADDRESS2,
         entry_address: SAMPLE_ADDRESS
       });
-      t.equal(proxyEntryAddress.Ok !== null, true);
+      t.equal(Object.keys(proxyEntryAddress).includes('Ok'), true);
     }
   );
 

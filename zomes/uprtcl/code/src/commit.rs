@@ -8,6 +8,7 @@ use hdk::{
     },
     holochain_json_api::{error::JsonError, json::JsonString},
     holochain_persistence_api::cas::content::Address,
+    AGENT_ADDRESS
 };
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
@@ -25,6 +26,20 @@ pub struct CommitData {
 pub struct Commit {
     payload: CommitData,
     proof: Proof,
+}
+
+impl Commit {
+    pub fn new(dataId: Address, parentsIds: Vec<Address>, message: String, timestamp: u128) -> ZomeApiResult<Commit> {
+        let commit_data = CommitData {
+            dataId,
+            parentsIds,
+            timestamp,
+            message,
+            creatorId: AGENT_ADDRESS.clone()
+        };
+
+        Commit::from_data(commit_data)
+    }
 }
 
 impl Secured<CommitData> for Commit {
@@ -78,8 +93,8 @@ pub fn definition() -> ValidatingEntryType {
 /**
  * Create the commit with the given input data
  */
-pub fn create_commit(commit_data: CommitData) -> ZomeApiResult<Address> {
-    let commit = Commit::from_data(commit_data)?;
+pub fn create_commit(dataId: Address, parentsIds: Vec<Address>, message: String, timestamp: u128) -> ZomeApiResult<Address> {
+    let commit = Commit::new(dataId, parentsIds, message, timestamp)?;
 
     create_entry(commit)
 }

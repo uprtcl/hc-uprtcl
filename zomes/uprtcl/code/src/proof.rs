@@ -16,7 +16,9 @@ pub struct Proof {
 
 impl Proof {
     pub fn from(payload: JsonString) -> ZomeApiResult<Proof> {
-        let signature = hdk::sign(payload)?;
+        let payload_str = String::from(payload);
+        let payload_replaced = payload_str.replace("\"", "\\\"");
+        let signature = hdk::sign(payload_replaced)?;
 
         Ok(Proof {
             r#type: String::from("ECDSA"),

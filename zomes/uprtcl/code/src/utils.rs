@@ -1,10 +1,10 @@
+use hdk::DNA_ADDRESS;
 use crate::proof::Secured;
 use hdk::{
     error::{ZomeApiError, ZomeApiResult},
     holochain_core_types::link::LinkMatch,
     holochain_persistence_api::cas::content::Address,
     PUBLIC_TOKEN,
-    holochain_json_api::{error::JsonError, json::JsonString},
 };
 use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
 use std::convert::{From,TryInto};
@@ -22,7 +22,7 @@ pub fn set_entry_proxy(
         "set_entry_proxy",
         json!({"proxy_address": proxy_address, "entry_address": entry_address}).into(),
     )?;
-    let _result: ZomeApiResult<()> = response.try_into()?;
+    let _result: ZomeApiResult<Option<Address>> = response.try_into()?;
     _result?;
     Ok(())
 }
@@ -47,6 +47,10 @@ where
     set_entry_proxy(None, Some(entry_address.clone()))?;
 
     Ok(entry_address)
+}
+
+pub fn get_origin() -> String {
+    String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
 }
 
 pub fn get_internal_address(address: Address) -> ZomeApiResult<Address> {

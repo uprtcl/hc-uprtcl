@@ -3,10 +3,10 @@ const {
   getEntry,
   createContext,
   createPerspective,
-  getRootContextId,
   getContextPerspectives,
   getPerspectiveHead,
   updatePerspectiveHead,
+  updatePerspectiveContext,
   createCommit,
   createCommitInPerspective,
   createContextPerspectiveAndCommit,
@@ -22,97 +22,94 @@ const SAMPLE_ADDRESS1 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const SAMPLE_ADDRESS2 = 'QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE';
 
 module.exports = scenario => {
-/*   scenario('check root context created', async (s, t, { alice }) => {
-    let contextAddress = await getRootContextId()(alice);
-    t.equal(contextAddress, 'QmbBkX5Bjofs2XSjkgo3rKvzCdr4tefVpHMDbTmjXtRH2E');
-
-    const perspectives = await getContextPerspectives(contextAddress)(alice);
-    t.equal(perspectives.length, 1);
-
-    t.equal(
-      perspectives[0].id,
-      'QmSNDhLvofEz5SkzN7cEwq6DsY3BLdN2juBdCgqBoCXqWU'
-    );
-
-    t.equal(perspectives[0].origin.includes('holochain://'), true);
-  });
- */
   scenario('create context', async (s, t, { alice }) => {
     // Create context
-    const contextAddress = await createContext(buildContext())(alice);
+    const contextAddress = await createContext()(alice);
 
     const result = await getEntry(contextAddress)(alice);
 
     // Check that context creator is correct
-    t.equal(result.creatorId, CREATOR_ADDRESS);
+    t.equal(result.payload.creatorId, CREATOR_ADDRESS);
 
     // check that context has a perspective associated
     const perspectives = await getContextPerspectives(contextAddress)(alice);
     t.equal(perspectives.length, 0);
   });
 
-  scenario('create perspective with proxy addresses', async (s, t, { alice }) => {
-    // Create perspective pointing proxy addresses
-    const perspective = buildPerspective('develop', 'proxy1');
-    const perspectiveAddress = await createPerspective(perspective)(alice);
-    // check that context has a perspective associated
-    t.equal(perspectiveAddress.startsWith('Qm'), true);
+  scenario(
+    'create perspective with proxy addresses',
+    async (s, t, { alice }) => {
+      // Create perspective pointing proxy addresses
+      const perspectiveAddress = await createPerspective('develop')(alice);
+      // Check that context has a perspective associated
+      t.equal(perspectiveAddress.startsWith('Qm'), true);
 
-    const result = await updatePerspectiveHead(perspectiveAddress, 'proxy2')(
-      alice
-    );
-    t.equal(Object.keys(result).includes('Ok'), true);
-  });
+      // Update perspective context
+      let result = await updatePerspectiveContext(
+        perspectiveAddress,
+        'proxy1'
+      )(alice);
+      t.equal(Object.keys(result).includes('Ok'), true);
 
-  scenario('create two commits in master perspective', async (s, t, { alice }) => {
-    // Create new context, perspective and commit
-    const {
-      contextAddress,
-      perspectiveAddress,
-      commitAddress
-    } = await createContextPerspectiveAndCommit(
-      'Commit message',
-      SAMPLE_ADDRESS1,
-      'master'
-    )(alice);
+      // Update perspective head
+      result = await updatePerspectiveHead(perspectiveAddress, 'proxy2')(alice);
+      t.equal(Object.keys(result).includes('Ok'), true);
+    }
+  );
 
-    // Check that the context has one perspective named master
-    const perspectives = await getContextPerspectives(contextAddress)(alice);
-    t.equal(perspectives.length, 1);
-    t.equal(perspectives[0].name, 'master');
+  scenario(
+    'create two commits in master perspective',
+    async (s, t, { alice }) => {
+      // Create new context, perspective and commit
+      const {
+        contextAddress,
+        perspectiveAddress,
+        commitAddress
+      } = await createContextPerspectiveAndCommit(
+        'Commit message',
+        SAMPLE_ADDRESS1,
+        'master'
+      )(alice);
 
-    const masterAddress = perspectives[0].id;
+      // Check that the context has one perspective named master
+      const perspectives = await getContextPerspectives(contextAddress)(alice);
+      t.equal(perspectives.length, 1);
+      t.equal(perspectives[0].payload.name, 'master');
 
-    // Check that the perspective points to the previously defined commit
-    const perspectiveHead = await getPerspectiveHead(masterAddress)(alice);
-    // ... and check the commit's structure
-    const commitInfo = await getEntry(perspectiveHead)(alice);
-    t.equal(commitInfo.parentsIds.length, 0);
-    t.equal(commitInfo.creatorId, CREATOR_ADDRESS);
-    t.equal(commitInfo.dataId, SAMPLE_ADDRESS1);
-    t.equal(commitInfo.message, 'Commit message');
+      const masterAddress = perspectives[0].id;
 
-    // Create second commit
-    const commit = buildCommit(SAMPLE_ADDRESS2, 'second commit', [
-      commitAddress
-    ]);
-    const secondCommitAddress = await createCommit(commit)(alice);
+      // Check that the perspective points to the previously defined commit
+      const perspectiveHead = await getPerspectiveHead(masterAddress)(alice);
+      // ... and check the commit's structure
+      const commitInfo = await getEntry(perspectiveHead)(alice);
+      t.equal(commitInfo.payload.parentsIds.length, 0);
+      t.equal(commitInfo.payload.creatorId, CREATOR_ADDRESS);
+      t.equal(commitInfo.payload.dataId, SAMPLE_ADDRESS1);
+      t.equal(commitInfo.payload.message, 'Commit message');
 
-    // Update perspective head
-    await updatePerspectiveHead(masterAddress, secondCommitAddress)(alice);
+      // Create second commit
+      const secondCommitAddress = await createCommit(
+        SAMPLE_ADDRESS2,
+        [commitAddress],
+        'second commit'
+      )(alice);
 
-    // Check that now master points to the new commit
-    // Double call to avoid network synchronization issues
-    let perspectiveHead2 = await getPerspectiveHead(masterAddress)(alice);
-    perspectiveHead2 = await getPerspectiveHead(masterAddress)(alice);
-    t.equal(perspectiveHead2, secondCommitAddress);
+      // Update perspective head
+      await updatePerspectiveHead(masterAddress, secondCommitAddress)(alice);
 
-    // Check that parent commit of the second commit is the first commit
-    const secondCommitInfo = await getEntry(secondCommitAddress)(alice);
-    t.equal(secondCommitInfo.parentsIds[0], perspectiveHead);
-    // Check new commits content and its content is the new content
-    t.equal(secondCommitInfo.dataId, SAMPLE_ADDRESS2);
-  });
+      // Check that now master points to the new commit
+      // Double call to avoid network synchronization issues
+      let perspectiveHead2 = await getPerspectiveHead(masterAddress)(alice);
+      perspectiveHead2 = await getPerspectiveHead(masterAddress)(alice);
+      t.equal(perspectiveHead2, secondCommitAddress);
+
+      // Check that parent commit of the second commit is the first commit
+      const secondCommitInfo = await getEntry(secondCommitAddress)(alice);
+      t.equal(secondCommitInfo.payload.parentsIds[0], perspectiveHead);
+      // Check new commits content and its content is the new content
+      t.equal(secondCommitInfo.payload.dataId, SAMPLE_ADDRESS2);
+    }
+  );
 
   scenario(
     'create a develop perspective and a commit in it',
@@ -127,18 +124,23 @@ module.exports = scenario => {
         SAMPLE_ADDRESS1,
         'master'
       )(alice);
-
+      
       // Create another perspective pointing to the initial commit
-      const perspective = buildPerspective('develop', contextAddress);
-      const developAddress = await createPerspective(perspective)(alice);
+      const developAddress = await createPerspective('develop')(alice);
+
+      const result = await updatePerspectiveContext(
+        developAddress,
+        contextAddress
+      )(alice);
+      t.equal(Object.keys(result).includes('Ok'), true);
 
       // Check perspective info
       const developPerspective = await getEntry(developAddress)(alice);
-      t.equal(developPerspective.name, 'develop');
-      t.equal(developPerspective.contextId, contextAddress);
+      t.equal(developPerspective.payload.name, 'develop');
+
+      const perspectives = await getContextPerspectives(contextAddress)(alice);
 
       // Check that the context now has the two correct perspectives
-      const perspectives = await getContextPerspectives(contextAddress)(alice);
       t.equal(perspectives[0].id, perspectiveAddress);
       t.equal(perspectives[1].id, developAddress);
 

@@ -1,6 +1,6 @@
 use crate::proof::{Proof, Secured};
 use crate::utils;
-use hdk::PUBLIC_TOKEN;
+use hdk::{AGENT_ADDRESS,PUBLIC_TOKEN};
 use hdk::{
     entry_definition::ValidatingEntryType,
     error::ZomeApiResult,
@@ -18,10 +18,26 @@ pub struct PerspectiveData {
     pub name: String,
 }
 
+
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Perspective {
     payload: PerspectiveData,
     proof: Proof,
+}
+
+impl Perspective {
+    pub fn new(name: String, timestamp: u128) -> ZomeApiResult<Perspective> {
+        let origin = utils::get_origin();
+
+        let perspective_data = PerspectiveData {
+            name,
+            timestamp,
+            origin,
+            creatorId: AGENT_ADDRESS.clone()
+        };
+
+        Perspective::from_data(perspective_data)
+    }
 }
 
 impl Secured<PerspectiveData> for Perspective {
@@ -80,7 +96,7 @@ pub fn definition() -> ValidatingEntryType {
             ),
             to!(
                 "proxy",
-                link_type: "context",
+                link_type: "perspective->context",
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
@@ -90,7 +106,7 @@ pub fn definition() -> ValidatingEntryType {
             ),
             from!(
                 "proxy",
-                link_type: "perspectives",
+                link_type: "context->perspective",
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
@@ -107,8 +123,8 @@ pub fn definition() -> ValidatingEntryType {
 /**
  * Create the perspective with the given input data 
  */
-pub fn create_perspective(perspective_data: PerspectiveData) -> ZomeApiResult<Address> {
-    let perspective = Perspective::from_data(perspective_data)?;
+pub fn create_perspective(name: String, timestamp: u128) -> ZomeApiResult<Address> {
+    let perspective = Perspective::new(name, timestamp)?;
 
     utils::create_entry(perspective)
 }
@@ -118,7 +134,19 @@ pub fn create_perspective(perspective_data: PerspectiveData) -> ZomeApiResult<Ad
 /**
  * Get the head associated with the given perspective, if it exists
  */
-pub fn get_head(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
+pub fn get_perspective_head(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
+    get_perspective_link_to_proxy(perspective_address, String::from("head"))
+}
+
+/**
+ * Get the context associated with the given perspective, if it exists
+ */
+pub fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
+    get_perspective_link_to_proxy(perspective_address, String::from("perspective->context"))
+}
+
+fn get_perspective_link_to_proxy(perspective_address: Address, link_type: String) -> ZomeApiResult<Option<Address>> {
+        // Get the internal perspective address, in case the given address is a hash with a different form than the one stored in this hApp
     let internal_perspective_address = utils::get_internal_address(perspective_address)?;
 
     let response = hdk::call(
@@ -126,9 +154,10 @@ pub fn get_head(perspective_address: Address) -> ZomeApiResult<Option<Address>> 
         "proxy",
         Address::from(PUBLIC_TOKEN.to_string()),
         "get_links_to_proxy",
-        json!({ "base_address": internal_perspective_address, "link_type": "head", "tag": ""})
+        json!({ "base_address": internal_perspective_address, "link_type": { "Exactly": link_type }, "tag": "Any"})
             .into(),
     )?;
+
     let links_result: ZomeApiResult<Vec<Address>> = response.try_into()?;
     let links = links_result?;
     if links.len() == 0 {
@@ -142,9 +171,10 @@ pub fn get_head(perspective_address: Address) -> ZomeApiResult<Option<Address>> 
 /**
  * Updates the head commit associated with the given perspective
  */
-pub fn update_head(perspective_address: Address, head_address: Address) -> ZomeApiResult<()> {
+pub fn update_perspective_head(perspective_address: Address, head_address: Address) -> ZomeApiResult<()> {
     // Perspective address can be a proxy address, get the internal address
     let internal_perspective_address = utils::get_internal_address(perspective_address)?;
+
     utils::remove_previous_links(
         &internal_perspective_address,
         Some(String::from("head")),
@@ -165,6 +195,7 @@ pub fn link_perspective_to_commit(
 ) -> ZomeApiResult<()> {
     // Head commit may not exist on this hApp, we have to set its proxy address and use that entry to link
     utils::set_entry_proxy(Some(commit_address.clone()), Some(commit_address.clone()))?;
+
     let response = hdk::call(
         hdk::THIS_INSTANCE,
         "proxy",
