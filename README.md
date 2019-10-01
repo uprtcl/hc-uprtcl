@@ -32,6 +32,7 @@ This project is in active development, and in its early stages. Its intention is
 - [x] Implement demo content zomes compatible with the _Prtcl
 - [x] Link to entries outside the hApp (other platforms as well)
 - [x] Implement signatures inside the entry
+- [ ] Switch tests to try-o-rama
 - [ ] Create clone tests
 - [ ] Integrate did provider to get the creatorId
 
