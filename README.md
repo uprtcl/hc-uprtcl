@@ -8,10 +8,10 @@ In the Holochain world, this project was previously known as Fractal Wiki.
 
 ## FAQ
 
- - What is the _Prtcl?
- - What is a _Prtcl provider?
- - Where is the frontend?
- - How can I build a Holochain application with the _Prtcl?
+ - [What is the _Prtcl?](https://github.com/uprtcl/spec/wiki/What-is-the-_Prtcl%3F)
+ - [What is a _Prtcl provider?](https://github.com/uprtcl/spec/wiki/What-is-a-_Prtcl-provider%3F)
+ - [What is the _Prtcl technology stack?](https://github.com/uprtcl/spec/wiki/Technology-Stack)
+ - [How can I integrate a Holochain application with the _Prtcl?](https://github.com/uprtcl/spec/wiki/How-can-I-integrate-the-_Prtcl-in-my-app%3F)
 
 ## Overview
 
