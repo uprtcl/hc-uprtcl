@@ -12,7 +12,7 @@ extern crate serde_json;
 extern crate holochain_json_derive;
 
 use hdk::holochain_persistence_api::cas::content::Address;
-use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
+use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult, DNA_ADDRESS};
 use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
 
 use hdk_proc_macros::zome;
@@ -51,6 +51,11 @@ mod uprtcl {
     #[entry_def]
     fn context_entry_def() -> ValidatingEntryType {
         context::definition()
+    }
+
+    #[zome_fn("hc_public")]
+    fn get_source_name() -> ZomeApiResult<String> {
+        Ok(String::from("holo:uprtcl:") + &String::from(DNA_ADDRESS.to_owned()))
     }
 
     // Create entries

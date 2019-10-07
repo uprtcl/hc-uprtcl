@@ -65,11 +65,6 @@ mod my_zome {
         )
     }
 
-    #[zome_fn("hc_public")]
-    fn get_own_source() -> ZomeApiResult<String> {
-        Ok(own_source())
-    }
-
     /**
      * Returns the known sources for the given address, as following:
      * - If we have the entry in our app, return our own source
@@ -166,10 +161,6 @@ mod my_zome {
 }
 
 /** Helper functions */
-
-fn own_source() -> String {
-    String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
-}
 
 fn source_entry(source: String) -> Entry {
     Entry::App("source".into(), AppEntryValue::from_json(source.as_str()))
