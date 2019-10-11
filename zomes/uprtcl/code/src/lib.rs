@@ -67,11 +67,6 @@ mod uprtcl {
         perspective::create_perspective(name, timestamp)
     }
 
-    #[zome_fn("hc_public")]
-    fn create_context(context: String) -> ZomeApiResult<Address> {
-        context::create_context(context)
-    }
-
     // Clone entries
 
     #[zome_fn("hc_public")]

@@ -1,17 +1,17 @@
-use crate::proof::{Proof, Secured};
 use crate::utils;
 use hdk::{
     entry_definition::ValidatingEntryType,
     error::ZomeApiResult,
     holochain_core_types::{
-        dna::entry_types::Sharing, entry::Entry, validation::EntryValidationData, link::LinkMatch
+        dna::entry_types::Sharing, entry::Entry, link::LinkMatch, validation::EntryValidationData,
     },
-    holochain_json_api::{error::JsonError, json::JsonString},
+    holochain_json_api::json::JsonString,
     holochain_persistence_api::cas::content::Address,
-    PUBLIC_TOKEN, AGENT_ADDRESS
 };
-use holochain_wasm_utils::api_serialization::{get_links::GetLinksOptions,get_entry::{GetEntryOptions, GetEntryResult}};
-use std::convert::TryInto;
+use holochain_wasm_utils::api_serialization::{
+    get_entry::{GetEntryOptions, GetEntryResult},
+    get_links::GetLinksOptions,
+};
 
 pub fn definition() -> ValidatingEntryType {
     entry!(
@@ -29,7 +29,7 @@ pub fn definition() -> ValidatingEntryType {
                 _ => Err("Cannot modify or delete contexts".into())
             }
         },
-        links: [            
+        links: [
             from!(
                 "perspective",
                 link_type: "perspective->context",
@@ -57,13 +57,6 @@ pub fn definition() -> ValidatingEntryType {
 // Public handlers
 
 /**
- * Create the context with the given input data
- */
-pub fn create_context(context: String) -> ZomeApiResult<Address> {
-    hdk::commit_entry(&context_entry(context))
-}
-
-/** 
  * Return all perspectives associated to the given context
  */
 pub fn get_context_perspectives(
@@ -71,7 +64,13 @@ pub fn get_context_perspectives(
 ) -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
     let context_address = context_address(context)?;
 
-    hdk::get_links_result(&context_address, LinkMatch::Exactly("context->perspective"), LinkMatch::Any, GetLinksOptions::default(), GetEntryOptions::default())
+    hdk::get_links_result(
+        &context_address,
+        LinkMatch::Exactly("context->perspective"),
+        LinkMatch::Any,
+        GetLinksOptions::default(),
+        GetEntryOptions::default(),
+    )
 }
 
 /**
@@ -81,7 +80,11 @@ pub fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Op
     // Get the internal perspective address, in case the given address is a hash with a different form than the one stored in this hApp
     let internal_perspective_address = utils::get_internal_address(perspective_address)?;
 
-    let links = hdk::get_links(&internal_perspective_address, LinkMatch::Exactly("perspective->Context"), LinkMatch::Any)?;
+    let links = hdk::get_links(
+        &internal_perspective_address,
+        LinkMatch::Exactly("perspective->Context"),
+        LinkMatch::Any,
+    )?;
 
     match links.addresses().first() {
         None => Ok(None),
@@ -107,22 +110,45 @@ pub fn update_perspective_context(
 
     let context_address = create_context(context)?;
 
-    hdk::link_entries(&context_address, &internal_perspective_address, "context->perspective", "")?;
-    hdk::link_entries(&internal_perspective_address, &context_address, "perspective->context", "")?;
+    hdk::link_entries(
+        &context_address,
+        &internal_perspective_address,
+        "context->perspective",
+        "",
+    )?;
+    hdk::link_entries(
+        &internal_perspective_address,
+        &context_address,
+        "perspective->context",
+        "",
+    )?;
 
     Ok(())
 }
-
 
 /**
  * Remove the bidirectional links between the perspective and the previously linked context
  */
 fn remove_previous_context_links(perspective_address: &Address) -> ZomeApiResult<()> {
-    let previous_contexts = hdk::get_links(perspective_address, LinkMatch::Exactly("perspective->context"), LinkMatch::Any)?;
+    let previous_contexts = hdk::get_links(
+        perspective_address,
+        LinkMatch::Exactly("perspective->context"),
+        LinkMatch::Any,
+    )?;
 
     for previous_context in previous_contexts.addresses() {
-        hdk::remove_link(perspective_address, &previous_context, "perspective->context", "")?;
-        hdk::remove_link(&previous_context, perspective_address, "context->perspective", "")?;
+        hdk::remove_link(
+            perspective_address,
+            &previous_context,
+            "perspective->context",
+            "",
+        )?;
+        hdk::remove_link(
+            &previous_context,
+            perspective_address,
+            "context->perspective",
+            "",
+        )?;
     }
 
     Ok(())
@@ -136,4 +162,11 @@ fn context_entry(context: String) -> Entry {
 
 fn context_address(context: String) -> ZomeApiResult<Address> {
     hdk::entry_address(&context_entry(context))
+}
+
+/**
+ * Create the context
+ */
+fn create_context(context: String) -> ZomeApiResult<Address> {
+    hdk::commit_entry(&context_entry(context))
 }

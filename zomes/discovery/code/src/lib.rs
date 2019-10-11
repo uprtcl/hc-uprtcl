@@ -67,7 +67,7 @@ mod my_zome {
 
     #[zome_fn("hc_public")]
     fn get_own_source() -> ZomeApiResult<String> {
-        Ok(own_source())
+        Ok(source_name())
     }
 
     /**
