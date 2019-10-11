@@ -68,8 +68,8 @@ mod uprtcl {
     }
 
     #[zome_fn("hc_public")]
-    fn create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Address> {
-        context::create_context(timestamp, nonce)
+    fn create_context(context: String) -> ZomeApiResult<Address> {
+        context::create_context(context)
     }
 
     // Clone entries
@@ -89,13 +89,6 @@ mod uprtcl {
     ) -> ZomeApiResult<Address> {
         utils::clone_entry(previous_address, perspective)
     }
-    #[zome_fn("hc_public")]
-    fn clone_context(
-        previous_address: Option<Address>,
-        context: context::Context,
-    ) -> ZomeApiResult<Address> {
-        utils::clone_entry(previous_address, context)
-    }
 
     // Getters
 
@@ -105,15 +98,15 @@ mod uprtcl {
     }
 
     #[zome_fn("hc_public")]
-    fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
-        perspective::get_perspective_context(perspective_address)
+    fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Option<String>> {
+        context::get_perspective_context(perspective_address)
     }
 
     #[zome_fn("hc_public")]
     fn get_context_perspectives(
-        context_address: Address,
+        context: String,
     ) -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
-        context::get_context_perspectives(context_address)
+        context::get_context_perspectives(context)
     }
 
     // Setters
@@ -125,9 +118,9 @@ mod uprtcl {
     #[zome_fn("hc_public")]
     fn update_perspective_context(
         perspective_address: Address,
-        context_address: Address,
+        context: String,
     ) -> ZomeApiResult<()> {
-        context::update_perspective_context(perspective_address, context_address)
+        context::update_perspective_context(perspective_address, context)
     }
 
 }

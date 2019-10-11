@@ -79,7 +79,7 @@ mod my_zome {
     #[zome_fn("hc_public")]
     fn get_known_sources(address: Address) -> ZomeApiResult<Vec<String>> {
         match proxied_entry_exists(&address)? {
-            true => Ok(vec![own_source()]),
+            true => Ok(vec![source_name()]),
             false => {
                 let response = hdk::call(
                     hdk::THIS_INSTANCE,
@@ -118,7 +118,7 @@ mod my_zome {
 
         for source in sources.into_iter() {
             // If the source given is this app, do not add it to the known sources as this can be computed
-            if source != own_source() {
+            if source != source_name() {
                 let source_address = create_source(source)?;
 
                 let response = hdk::call(
@@ -167,8 +167,8 @@ mod my_zome {
 
 /** Helper functions */
 
-fn own_source() -> String {
-    String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
+fn source_name() -> String {
+    String::from("holo:uprtcl:") + &String::from(DNA_ADDRESS.to_owned())
 }
 
 fn source_entry(source: String) -> Entry {

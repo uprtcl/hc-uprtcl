@@ -50,7 +50,7 @@ where
 }
 
 pub fn get_origin() -> String {
-    String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
+    String::from("hc:uprtcl:") + &String::from(DNA_ADDRESS.to_owned())
 }
 
 pub fn get_internal_address(address: Address) -> ZomeApiResult<Address> {

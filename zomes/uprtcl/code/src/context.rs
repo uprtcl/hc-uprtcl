@@ -10,60 +10,8 @@ use hdk::{
     holochain_persistence_api::cas::content::Address,
     PUBLIC_TOKEN, AGENT_ADDRESS
 };
-use holochain_wasm_utils::api_serialization::get_entry::{GetEntryOptions, GetEntryResult};
+use holochain_wasm_utils::api_serialization::{get_links::GetLinksOptions,get_entry::{GetEntryOptions, GetEntryResult}};
 use std::convert::TryInto;
-
-#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct ContextData {
-    creatorId: Address,
-    timestamp: u128,
-    nonce: u128,
-}
-
-#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
-pub struct Context {
-    payload: ContextData,
-    proof: Proof,
-}
-
-impl Context {
-    pub fn new(timestamp: u128, nonce: u128) -> ZomeApiResult<Context> {
-        let context_data = ContextData {
-            creatorId: AGENT_ADDRESS.clone(),
-            timestamp,
-            nonce
-        };
-
-        Context::from_data(context_data)
-    }
-}
-
-impl Secured<ContextData> for Context {
-    fn from_data(context_data: ContextData) -> ZomeApiResult<Self> {
-        let proof = Proof::from(context_data.clone().into())?;
-
-        Ok(Context {
-            payload: context_data,
-            proof: proof,
-        })
-    }
-
-    fn entry(&self) -> Entry {
-        Entry::App("context".into(), self.into())
-    }
-
-    fn creator_id(&self) -> Address {
-        self.payload.creatorId.to_owned()
-    }
-
-    fn payload(&self) -> JsonString {
-        self.payload.to_owned().into()
-    }
-
-    fn proof(&self) -> Proof {
-        self.proof.to_owned()
-    }
-}
 
 pub fn definition() -> ValidatingEntryType {
     entry!(
@@ -73,14 +21,36 @@ pub fn definition() -> ValidatingEntryType {
         validation_package: || {
             hdk::ValidationPackageDefinition::Entry
         },
-        validation: |validation_data: hdk::EntryValidationData<Context>| {
+        validation: |validation_data: hdk::EntryValidationData<String>| {
             match validation_data {
-                EntryValidationData::Create { entry: context, .. } => {
-                    Proof::verify(context)
+                EntryValidationData::Create { .. } => {
+                    Ok(())
                 },
                 _ => Err("Cannot modify or delete contexts".into())
             }
-        }
+        },
+        links: [            
+            from!(
+                "perspective",
+                link_type: "perspective->context",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: |_validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
+            ),
+            to!(
+                "perspective",
+                link_type: "context->perspective",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: |_validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
+            )
+        ]
     )
 }
 
@@ -89,38 +59,37 @@ pub fn definition() -> ValidatingEntryType {
 /**
  * Create the context with the given input data
  */
-pub fn create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Address> {
-    let context = Context::new(timestamp, nonce)?;
-
-    utils::create_entry(context)
+pub fn create_context(context: String) -> ZomeApiResult<Address> {
+    hdk::commit_entry(&context_entry(context))
 }
 
 /** 
  * Return all perspectives associated to the given context
  */
 pub fn get_context_perspectives(
-    context_address: Address,
+    context: String,
 ) -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
-    let response = hdk::call(
-        hdk::THIS_INSTANCE,
-        "proxy",
-        Address::from(PUBLIC_TOKEN.to_string()),
-        "get_links_from_proxy",
-        json!({ "proxy_address": context_address, "link_type": { "Exactly": "context->perspective" }, "tag": "Any" }).into(),
-    )?;
-    
-    let perspectives_result: ZomeApiResult<Vec<Address>> = response.try_into()?;
-    let perspectives_addresses = perspectives_result?;
-    
-    let mut perspectives: Vec<ZomeApiResult<GetEntryResult>> = Vec::new();
+    let context_address = context_address(context)?;
 
-    for perspective_address in perspectives_addresses {
-        perspectives.push(hdk::get_entry_result(
-            &perspective_address,
-            GetEntryOptions::default(),
-        ));
+    hdk::get_links_result(&context_address, LinkMatch::Exactly("context->perspective"), LinkMatch::Any, GetLinksOptions::default(), GetEntryOptions::default())
+}
+
+/**
+ * Get the context associated with the given perspective, if it exists
+ */
+pub fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Option<String>> {
+    // Get the internal perspective address, in case the given address is a hash with a different form than the one stored in this hApp
+    let internal_perspective_address = utils::get_internal_address(perspective_address)?;
+
+    let links = hdk::get_links(&internal_perspective_address, LinkMatch::Exactly("perspective->Context"), LinkMatch::Any)?;
+
+    match links.addresses().first() {
+        None => Ok(None),
+        Some(context_address) => {
+            let context: String = hdk::utils::get_as_type(context_address.to_owned())?;
+            Ok(Some(context))
+        }
     }
-    Ok(perspectives)
 }
 
 /**
@@ -128,7 +97,7 @@ pub fn get_context_perspectives(
  */
 pub fn update_perspective_context(
     perspective_address: Address,
-    context_address: Address,
+    context: String,
 ) -> ZomeApiResult<()> {
     // Get the internal perspective address, in case the given address is a hash with a different form than the one stored in this hApp
     let internal_perspective_address = utils::get_internal_address(perspective_address)?;
@@ -136,30 +105,10 @@ pub fn update_perspective_context(
     // Remove the previous links, as only one link to a context is valid in any given time
     remove_previous_context_links(&internal_perspective_address)?;
 
-    // Context may not exist on this hApp, we have to set its proxy address and use that entry to link
-    utils::set_entry_proxy(Some(context_address.clone()), Some(context_address.clone()))?;
+    let context_address = create_context(context)?;
 
-    let response = hdk::call(
-        hdk::THIS_INSTANCE,
-        "proxy",
-        Address::from(PUBLIC_TOKEN.to_string()),
-        "link_from_proxy",
-        json!({"proxy_address": context_address, "to_address": internal_perspective_address, "link_type": "context->perspective", "tag": ""}).into(),
-    )?;
-
-    let _result: ZomeApiResult<Address> = response.try_into()?;
-    let _address = _result?;
-
-    let response2 = hdk::call(
-        hdk::THIS_INSTANCE,
-        "proxy",
-        Address::from(PUBLIC_TOKEN.to_string()),
-        "link_to_proxy",
-        json!({"base_address": internal_perspective_address, "proxy_address": context_address, "link_type": "perspective->context", "tag": ""}).into(),
-    )?;
-
-    let _result2: ZomeApiResult<Address> = response2.try_into()?;
-    let _address2 = _result2?;
+    hdk::link_entries(&context_address, &internal_perspective_address, "context->perspective", "")?;
+    hdk::link_entries(&internal_perspective_address, &context_address, "perspective->context", "")?;
 
     Ok(())
 }
@@ -177,4 +126,14 @@ fn remove_previous_context_links(perspective_address: &Address) -> ZomeApiResult
     }
 
     Ok(())
+}
+
+/** Helper functions */
+
+fn context_entry(context: String) -> Entry {
+    Entry::App("context".into(), JsonString::from_json(context.as_str()))
+}
+
+fn context_address(context: String) -> ZomeApiResult<Address> {
+    hdk::entry_address(&context_entry(context))
 }

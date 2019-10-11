@@ -10,6 +10,7 @@ extern crate serde_json;
 extern crate holochain_json_derive;
 
 use hdk::{
+    DNA_ADDRESS,
     entry_definition::ValidatingEntryType,
     error::ZomeApiResult,
 };
@@ -55,6 +56,11 @@ mod my_zome {
     #[validate_agent]
     pub fn validate_agent(validation_data: EntryValidationData<AgentId>) {
         Ok(())
+    }
+
+    #[zome_fn("hc_public")]
+    fn get_source_name() -> ZomeApiResult<String> {
+        Ok(String::from("holo:uprtcl:") + &String::from(DNA_ADDRESS.to_owned()))
     }
 
     #[entry_def]

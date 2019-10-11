@@ -93,26 +93,6 @@ pub fn definition() -> ValidatingEntryType {
                 validation: |_validation_data: hdk::LinkValidationData | {
                     Ok(())
                 }
-            ),
-            to!(
-                "proxy",
-                link_type: "perspective->context",
-                validation_package: || {
-                    hdk::ValidationPackageDefinition::Entry
-                },
-                validation: |_validation_data: hdk::LinkValidationData | {
-                    Ok(())
-                }
-            ),
-            from!(
-                "proxy",
-                link_type: "context->perspective",
-                validation_package: || {
-                    hdk::ValidationPackageDefinition::Entry
-                },
-                validation: |_validation_data: hdk::LinkValidationData | {
-                    Ok(())
-                }
             )
         ]
     )
@@ -136,13 +116,6 @@ pub fn create_perspective(name: String, timestamp: u128) -> ZomeApiResult<Addres
  */
 pub fn get_perspective_head(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
     get_perspective_link_to_proxy(perspective_address, String::from("head"))
-}
-
-/**
- * Get the context associated with the given perspective, if it exists
- */
-pub fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
-    get_perspective_link_to_proxy(perspective_address, String::from("perspective->context"))
 }
 
 fn get_perspective_link_to_proxy(perspective_address: Address, link_type: String) -> ZomeApiResult<Option<Address>> {
