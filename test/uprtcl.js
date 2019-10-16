@@ -1,19 +1,18 @@
 // Utils variables to facilitate testing code
 const {
   getEntry,
-  createContext,
-  createPerspective,
+  buildPerspective,
   getContextPerspectives,
   getPerspectiveHead,
   updatePerspectiveHead,
   updatePerspectiveContext,
-  createCommit,
   createCommitInPerspective,
   createContextPerspectiveAndCommit,
-  buildContext,
-  buildPerspective,
+  cloneCommit,
+  clonePerspective,
   buildCommit,
-  buildProvenance,
+  buildProof,
+  getSourceName,
   parseEntryResult,
   CREATOR_ADDRESS
 } = require('./utils');
@@ -22,33 +21,20 @@ const SAMPLE_ADDRESS1 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
 const SAMPLE_ADDRESS2 = 'QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE';
 
 module.exports = scenario => {
-  scenario('create context', async (s, t, { alice }) => {
-    // Create context
-    const contextAddress = await createContext()(alice);
-
-    const result = await getEntry(contextAddress)(alice);
-
-    // Check that context creator is correct
-    t.equal(result.payload.creatorId, CREATOR_ADDRESS);
-
-    // check that context has a perspective associated
-    const perspectives = await getContextPerspectives(contextAddress)(alice);
-    t.equal(perspectives.length, 0);
-  });
-
   scenario(
     'create perspective with proxy addresses',
     async (s, t, { alice }) => {
       // Create perspective pointing proxy addresses
-      const perspectiveAddress = await createPerspective('develop')(alice);
+      const perspectiveAddress = await clonePerspective(
+        buildPerspective('develop')
+      )(alice);
       // Check that context has a perspective associated
       t.equal(perspectiveAddress.startsWith('Qm'), true);
 
       // Update perspective context
-      let result = await updatePerspectiveContext(
-        perspectiveAddress,
-        'proxy1'
-      )(alice);
+      let result = await updatePerspectiveContext(perspectiveAddress, 'proxy1')(
+        alice
+      );
       t.equal(Object.keys(result).includes('Ok'), true);
 
       // Update perspective head
@@ -62,7 +48,7 @@ module.exports = scenario => {
     async (s, t, { alice }) => {
       // Create new context, perspective and commit
       const {
-        contextAddress,
+        context,
         perspectiveAddress,
         commitAddress
       } = await createContextPerspectiveAndCommit(
@@ -72,7 +58,7 @@ module.exports = scenario => {
       )(alice);
 
       // Check that the context has one perspective named master
-      const perspectives = await getContextPerspectives(contextAddress)(alice);
+      const perspectives = await getContextPerspectives(context)(alice);
       t.equal(perspectives.length, 1);
       t.equal(perspectives[0].payload.name, 'master');
 
@@ -88,10 +74,8 @@ module.exports = scenario => {
       t.equal(commitInfo.payload.message, 'Commit message');
 
       // Create second commit
-      const secondCommitAddress = await createCommit(
-        SAMPLE_ADDRESS2,
-        [commitAddress],
-        'second commit'
+      const secondCommitAddress = await cloneCommit(
+        buildCommit(SAMPLE_ADDRESS2, 'second commit', [commitAddress])
       )(alice);
 
       // Update perspective head
@@ -116,7 +100,7 @@ module.exports = scenario => {
     async (s, t, { alice }) => {
       // Create new context, perspective and commit
       const {
-        contextAddress,
+        context,
         perspectiveAddress,
         commitAddress
       } = await createContextPerspectiveAndCommit(
@@ -124,21 +108,22 @@ module.exports = scenario => {
         SAMPLE_ADDRESS1,
         'master'
       )(alice);
-      
-      // Create another perspective pointing to the initial commit
-      const developAddress = await createPerspective('develop')(alice);
 
-      const result = await updatePerspectiveContext(
-        developAddress,
-        contextAddress
+      // Create another perspective pointing to the initial commit
+      const developAddress = await clonePerspective(
+        buildPerspective('develop')
       )(alice);
+
+      const result = await updatePerspectiveContext(developAddress, context)(
+        alice
+      );
       t.equal(Object.keys(result).includes('Ok'), true);
 
       // Check perspective info
       const developPerspective = await getEntry(developAddress)(alice);
       t.equal(developPerspective.payload.name, 'develop');
 
-      const perspectives = await getContextPerspectives(contextAddress)(alice);
+      const perspectives = await getContextPerspectives(context)(alice);
 
       // Check that the context now has the two correct perspectives
       t.equal(perspectives[0].id, perspectiveAddress);
@@ -169,87 +154,4 @@ module.exports = scenario => {
       t.equal(perspectiveHead3, secondCommitAddress);
     }
   );
-  /* 
-scenario('create with invalid provenance fails', async (s, t, { alice }) => {
-  // create context
-  let errorMessage = await createContext(
-    buildContext(CREATOR_ADDRESS, 0, 0),
-    buildProvenance(
-      CREATOR_ADDRESS,
-      '1UKVugll/HSeZ9pM9Je9z3Y3xFmSSsZ3mprd4ObZnGZ91GEj6LqtjgCZavK19hUcqnJdxU+PBgjBPSYU3v0ZeCA=='
-    )
-  )(alice);
-  t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
-
-  // create commit
-  errorMessage = await createCommit(
-    buildCommit(SAMPLE_ADDRESS1, 0, 'commit messages', []),
-    buildProvenance(
-      CREATOR_ADDRESS,
-      '3PdfvyQ0mn/kVC8B/yD0d1weT8rXs4AmJE7oagmN/xPK4omsXFp4gKLkPo+65cjtOpE3G3FuTnS0jpaYtwCuIBg=='
-    )
-  )(alice);
-  t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
-
-  // create perspective
-  errorMessage = await createPerspective(
-    {
-      context_address: SAMPLE_ADDRESS1,
-      timestamp: 0,
-      origin: 'local',
-      name: 'master',
-      creator: CREATOR_ADDRESS
-    },
-    buildProvenance(
-      CREATOR_ADDRESS,
-      'gGsg87N7yjW4iBP+AMsbIZXas+IEh668UgfgDFZJFh/tT6rTjOHiYhalZoUd6eBzBX8MxxGFYk6z/ZcaXA9sTAw=='
-    )
-  )(alice);
-  t.equal(errorMessage.Err.Internal.includes('ValidationFailed'), true);
-});
-
-scenario(
-  'create with valid custom provenance context, perspective and commit',
-  async (s, t, { alice }) => {
-    // create context
-    const contextAddress = await createContext(
-      buildContext(CREATOR_ADDRESS, 0, 0),
-      buildProvenance(
-        CREATOR_ADDRESS,
-        '1UKVugll/HSeZ9pM9Je9z3Y3xFmSSZ3mprd4ObZnGZ91GEj6LqtjgCZavK19hUcqnJdxU+PBgjBPSYU3v0ZeCA=='
-      )
-    )(alice);
-    t.equal(contextAddress, 'QmdyhNVV7AqBMriBKmCUUJq5hWDfz5ny3Syp2HNeSiWwvr');
-
-    // create commit
-    const commitAddress = await createCommit(
-      buildCommit(SAMPLE_ADDRESS1, 0, 'commit messages', []),
-      buildProvenance(
-        CREATOR_ADDRESS,
-        '3PdfvyQ0mn/kVC8B/yD0d1weT8rX4AmJE7oagmN/xPK4omsXFp4gKLkPo+65cjtOpE3G3FuTnS0jpaYtwCuIBg=='
-      )
-    )(alice);
-    t.equal(commitAddress, 'QmWCtDCnbHXhkccaUQeSfsbrPHTvgascdeASSJ1UbvVu2J');
-
-    // create perspective
-    const perspectiveAddress = await createPerspective(
-      {
-        context_address: contextAddress,
-        timestamp: 0,
-        origin: 'local',
-        name: 'master',
-        creator: CREATOR_ADDRESS
-      },
-      buildProvenance(
-        CREATOR_ADDRESS,
-        'gGsg87N7yjW4iBP+AMbIZXas+IEh668UgfgDFZJFh/tT6rTjOHiYhalZoUd6eBzBX8MxxGFYk6z/ZcaXA9sTAw=='
-      )
-    )(alice);
-    t.equal(
-      perspectiveAddress,
-      'QmZtLZjF9HoRkLUnhAJE6ZjULZNLP6DZKLE1ZcYcFbTfAe'
-    );
-  }
-);
- */
 };

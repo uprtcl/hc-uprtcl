@@ -1,5 +1,4 @@
 use crate::proof::{Proof, Secured};
-use crate::utils::create_entry;
 use hdk::{
     entry_definition::ValidatingEntryType,
     error::ZomeApiResult,
@@ -79,8 +78,8 @@ pub fn definition() -> ValidatingEntryType {
         },
         validation: |validation_data: hdk::EntryValidationData<Commit>| {
             match validation_data {
-                EntryValidationData::Create { entry: commit, .. } => {
-                    Proof::verify(commit)
+                EntryValidationData::Create { .. } => {
+                    Ok(())
                 },
                 _ => Err("Cannot modify or delete commits".into())
             }
@@ -88,13 +87,3 @@ pub fn definition() -> ValidatingEntryType {
     )
 }
 
-// Public handlers
-
-/**
- * Create the commit with the given input data
- */
-pub fn create_commit(dataId: Address, parentsIds: Vec<Address>, message: String, timestamp: u128) -> ZomeApiResult<Address> {
-    let commit = Commit::new(dataId, parentsIds, message, timestamp)?;
-
-    create_entry(commit)
-}

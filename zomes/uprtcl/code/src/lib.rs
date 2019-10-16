@@ -11,6 +11,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate holochain_json_derive;
 
+use hdk::DNA_ADDRESS;
 use hdk::holochain_persistence_api::cas::content::Address;
 use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
 use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
@@ -36,6 +37,11 @@ mod uprtcl {
         Ok(())
     }
 
+    #[zome_fn("hc_public")]
+    fn get_source_name() -> ZomeApiResult<String> {
+        Ok(String::from("holo:uprtcl:") + &String::from(DNA_ADDRESS.to_owned()))
+    }
+
     // Entry definitions
 
     #[entry_def]
@@ -51,20 +57,6 @@ mod uprtcl {
     #[entry_def]
     fn context_entry_def() -> ValidatingEntryType {
         context::definition()
-    }
-
-    // Create entries
-
-    #[zome_fn("hc_public")]
-    fn create_commit(dataId: Address, parentsIds: Vec<Address>, message: String, timestamp: u128) -> ZomeApiResult<Address> {
-        commit::create_commit(dataId, parentsIds, message, timestamp)
-    }
-
-    #[zome_fn("hc_public")]
-    fn create_perspective(
-        name: String, timestamp: u128
-    ) -> ZomeApiResult<Address> {
-        perspective::create_perspective(name, timestamp)
     }
 
     // Clone entries

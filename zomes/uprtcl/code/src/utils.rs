@@ -38,17 +38,6 @@ where
     Ok(entry_address)
 }
 
-pub fn create_entry<S, T>(secured: T) -> ZomeApiResult<Address>
-where
-    T: Secured<S>,
-{
-    let entry_address = hdk::commit_entry(&secured.entry())?;
-
-    set_entry_proxy(None, Some(entry_address.clone()))?;
-
-    Ok(entry_address)
-}
-
 pub fn get_origin() -> String {
     String::from("hc:uprtcl:") + &String::from(DNA_ADDRESS.to_owned())
 }

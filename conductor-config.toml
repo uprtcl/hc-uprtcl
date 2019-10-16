@@ -12,7 +12,7 @@ test_agent = true
 
 [[dnas]]
 file = '/home/guillem/projects/uprtcl/hc-uprtcl/dist/hc-uprtcl.dna.json'
-hash = 'Qmc9WQR9hr9QSKKHony1mTQETFZULXPuUPMsskSwQrnJT6'
+hash = 'QmY7QJzEAVn6RKdKUWvejxXCfASoLYZo32DSUbrbzxYHYu'
 id = 'hc-run-dna'
 
 [[instances]]

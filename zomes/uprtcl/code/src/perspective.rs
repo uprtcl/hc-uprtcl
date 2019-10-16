@@ -77,8 +77,8 @@ pub fn definition() -> ValidatingEntryType {
         },
         validation: |validation_data: hdk::EntryValidationData<Perspective>| {
             match validation_data {
-                hdk::EntryValidationData::Create { entry: perspective, .. } => {
-                    Proof::verify(perspective)
+                hdk::EntryValidationData::Create { .. } => {
+                    Ok(())
                 },
                 _ => Err("Cannot modify or delete perspectives".into())
             }
@@ -96,17 +96,6 @@ pub fn definition() -> ValidatingEntryType {
             )
         ]
     )
-}
-
-// Create
-
-/**
- * Create the perspective with the given input data 
- */
-pub fn create_perspective(name: String, timestamp: u128) -> ZomeApiResult<Address> {
-    let perspective = Perspective::new(name, timestamp)?;
-
-    utils::create_entry(perspective)
 }
 
 // Getters

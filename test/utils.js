@@ -16,37 +16,25 @@ const getEntry = function(address) {
 
 /** Basic functions which call the zome */
 
-/** Contexts */
-
-const createContext = function(timestamp = Date.now(), nonce = 0) {
-  return async caller =>
-    parseResponse(
-      await caller.callSync('uprtcl', 'create_context', {
-        timestamp,
-        nonce
-      })
-    );
-};
-
 /** Perspective */
 
-const createPerspective = function(name, timestamp = Date.now()) {
+const clonePerspective = function(perspective, previousAddress = null) {
   return async caller =>
     parseResponse(
-      await caller.callSync('uprtcl', 'create_perspective', {
-        name,
-        timestamp
+      await caller.callSync('uprtcl', 'clone_perspective', {
+        previous_address: previousAddress,
+        perspective
       })
     );
 };
 
-const getContextPerspectives = function(contextAddress) {
+const getContextPerspectives = function(context) {
   return async caller => {
     const perspectives = await caller.callSync(
       'uprtcl',
       'get_context_perspectives',
       {
-        context_address: contextAddress
+        context
       }
     );
     return parseEntriesResult(perspectives);
@@ -70,31 +58,22 @@ const updatePerspectiveHead = function(perspectiveAddress, headAddress) {
     });
 };
 
-const updatePerspectiveContext = function(perspectiveAddress, contextAddress) {
+const updatePerspectiveContext = function(perspectiveAddress, context) {
   return async caller =>
     await caller.callSync('uprtcl', 'update_perspective_context', {
       perspective_address: perspectiveAddress,
-      context_address: contextAddress
+      context
     });
 };
 
 /** Commits */
 
-const createCommit = function(
-  dataAddress,
-  parentCommitAddresses = [],
-  message = '',
-  timestamp = Date.now()
-) {
+const cloneCommit = function(commit, previousAddress = null) {
+  const params = { commit };
+  if (previousAddress) params['previous_address'] = previousAddress;
+
   return async caller =>
-    parseResponse(
-      await caller.callSync('uprtcl', 'create_commit', {
-        dataId: dataAddress,
-        parentsIds: parentCommitAddresses,
-        message,
-        timestamp
-      })
-    );
+    parseResponse(await caller.callSync('uprtcl', 'clone_commit', params));
 };
 
 /** Helper functions */
@@ -107,7 +86,9 @@ const createCommitInPerspective = function(
   return async caller => {
     const headAddress = await getPerspectiveHead(perspectiveAddress)(caller);
 
-    const commitAddress = await createCommit(contentAddress, [headAddress], message)(caller);
+    const commitAddress = await cloneCommit(
+      buildCommit(contentAddress, message, [headAddress])
+    )(caller);
 
     await updatePerspectiveHead(perspectiveAddress, commitAddress)(caller);
     return commitAddress;
@@ -120,19 +101,21 @@ const createContextPerspectiveAndCommit = function(
   perspectiveName
 ) {
   return async caller => {
-    const contextAddress = await createContext()(caller);
+    const commitAddress = await cloneCommit(
+      buildCommit(contentAddress, message, [])
+    )(caller);
 
-    const commitAddress = await createCommit(contentAddress, [], message)(caller);
+    const perspectiveAddress = await clonePerspective(
+      buildPerspective(perspectiveName)
+    )(caller);
 
-    // Create another perspective pointing to the initial commit
-    const perspectiveAddress = await createPerspective(perspectiveName)(caller);
-
-    await updatePerspectiveContext(perspectiveAddress, contextAddress)(caller);
+    const context = 'context';
+    await updatePerspectiveContext(perspectiveAddress, context)(caller);
 
     await updatePerspectiveHead(perspectiveAddress, commitAddress)(caller);
     return {
       commitAddress,
-      contextAddress,
+      context,
       perspectiveAddress
     };
   };
@@ -140,24 +123,15 @@ const createContextPerspectiveAndCommit = function(
 
 /** Helper builders */
 
-const buildContext = function(
-  creatorId = CREATOR_ADDRESS,
-  nonce = 0,
-  timestamp = Date.now()
-) {
-  return {
-    creatorId: creatorId,
-    timestamp: timestamp,
-    nonce: nonce
-  };
-};
-
 const buildPerspective = function(name, creatorId = CREATOR_ADDRESS) {
   return {
-    name: name,
-    origin: 'holochain://',
-    timestamp: Date.now(),
-    creatorId: creatorId
+    payload: {
+      name: name,
+      origin: 'hc:uprtcl:example',
+      timestamp: Date.now(),
+      creatorId: creatorId
+    },
+    proof: buildProof()
   };
 };
 
@@ -168,16 +142,27 @@ const buildCommit = function(
   timestamp = Date.now()
 ) {
   return {
-    creatorId: CREATOR_ADDRESS,
-    timestamp: timestamp,
-    message: message,
-    dataId: contentAddress,
-    parentsIds: parentCommitAddresses
+    payload: {
+      creatorId: CREATOR_ADDRESS,
+      timestamp: timestamp,
+      message: message,
+      dataId: contentAddress,
+      parentsIds: parentCommitAddresses
+    },
+    proof: buildProof()
   };
 };
 
-const buildProvenance = function(address, signature) {
-  return [address, signature];
+const buildProof = function(signature = '') {
+  return {
+    type: 'ECDSA',
+    signature
+  };
+};
+
+const getSourceName = async function(caller) {
+  const result = await caller.callSync('uprtcl', 'get_source_name', {});
+  return parseResponse(result);
 };
 
 const chain = async function(caller, ...actions) {
@@ -215,19 +200,18 @@ const parseEntry = function(entry) {
 
 module.exports = {
   getEntry,
-  createContext,
-  createPerspective,
+  clonePerspective,
   getContextPerspectives,
   getPerspectiveHead,
   updatePerspectiveHead,
   updatePerspectiveContext,
-  createCommit,
+  cloneCommit,
   createCommitInPerspective,
   createContextPerspectiveAndCommit,
-  buildContext,
   buildPerspective,
   buildCommit,
-  buildProvenance,
+  buildProof,
+  getSourceName,
   chain,
   parseEntryResult,
   parseEntry,
