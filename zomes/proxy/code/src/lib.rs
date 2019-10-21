@@ -8,6 +8,7 @@ extern crate serde_derive;
 extern crate holochain_json_derive;
 extern crate serde_json;
 
+use hdk::DNA_ADDRESS;
 use hdk::holochain_core_types::{
     dna::entry_types::Sharing, entry::Entry, link::LinkMatch as HdkLinkMatch,
 };
@@ -44,6 +45,11 @@ mod my_zome {
         Ok(())
     }
 
+    #[zome_fn("hc_public")]
+    fn get_source_name() -> ZomeApiResult<String> {
+        Ok(String::from("holo:uprtcl:") + &String::from(DNA_ADDRESS.to_owned()))
+    }
+    
     #[entry_def]
     fn proxy_def() -> ValidatingEntryType {
         entry!(

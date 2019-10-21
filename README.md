@@ -33,6 +33,7 @@ This project is in active development, and in its early stages. Its intention is
 - [x] Link to entries outside the hApp (other platforms as well)
 - [x] Implement signatures inside the entry
 - [x] Create clone tests
+- [ ] Implement access control
 - [ ] Implement merge requests
 - [ ] Integrate did provider to get the creatorId
 
