@@ -6,9 +6,9 @@
         "build",
         "--release",
         "--target=wasm32-unknown-unknown",
-        "--target-dir=/home/guillem/nix-holochain/discovery/target"
+        "--target-dir=~/nix-holochain/discovery/target"
       ]
     }
   ],
-  "artifact": "/home/guillem/nix-holochain/discovery/target/wasm32-unknown-unknown/release/discovery.wasm"
+  "artifact": "~/nix-holochain/discovery/target/wasm32-unknown-unknown/release/discovery.wasm"
 }

@@ -6,9 +6,9 @@
         "build",
         "--release",
         "--target=wasm32-unknown-unknown",
-        "--target-dir=/home/guillem/nix-holochain/proxy/target"
+        "--target-dir=~/nix-holochain/proxy/target"
       ]
     }
   ],
-  "artifact": "/home/guillem/nix-holochain/proxy/target/wasm32-unknown-unknown/release/proxy.wasm"
+  "artifact": "~/nix-holochain/proxy/target/wasm32-unknown-unknown/release/proxy.wasm"
 }

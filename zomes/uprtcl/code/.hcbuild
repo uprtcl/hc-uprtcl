@@ -6,9 +6,9 @@
         "build",
         "--release",
         "--target=wasm32-unknown-unknown",
-        "--target-dir=/home/guillem/nix-holochain/uprtcl/target"
+        "--target-dir=~/nix-holochain/uprtcl/target"
       ]
     }
   ],
-  "artifact": "/home/guillem/nix-holochain/uprtcl/target/wasm32-unknown-unknown/release/uprtcl.wasm"
+  "artifact": "~/nix-holochain/uprtcl/target/wasm32-unknown-unknown/release/uprtcl.wasm"
 }
