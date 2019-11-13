@@ -1,3 +1,6 @@
 dist
 test
 README.md
+config.nix
+default.nix
+LICENSE

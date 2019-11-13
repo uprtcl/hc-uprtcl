@@ -20,11 +20,13 @@ use hdk_proc_macros::zome;
 pub mod commit;
 pub mod context;
 pub mod perspective;
+pub mod name;
 pub mod proof;
+pub mod proposal;
 pub mod utils;
 
 #[zome]
-mod uprtcl {
+mod evees_zome {
 
     #[init]
     fn init() {
@@ -53,6 +55,11 @@ mod uprtcl {
         context::definition()
     }
 
+    #[entry_def]
+    fn name_entry_def() -> ValidatingEntryType {
+        name::definition()
+    }
+
     // Clone entries
 
     #[zome_fn("hc_public")]
@@ -74,13 +81,16 @@ mod uprtcl {
     // Getters
 
     #[zome_fn("hc_public")]
-    fn get_perspective_head(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
-        perspective::get_perspective_head(perspective_address)
-    }
+    fn get_perspective_details(perspective_address: Address) -> ZomeApiResult<perspective::PerspectiveDetails> {
+        let head = perspective::get_perspective_head(perspective_address.clone())?;
+        let name = name::get_perspective_name(perspective_address.clone(),)?;
+        let context = context::get_perspective_context(perspective_address)?;
 
-    #[zome_fn("hc_public")]
-    fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Option<String>> {
-        context::get_perspective_context(perspective_address)
+        Ok(perspective::PerspectiveDetails {
+            headId: head,
+            name,
+            context
+        })
     }
 
     #[zome_fn("hc_public")]
@@ -92,16 +102,21 @@ mod uprtcl {
 
     // Setters
     #[zome_fn("hc_public")]
-    fn update_perspective_head(perspective_address: Address, head_address: Address) -> ZomeApiResult<()> {
-        perspective::update_perspective_head(perspective_address, head_address)
-    }
+    fn update_perspective_details(perspective_address: Address, details: perspective::PerspectiveDetails) -> ZomeApiResult<()> {
 
-    #[zome_fn("hc_public")]
-    fn update_perspective_context(
-        perspective_address: Address,
-        context: String,
-    ) -> ZomeApiResult<()> {
-        context::update_perspective_context(perspective_address, context)
+        if let Some(head_address) = details.headId {
+            perspective::update_perspective_head(perspective_address.clone(), head_address)?;
+        }
+
+        if let Some(context) = details.context {
+            context::update_perspective_context(perspective_address.clone(), context)?;
+        }
+
+        if let Some(name) = details.name {
+            name::update_perspective_name(perspective_address, name)?;
+        }
+
+        Ok(())
     }
 
 }

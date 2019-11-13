@@ -31,7 +31,7 @@ impl Proof {
         T: Secured<S>,
     {
         let proof = secured.proof();
-        let provenance = Provenance::new(secured.creator_id(), Signature::from(proof.signature));
+        let provenance = Provenance::new(secured.creators_ids()[0].clone(), Signature::from(proof.signature));
 
         match hdk::verify_signature(provenance, secured.payload())? {
             true => Ok(()),
@@ -46,7 +46,7 @@ where
 {
     fn from_data(data: S) -> ZomeApiResult<Self>;
     fn entry(&self) -> Entry;
-    fn creator_id(&self) -> Address;
+    fn creators_ids(&self) -> Vec<Address>;
     fn payload(&self) -> JsonString;
     fn proof(&self) -> Proof;
 }

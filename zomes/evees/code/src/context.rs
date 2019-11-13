@@ -54,7 +54,7 @@ pub fn definition() -> ValidatingEntryType {
     )
 }
 
-// Public handlers
+/** Public handlers **/
 
 /**
  * Return all perspectives associated to the given context
@@ -82,7 +82,7 @@ pub fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Op
 
     let links = hdk::get_links(
         &internal_perspective_address,
-        LinkMatch::Exactly("perspective->Context"),
+        LinkMatch::Exactly("perspective->context"),
         LinkMatch::Any,
     )?;
 

@@ -6,9 +6,37 @@
         "build",
         "--release",
         "--target=wasm32-unknown-unknown",
-        "--target-dir=/home/guillem/nix-holochain/discovery/target"
+        "--target-dir=/tmp/holochain/target"
+      ]
+    },
+    {
+      "command": "wasm-gc",
+      "arguments": ["/tmp/holochain/target/wasm32-unknown-unknown/release/discovery.wasm"]
+    },
+    {
+      "command": "wasm-opt",
+      "arguments": [
+        "-Oz",
+        "--vacuum",
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/discovery.wasm"
+      ]
+    },
+    {
+      "command": "wasm2wat",
+      "arguments": [
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/discovery.wasm",
+        "-o",
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/discovery.wat"
+      ]
+    },
+    {
+      "command": "wat2wasm",
+      "arguments": [
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/discovery.wat",
+        "-o",
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/discovery.wasm"
       ]
     }
   ],
-  "artifact": "/home/guillem/nix-holochain/discovery/target/wasm32-unknown-unknown/release/discovery.wasm"
+  "artifact": "/tmp/holochain/target/wasm32-unknown-unknown/release/discovery.wasm"
 }

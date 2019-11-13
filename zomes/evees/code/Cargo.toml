@@ -1,5 +1,5 @@
 [package]
-name = "proxy"
+name = "evees"
 version = "0.1.0"
 authors = ["guillem.cordoba <guillem.cordoba@gmail.com>"]
 edition = "2018"

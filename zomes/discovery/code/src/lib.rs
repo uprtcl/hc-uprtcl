@@ -18,15 +18,13 @@ use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult, DNA_ADDRE
 use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
 use std::convert::TryInto;
 
-use hdk::holochain_json_api::json::JsonString;
-
 use hdk::holochain_persistence_api::cas::content::Address;
 
 use hdk_proc_macros::zome;
 
 
 #[zome]
-mod my_zome {
+mod discovery_zome {
 
     #[init]
     fn init() {
@@ -66,8 +64,8 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_own_source() -> ZomeApiResult<String> {
-        Ok(source_name())
+    fn get_uprtcl_provider_locator() -> ZomeApiResult<String> {
+        Ok(self_upl())
     }
 
     /**
@@ -79,7 +77,7 @@ mod my_zome {
     #[zome_fn("hc_public")]
     fn get_known_sources(address: Address) -> ZomeApiResult<Vec<String>> {
         match proxied_entry_exists(&address)? {
-            true => Ok(vec![source_name()]),
+            true => Ok(vec![self_upl()]),
             false => {
                 let response = hdk::call(
                     hdk::THIS_INSTANCE,
@@ -118,7 +116,7 @@ mod my_zome {
 
         for source in sources.into_iter() {
             // If the source given is this app, do not add it to the known sources as this can be computed
-            if source != source_name() {
+            if source != self_upl() {
                 let source_address = create_source(source)?;
 
                 let response = hdk::call(
@@ -167,7 +165,7 @@ mod my_zome {
 
 /** Helper functions */
 
-fn source_name() -> String {
+fn self_upl() -> String {
     String::from("holo:uprtcl:") + &String::from(DNA_ADDRESS.to_owned())
 }
 

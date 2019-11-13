@@ -6,9 +6,37 @@
         "build",
         "--release",
         "--target=wasm32-unknown-unknown",
-        "--target-dir=/home/guillem/nix-holochain/folder/target"
+        "--target-dir=/tmp/holochain/target"
+      ]
+    },
+    {
+      "command": "wasm-gc",
+      "arguments": ["/tmp/holochain/target/wasm32-unknown-unknown/release/folder.wasm"]
+    },
+    {
+      "command": "wasm-opt",
+      "arguments": [
+        "-Oz",
+        "--vacuum",
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/folder.wasm"
+      ]
+    },
+    {
+      "command": "wasm2wat",
+      "arguments": [
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/folder.wasm",
+        "-o",
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/folder.wat"
+      ]
+    },
+    {
+      "command": "wat2wasm",
+      "arguments": [
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/folder.wat",
+        "-o",
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/folder.wasm"
       ]
     }
   ],
-  "artifact": "/home/guillem/nix-holochain/folder/target/wasm32-unknown-unknown/release/folder.wasm"
+  "artifact": "/tmp/holochain/target/wasm32-unknown-unknown/release/folder.wasm"
 }

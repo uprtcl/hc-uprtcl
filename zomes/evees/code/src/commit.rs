@@ -12,7 +12,7 @@ use hdk::{
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct CommitData {
-    pub creatorId: Address,
+    pub creatorsIds: Vec<Address>,
     pub timestamp: u128,
     pub message: String,
 
@@ -34,7 +34,7 @@ impl Commit {
             parentsIds,
             timestamp,
             message,
-            creatorId: AGENT_ADDRESS.clone()
+            creatorsIds: vec![AGENT_ADDRESS.clone()]
         };
 
         Commit::from_data(commit_data)
@@ -55,8 +55,8 @@ impl Secured<CommitData> for Commit {
         Entry::App("commit".into(), self.into())
     }
 
-    fn creator_id(&self) -> Address {
-        self.payload.creatorId.to_owned()
+    fn creators_ids(&self) -> Vec<Address> {
+        self.payload.creatorsIds.to_owned()
     }
 
     fn payload(&self) -> JsonString {

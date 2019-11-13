@@ -21,7 +21,7 @@ const getEntry = function(address) {
 const clonePerspective = function(perspective, previousAddress = null) {
   return async caller =>
     parseResponse(
-      await caller.callSync('uprtcl', 'clone_perspective', {
+      await caller.callSync('evees', 'clone_perspective', {
         previous_address: previousAddress,
         perspective
       })
@@ -31,7 +31,7 @@ const clonePerspective = function(perspective, previousAddress = null) {
 const getContextPerspectives = function(context) {
   return async caller => {
     const perspectives = await caller.callSync(
-      'uprtcl',
+      'evees',
       'get_context_perspectives',
       {
         context
@@ -41,28 +41,20 @@ const getContextPerspectives = function(context) {
   };
 };
 
-const getPerspectiveHead = function(perspectiveAddress) {
+const getPerspectiveDetails = function(perspectiveAddress) {
   return async caller => {
-    const head = await caller.callSync('uprtcl', 'get_perspective_head', {
+    const head = await caller.callSync('evees', 'get_perspective_details', {
       perspective_address: perspectiveAddress
     });
     return parseResponse(head);
   };
 };
 
-const updatePerspectiveHead = function(perspectiveAddress, headAddress) {
+const updatePerspectiveDetails = function(perspectiveAddress, details) {
   return async caller =>
-    await caller.callSync('uprtcl', 'update_perspective_head', {
+    await caller.callSync('evees', 'update_perspective_details', {
       perspective_address: perspectiveAddress,
-      head_address: headAddress
-    });
-};
-
-const updatePerspectiveContext = function(perspectiveAddress, context) {
-  return async caller =>
-    await caller.callSync('uprtcl', 'update_perspective_context', {
-      perspective_address: perspectiveAddress,
-      context
+      details
     });
 };
 
@@ -73,7 +65,7 @@ const cloneCommit = function(commit, previousAddress = null) {
   if (previousAddress) params['previous_address'] = previousAddress;
 
   return async caller =>
-    parseResponse(await caller.callSync('uprtcl', 'clone_commit', params));
+    parseResponse(await caller.callSync('evees', 'clone_commit', params));
 };
 
 /** Helper functions */
@@ -84,13 +76,15 @@ const createCommitInPerspective = function(
   contentAddress
 ) {
   return async caller => {
-    const headAddress = await getPerspectiveHead(perspectiveAddress)(caller);
+    const { headId } = await getPerspectiveDetails(perspectiveAddress)(caller);
 
     const commitAddress = await cloneCommit(
-      buildCommit(contentAddress, message, [headAddress])
+      buildCommit(contentAddress, message, [headId])
     )(caller);
 
-    await updatePerspectiveHead(perspectiveAddress, commitAddress)(caller);
+    await updatePerspectiveDetails(perspectiveAddress, {
+      headId: commitAddress
+    })(caller);
     return commitAddress;
   };
 };
@@ -105,14 +99,17 @@ const createContextPerspectiveAndCommit = function(
       buildCommit(contentAddress, message, [])
     )(caller);
 
-    const perspectiveAddress = await clonePerspective(
-      buildPerspective(perspectiveName)
-    )(caller);
+    const perspectiveAddress = await clonePerspective(buildPerspective())(
+      caller
+    );
 
     const context = 'context';
-    await updatePerspectiveContext(perspectiveAddress, context)(caller);
+    await updatePerspectiveDetails(perspectiveAddress, {
+      headId: commitAddress,
+      name: perspectiveName,
+      context
+    })(caller);
 
-    await updatePerspectiveHead(perspectiveAddress, commitAddress)(caller);
     return {
       commitAddress,
       context,
@@ -123,10 +120,9 @@ const createContextPerspectiveAndCommit = function(
 
 /** Helper builders */
 
-const buildPerspective = function(name, creatorId = CREATOR_ADDRESS) {
+const buildPerspective = function(creatorId = CREATOR_ADDRESS) {
   return {
     payload: {
-      name: name,
       origin: 'hc:uprtcl:example',
       timestamp: Date.now(),
       creatorId: creatorId
@@ -143,7 +139,7 @@ const buildCommit = function(
 ) {
   return {
     payload: {
-      creatorId: CREATOR_ADDRESS,
+      creatorsIds: [CREATOR_ADDRESS],
       timestamp: timestamp,
       message: message,
       dataId: contentAddress,
@@ -161,7 +157,7 @@ const buildProof = function(signature = '') {
 };
 
 const getSourceName = async function(caller) {
-  const result = await caller.callSync('uprtcl', 'get_source_name', {});
+  const result = await caller.callSync('evees', 'get_source_name', {});
   return parseResponse(result);
 };
 
@@ -187,6 +183,9 @@ const parseEntriesResult = function(entries) {
 
 const parseEntryResult = function(entry) {
   let parseable = parseResponse(entry);
+
+  if (!parseable.result) return undefined;
+
   return {
     ...parseEntry(parseable.result.Single.entry),
     id: parseable.result.Single.meta.address
@@ -202,9 +201,8 @@ module.exports = {
   getEntry,
   clonePerspective,
   getContextPerspectives,
-  getPerspectiveHead,
-  updatePerspectiveHead,
-  updatePerspectiveContext,
+  getPerspectiveDetails,
+  updatePerspectiveDetails,
   cloneCommit,
   createCommitInPerspective,
   createContextPerspectiveAndCommit,

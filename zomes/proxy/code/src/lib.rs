@@ -8,17 +8,14 @@ extern crate serde_derive;
 extern crate holochain_json_derive;
 extern crate serde_json;
 
-use hdk::DNA_ADDRESS;
 use hdk::holochain_core_types::{
     dna::entry_types::Sharing, entry::Entry, link::LinkMatch as HdkLinkMatch,
 };
-use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
+use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult, AGENT_ADDRESS};
 use holochain_wasm_utils::api_serialization::{
     get_entry::{GetEntryOptions, GetEntryResult, StatusRequestKind},
     get_links::GetLinksResult,
 };
-
-use hdk::holochain_json_api::json::JsonString;
 
 use hdk::holochain_persistence_api::cas::content::Address;
 
@@ -33,7 +30,7 @@ pub enum LinkMatch<S: Into<String>> {
 }
 
 #[zome]
-mod my_zome {
+mod proxy_zome {
 
     #[init]
     fn init() {
@@ -46,10 +43,10 @@ mod my_zome {
     }
 
     #[zome_fn("hc_public")]
-    fn get_source_name() -> ZomeApiResult<String> {
-        Ok(String::from("holo:uprtcl:") + &String::from(DNA_ADDRESS.to_owned()))
+    fn get_my_address() -> ZomeApiResult<Address> {
+        Ok(AGENT_ADDRESS.clone())
     }
-    
+
     #[entry_def]
     fn proxy_def() -> ValidatingEntryType {
         entry!(
@@ -61,7 +58,7 @@ mod my_zome {
             },
             validation: | _validation_data: hdk::EntryValidationData<Address>| {
                 Ok(())
-            },  
+            },
             links: [
                 to!(
                     "proxy",
@@ -98,15 +95,18 @@ mod my_zome {
         // Store the given proxy as an entry
         let maybe_proxy_entry_address = match proxy_address {
             None => None,
-            Some(address) => Some(hdk::commit_entry(&proxy_entry(address.clone()))?)
+            Some(address) => Some(hdk::commit_entry(&proxy_entry(address.clone()))?),
         };
 
         let maybe_internal_proxy_entry_address = match entry_address {
             None => None,
-            Some(address) => Some(hdk::commit_entry(&proxy_entry(address.clone()))?)
+            Some(address) => Some(hdk::commit_entry(&proxy_entry(address.clone()))?),
         };
 
-        if let (Some(proxy_entry_address), Some(internal_proxy_entry_address)) = (maybe_proxy_entry_address.clone(), maybe_internal_proxy_entry_address) {
+        if let (Some(proxy_entry_address), Some(internal_proxy_entry_address)) = (
+            maybe_proxy_entry_address.clone(),
+            maybe_internal_proxy_entry_address,
+        ) {
             if proxy_entry_address != internal_proxy_entry_address {
                 // We are setting an external proxy: set the internal and setup the links
                 hdk::link_entries(
@@ -249,7 +249,6 @@ mod my_zome {
 
         Ok(proxy_addresses)
     }
-
 }
 
 /** Helpers */

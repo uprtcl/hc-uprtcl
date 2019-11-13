@@ -28,7 +28,7 @@ const diorama = new Diorama({
 require('./proxy')(diorama.registerScenario);
 require('./discovery')(diorama.registerScenario);
 //require('./workspace')(diorama.registerScenario);
-require('./uprtcl')(diorama.registerScenario);
+require('./evees')(diorama.registerScenario);
 //require('./draft')(diorama.registerScenario);
 //require('./lens')(diorama.registerScenario);
 

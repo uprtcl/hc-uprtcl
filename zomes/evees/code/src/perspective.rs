@@ -15,9 +15,14 @@ pub struct PerspectiveData {
     pub origin: String,
     pub creatorId: Address,
     pub timestamp: u128,
-    pub name: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
+pub struct PerspectiveDetails {
+    pub name: Option<String>, 
+    pub headId: Option<Address>,
+    pub context: Option<String>
+}
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Perspective {
@@ -26,11 +31,10 @@ pub struct Perspective {
 }
 
 impl Perspective {
-    pub fn new(name: String, timestamp: u128) -> ZomeApiResult<Perspective> {
+    pub fn new(timestamp: u128) -> ZomeApiResult<Perspective> {
         let origin = utils::get_origin();
 
         let perspective_data = PerspectiveData {
-            name,
             timestamp,
             origin,
             creatorId: AGENT_ADDRESS.clone()
@@ -54,8 +58,8 @@ impl Secured<PerspectiveData> for Perspective {
         Entry::App("perspective".into(), self.into())
     }
 
-    fn creator_id(&self) -> Address {
-        self.payload.creatorId.to_owned()
+    fn creators_ids(&self) -> Vec<Address> {
+        vec![self.payload.creatorId.to_owned()]
     }
 
     fn payload(&self) -> JsonString {
@@ -108,7 +112,7 @@ pub fn get_perspective_head(perspective_address: Address) -> ZomeApiResult<Optio
 }
 
 fn get_perspective_link_to_proxy(perspective_address: Address, link_type: String) -> ZomeApiResult<Option<Address>> {
-        // Get the internal perspective address, in case the given address is a hash with a different form than the one stored in this hApp
+    // Get the internal perspective address, in case the given address is a hash with a different form than the one stored in this hApp
     let internal_perspective_address = utils::get_internal_address(perspective_address)?;
 
     let response = hdk::call(
