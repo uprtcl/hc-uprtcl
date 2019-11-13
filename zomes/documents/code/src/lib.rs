@@ -36,7 +36,7 @@ pub struct TextNode {
 }
 
 #[zome]
-mod my_zome {
+mod documents_zome {
 
     #[init]
     fn init() {

@@ -1,0 +1,42 @@
+{
+  "steps": [
+    {
+      "command": "cargo",
+      "arguments": [
+        "build",
+        "--release",
+        "--target=wasm32-unknown-unknown",
+        "--target-dir=/tmp/holochain/target"
+      ]
+    },
+    {
+      "command": "wasm-gc",
+      "arguments": ["/tmp/holochain/target/wasm32-unknown-unknown/release/drafts.wasm"]
+    },
+    {
+      "command": "wasm-opt",
+      "arguments": [
+        "-Oz",
+        "--vacuum",
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/drafts.wasm"
+      ]
+    },
+    {
+      "command": "wasm2wat",
+      "arguments": [
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/drafts.wasm",
+        "-o",
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/drafts.wat"
+      ]
+    },
+    {
+      "command": "wat2wasm",
+      "arguments": [
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/drafts.wat",
+        "-o",
+        "/tmp/holochain/target/wasm32-unknown-unknown/release/drafts.wasm"
+      ]
+    }
+  ],
+  "artifact": "/tmp/holochain/target/wasm32-unknown-unknown/release/drafts.wasm"
+}

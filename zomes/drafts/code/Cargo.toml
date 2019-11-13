@@ -1,0 +1,18 @@
+[package]
+name = "drafts"
+version = "0.1.0"
+authors = ["guillem.cordoba <guillem.cordoba@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+serde = "=1.0.89"
+serde_json = { version = "=1.0.39", features = ["preserve_order"] }
+serde_derive = "=1.0.89"
+hdk = "=0.0.38-alpha14"
+hdk_proc_macros = "=0.0.38-alpha14"
+holochain_wasm_utils = "=0.0.38-alpha14"
+holochain_json_derive = "=0.0.17"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
