@@ -5,8 +5,8 @@ extern crate hdk_proc_macros;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
 #[macro_use]
+extern crate serde_json;
 extern crate holochain_json_derive;
 
 use hdk::holochain_core_types::{
@@ -17,8 +17,6 @@ use hdk::PUBLIC_TOKEN;
 use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult, DNA_ADDRESS};
 use hdk::holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
 use std::convert::TryInto;
-
-use hdk::holochain_json_api::json::JsonString;
 
 use hdk::holochain_persistence_api::cas::content::Address;
 
@@ -74,7 +72,7 @@ mod my_zome {
     #[zome_fn("hc_public")]
     fn get_known_sources(address: Address) -> ZomeApiResult<Vec<String>> {
         match proxied_entry_exists(&address)? {
-            true => Ok(vec![own_source()]),
+            true => Ok(vec![get_source_name()]),
             false => {
                 let response = hdk::call(
                     hdk::THIS_INSTANCE,
@@ -113,7 +111,7 @@ mod my_zome {
 
         for source in sources.into_iter() {
             // If the source given is this app, do not add it to the known sources as this can be computed
-            if source != own_source() {
+            if source != get_source_name() {
                 let source_address = create_source(source)?;
 
                 let response = hdk::call(
@@ -161,6 +159,10 @@ mod my_zome {
 }
 
 /** Helper functions */
+
+fn get_source_name() -> String {
+    String::from("holo:uprtcl:") + &String::from(DNA_ADDRESS.to_owned())
+}
 
 fn source_entry(source: String) -> Entry {
     Entry::App("source".into(), AppEntryValue::from_json(source.as_str()))

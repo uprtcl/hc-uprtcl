@@ -5,7 +5,6 @@ extern crate hdk_proc_macros;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate holochain_json_derive;
 extern crate serde_json;
 
@@ -18,8 +17,6 @@ use hdk::holochain_wasm_utils::api_serialization::{
     get_links::GetLinksResult,
 };
 
-use hdk::holochain_json_api::json::JsonString;
-
 use hdk::holochain_persistence_api::cas::content::Address;
 
 use hdk_proc_macros::zome;
@@ -29,7 +26,6 @@ use hdk_proc_macros::zome;
 pub enum LinkMatch<S: Into<String>> {
     Any,
     Exactly(S),
-    Regex(S),
 }
 
 #[zome]
@@ -351,22 +347,12 @@ fn get_links(
             _string1 = expr.to_owned();
             HdkLinkMatch::Exactly(_string1.as_str())
         }
-        LinkMatch::Regex(expr) => {
-            _string2 = expr.to_owned();
-
-            HdkLinkMatch::Regex(_string2.as_str())
-        }
         LinkMatch::Any => HdkLinkMatch::Any,
     };
     let new_link_tag = match tag {
         LinkMatch::Exactly(expr) => {
             _string3 = expr.to_owned();
             HdkLinkMatch::Exactly(_string1.as_str())
-        }
-        LinkMatch::Regex(expr) => {
-            _string4 = expr.to_owned();
-
-            HdkLinkMatch::Regex(_string2.as_str())
         }
         LinkMatch::Any => HdkLinkMatch::Any,
     };
