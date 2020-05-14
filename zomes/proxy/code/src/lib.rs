@@ -5,6 +5,7 @@ extern crate hdk_proc_macros;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
 extern crate holochain_json_derive;
 extern crate serde_json;
 
@@ -12,7 +13,7 @@ use hdk::holochain_core_types::{
     dna::entry_types::Sharing, entry::Entry, link::LinkMatch as HdkLinkMatch,
 };
 use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult};
-use holochain_wasm_utils::api_serialization::{
+use hdk::holochain_wasm_utils::api_serialization::{
     get_entry::{GetEntryOptions, GetEntryResult, StatusRequestKind},
     get_links::GetLinksResult,
 };

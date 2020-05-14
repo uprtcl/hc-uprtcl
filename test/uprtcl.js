@@ -15,16 +15,19 @@ const {
   buildCommit,
   buildProvenance,
   parseEntryResult,
-  CREATOR_ADDRESS
-} = require('./utils');
+  CREATOR_ADDRESS,
+} = require("./utils");
 
-const SAMPLE_ADDRESS1 = 'QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en';
-const SAMPLE_ADDRESS2 = 'QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE';
+const SAMPLE_ADDRESS1 = "QmXA9hq87xLVqs4EgrzVZ5hRmaaiYUxpUB9J77GeQ5A2en";
+const SAMPLE_ADDRESS2 = "QmePeufDdo28ZcPnXhMJqCEEPPwDqq5yeqnCErQfd37UgE";
 
-module.exports = scenario => {
-  scenario('create context', async (s, t, { alice }) => {
+module.exports = (orchestrator, config) => {
+  orchestrator.registerScenario("create context", async (s, t) => {
+    const { alice } = await s.players({ alice: config }, true);
+
     // Create context
     const contextAddress = await createContext()(alice);
+    await s.consistency();
 
     const result = await getEntry(contextAddress)(alice);
 
@@ -36,45 +39,53 @@ module.exports = scenario => {
     t.equal(perspectives.length, 0);
   });
 
-  scenario(
-    'create perspective with proxy addresses',
-    async (s, t, { alice }) => {
+  orchestrator.registerScenario(
+    "create perspective with proxy addresses",
+    async (s, t) => {
+      const { alice } = await s.players({ alice: config }, true);
+
       // Create perspective pointing proxy addresses
-      const perspectiveAddress = await createPerspective('develop')(alice);
+      const perspectiveAddress = await createPerspective("develop")(alice);
+      await s.consistency();
+
       // Check that context has a perspective associated
-      t.equal(perspectiveAddress.startsWith('Qm'), true);
+      t.equal(perspectiveAddress.startsWith("Qm"), true);
 
       // Update perspective context
       let result = await updatePerspectiveContext(
         perspectiveAddress,
-        'proxy1'
+        "proxy1"
       )(alice);
-      t.equal(Object.keys(result).includes('Ok'), true);
+      await s.consistency();
+      t.equal(Object.keys(result).includes("Ok"), true);
 
       // Update perspective head
-      result = await updatePerspectiveHead(perspectiveAddress, 'proxy2')(alice);
-      t.equal(Object.keys(result).includes('Ok'), true);
+      result = await updatePerspectiveHead(perspectiveAddress, "proxy2")(alice);
+      t.equal(Object.keys(result).includes("Ok"), true);
     }
   );
 
-  scenario(
-    'create two commits in master perspective',
-    async (s, t, { alice }) => {
+  orchestrator.registerScenario(
+    "create two commits in master perspective",
+    async (s, t) => {
+      const { alice } = await s.players({ alice: config }, true);
+
       // Create new context, perspective and commit
       const {
         contextAddress,
         perspectiveAddress,
-        commitAddress
+        commitAddress,
       } = await createContextPerspectiveAndCommit(
-        'Commit message',
+        "Commit message",
         SAMPLE_ADDRESS1,
-        'master'
+        "master"
       )(alice);
+      await s.consistency();
 
       // Check that the context has one perspective named master
       const perspectives = await getContextPerspectives(contextAddress)(alice);
       t.equal(perspectives.length, 1);
-      t.equal(perspectives[0].payload.name, 'master');
+      t.equal(perspectives[0].payload.name, "master");
 
       const masterAddress = perspectives[0].id;
 
@@ -85,17 +96,19 @@ module.exports = scenario => {
       t.equal(commitInfo.payload.parentsIds.length, 0);
       t.equal(commitInfo.payload.creatorId, CREATOR_ADDRESS);
       t.equal(commitInfo.payload.dataId, SAMPLE_ADDRESS1);
-      t.equal(commitInfo.payload.message, 'Commit message');
+      t.equal(commitInfo.payload.message, "Commit message");
 
       // Create second commit
       const secondCommitAddress = await createCommit(
         SAMPLE_ADDRESS2,
         [commitAddress],
-        'second commit'
+        "second commit"
       )(alice);
+      await s.consistency();
 
       // Update perspective head
       await updatePerspectiveHead(masterAddress, secondCommitAddress)(alice);
+      await s.consistency();
 
       // Check that now master points to the new commit
       // Double call to avoid network synchronization issues
@@ -111,32 +124,37 @@ module.exports = scenario => {
     }
   );
 
-  scenario(
-    'create a develop perspective and a commit in it',
-    async (s, t, { alice }) => {
+  orchestrator.registerScenario(
+    "create a develop perspective and a commit in it",
+    async (s, t) => {
+      const { alice } = await s.players({ alice: config }, true);
+
       // Create new context, perspective and commit
       const {
         contextAddress,
         perspectiveAddress,
-        commitAddress
+        commitAddress,
       } = await createContextPerspectiveAndCommit(
-        'Commit message',
+        "Commit message",
         SAMPLE_ADDRESS1,
-        'master'
+        "master"
       )(alice);
-      
+      await s.consistency();
+
       // Create another perspective pointing to the initial commit
-      const developAddress = await createPerspective('develop')(alice);
+      const developAddress = await createPerspective("develop")(alice);
+      await s.consistency();
 
       const result = await updatePerspectiveContext(
         developAddress,
         contextAddress
       )(alice);
-      t.equal(Object.keys(result).includes('Ok'), true);
+      t.equal(Object.keys(result).includes("Ok"), true);
+      await s.consistency();
 
       // Check perspective info
       const developPerspective = await getEntry(developAddress)(alice);
-      t.equal(developPerspective.payload.name, 'develop');
+      t.equal(developPerspective.payload.name, "develop");
 
       const perspectives = await getContextPerspectives(contextAddress)(alice);
 
@@ -146,6 +164,7 @@ module.exports = scenario => {
 
       // Set perspective head
       await updatePerspectiveHead(developAddress, commitAddress)(alice);
+      await s.consistency();
 
       // Check that the newly created perspective points to the correct commit
       const perspectiveHead = await getPerspectiveHead(developAddress)(alice);
@@ -154,9 +173,10 @@ module.exports = scenario => {
       // Create second commit in the develop perspective
       const secondCommitAddress = await createCommitInPerspective(
         developAddress,
-        'second commit',
+        "second commit",
         SAMPLE_ADDRESS2
       )(alice);
+      await s.consistency();
 
       // Check that master still points to the first commit
       const perspectiveHead2 = await getPerspectiveHead(perspectiveAddress)(
