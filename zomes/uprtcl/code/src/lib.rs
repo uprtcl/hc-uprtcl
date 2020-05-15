@@ -10,9 +10,10 @@ extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate holochain_json_derive;
+extern crate holochain_anchors;
 
 use hdk::holochain_persistence_api::cas::content::Address;
-use hdk::{entry_definition::ValidatingEntryType, error::ZomeApiResult, DNA_ADDRESS};
+use hdk::prelude::*;
 use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
 
 use hdk_proc_macros::zome;
@@ -21,10 +22,14 @@ pub mod commit;
 pub mod context;
 pub mod perspective;
 pub mod proof;
+pub mod proxy;
 pub mod utils;
+pub mod perspective_details;
 
 #[zome]
 mod uprtcl {
+
+    use perspective_details::PerspectiveDetails;
 
     #[init]
     fn init() {
@@ -39,6 +44,11 @@ mod uprtcl {
     // Entry definitions
 
     #[entry_def]
+    fn anchor_entry_def() -> ValidatingEntryType {
+        holochain_anchors::anchor_definition()
+    }
+
+    #[entry_def]
     fn commit_entry_def() -> ValidatingEntryType {
         commit::definition()
     }
@@ -48,33 +58,26 @@ mod uprtcl {
         perspective::definition()
     }
 
-    #[entry_def]
-    fn context_entry_def() -> ValidatingEntryType {
-        context::definition()
-    }
-
     #[zome_fn("hc_public")]
-    fn get_source_name() -> ZomeApiResult<String> {
-        Ok(String::from("holo:uprtcl:") + &String::from(DNA_ADDRESS.to_owned()))
+    fn get_cas_id() -> ZomeApiResult<String> {
+        Ok(utils::get_cas_id())
     }
 
     // Create entries
 
     #[zome_fn("hc_public")]
-    fn create_commit(dataId: Address, parentsIds: Vec<Address>, message: String, timestamp: u128) -> ZomeApiResult<Address> {
+    fn create_commit(
+        dataId: Address,
+        parentsIds: Vec<Address>,
+        message: String,
+        timestamp: u128,
+    ) -> ZomeApiResult<Address> {
         commit::create_commit(dataId, parentsIds, message, timestamp)
     }
 
     #[zome_fn("hc_public")]
-    fn create_perspective(
-        name: String, timestamp: u128
-    ) -> ZomeApiResult<Address> {
+    fn create_perspective(name: String, timestamp: u128) -> ZomeApiResult<Address> {
         perspective::create_perspective(name, timestamp)
-    }
-
-    #[zome_fn("hc_public")]
-    fn create_context(timestamp: u128, nonce: u128) -> ZomeApiResult<Address> {
-        context::create_context(timestamp, nonce)
     }
 
     // Clone entries
@@ -94,45 +97,28 @@ mod uprtcl {
     ) -> ZomeApiResult<Address> {
         utils::clone_entry(previous_address, perspective)
     }
-    #[zome_fn("hc_public")]
-    fn clone_context(
-        previous_address: Option<Address>,
-        context: context::Context,
-    ) -> ZomeApiResult<Address> {
-        utils::clone_entry(previous_address, context)
-    }
 
     // Getters
 
     #[zome_fn("hc_public")]
-    fn get_perspective_head(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
-        perspective::get_perspective_head(perspective_address)
-    }
-
-    #[zome_fn("hc_public")]
-    fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
-        perspective::get_perspective_context(perspective_address)
+    fn get_perspective_details(perspective_address: Address) -> ZomeApiResult<PerspectiveDetails> {
+        perspective_details::get_perspective_details(perspective_address)
     }
 
     #[zome_fn("hc_public")]
     fn get_context_perspectives(
-        context_address: Address,
+        context: String,
     ) -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
-        context::get_context_perspectives(context_address)
+        context::get_context_perspectives(context)
     }
 
     // Setters
     #[zome_fn("hc_public")]
-    fn update_perspective_head(perspective_address: Address, head_address: Address) -> ZomeApiResult<()> {
-        perspective::update_perspective_head(perspective_address, head_address)
-    }
-
-    #[zome_fn("hc_public")]
-    fn update_perspective_context(
+    fn update_perspective_details(
         perspective_address: Address,
-        context_address: Address,
+        details: PerspectiveDetails,
     ) -> ZomeApiResult<()> {
-        context::update_perspective_context(perspective_address, context_address)
+        perspective_details::update_perspective_details(perspective_address, details)
     }
 
 }

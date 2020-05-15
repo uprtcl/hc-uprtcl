@@ -49,7 +49,7 @@ where
     Ok(entry_address)
 }
 
-pub fn get_origin() -> String {
+pub fn get_cas_id() -> String {
     String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
 }
 

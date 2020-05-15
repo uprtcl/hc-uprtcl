@@ -7,7 +7,7 @@ const PROXY_ADDRESS2 = 'z8mWaJHXieAVxxLagBpdaNWFEBKVWmMiE';
 const createSampleEntry = async function(caller) {
   const proxyAddress = 'PROXY' + Date.now();
   
-  const sampleEntryAddress = await caller.callSync('proxy', 'set_entry_proxy', {
+  const sampleEntryAddress = await caller.call('uprtcl', 'proxy', 'set_entry_proxy', {
     proxy_address: proxyAddress,
     entry_address: null
   });
@@ -17,7 +17,7 @@ const createSampleEntry = async function(caller) {
 
 module.exports = scenario => {
   scenario('set a proxy for a null entry is ok', async (s, t, { alice }) => {
-    const proxyEntryAddress = await alice.callSync('proxy', 'set_entry_proxy', {
+    const proxyEntryAddress = await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
       proxy_address: PROXY_ADDRESS1,
       entry_address: null
     });
@@ -27,7 +27,7 @@ module.exports = scenario => {
   scenario(
     'set a proxy for an internal entry is ok',
     async (s, t, { alice }) => {
-      const proxyEntryAddress = await alice.callSync(
+      const proxyEntryAddress = await alice.call('uprtcl', 
         'proxy',
         'set_entry_proxy',
         {
@@ -42,12 +42,12 @@ module.exports = scenario => {
   scenario(
     'set two proxies for the same entry is okey',
     async (s, t, { alice }) => {
-      let proxyEntryAddress = await alice.callSync('proxy', 'set_entry_proxy', {
+      let proxyEntryAddress = await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
         proxy_address: PROXY_ADDRESS1,
         entry_address: SAMPLE_ADDRESS
       });
       t.equal(Object.keys(proxyEntryAddress).includes('Ok'), true);
-      proxyEntryAddress = await alice.callSync('proxy', 'set_entry_proxy', {
+      proxyEntryAddress = await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
         proxy_address: PROXY_ADDRESS2,
         entry_address: SAMPLE_ADDRESS
       });
@@ -59,11 +59,11 @@ module.exports = scenario => {
     // Create any entry in the app
     const entryAddress = await createSampleEntry(alice);
 
-    await alice.callSync('proxy', 'set_entry_proxy', {
+    await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
       proxy_address: PROXY_ADDRESS2,
       entry_address: entryAddress
     });
-    const entry = await alice.callSync('proxy', 'get_proxied_entry', {
+    const entry = await alice.call('uprtcl', 'proxy', 'get_proxied_entry', {
       address: PROXY_ADDRESS2
     });
     t.equal(entry.Ok.result.Single.meta.address, entryAddress);
@@ -73,11 +73,11 @@ module.exports = scenario => {
     // Create any entry in the app
     const entryAddress = await createSampleEntry(alice);
 
-    await alice.callSync('proxy', 'set_entry_proxy', {
+    await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
       proxy_address: PROXY_ADDRESS2,
       entry_address: entryAddress
     });
-    const address = await alice.callSync('proxy', 'get_internal_address', {
+    const address = await alice.call('uprtcl', 'proxy', 'get_internal_address', {
       proxy_address: PROXY_ADDRESS2
     });
     t.equal(address.Ok, entryAddress);
@@ -87,18 +87,18 @@ module.exports = scenario => {
     const sampleEntryAddress = await createSampleEntry(alice);
 
     // Create a ghost proxy
-    await alice.callSync('proxy', 'set_entry_proxy', {
+    await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
       proxy_address: PROXY_ADDRESS1,
       entry_address: null
     });
     // Create a link to said proxy
-    await alice.callSync('proxy', 'link_to_proxy', {
+    await alice.call('uprtcl', 'proxy', 'link_to_proxy', {
       base_address: sampleEntryAddress,
       proxy_address: PROXY_ADDRESS1,
       link_type: LINK_TYPE,
       tag: ''
     });
-    let links = await alice.callSync('proxy', 'get_links_to_proxy', {
+    let links = await alice.call('uprtcl', 'proxy', 'get_links_to_proxy', {
       base_address: sampleEntryAddress,
       link_type: {
         Exactly: LINK_TYPE
@@ -108,12 +108,12 @@ module.exports = scenario => {
     t.equal(links.Ok.length, 1);
 
     // Create second ghost proxy
-    await alice.callSync('proxy', 'set_entry_proxy', {
+    await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
       proxy_address: PROXY_ADDRESS2,
       entry_address: null
     });
     // And a link also
-    await alice.callSync('proxy', 'link_to_proxy', {
+    await alice.call('uprtcl', 'proxy', 'link_to_proxy', {
       base_address: sampleEntryAddress,
       proxy_address: PROXY_ADDRESS2,
       link_type: LINK_TYPE,
@@ -122,17 +122,17 @@ module.exports = scenario => {
 
     // Actually, we now know that both proxies identify the same entry
     const proxiedEntryAddress = await createSampleEntry(alice);
-    await alice.callSync('proxy', 'set_entry_proxy', {
+    await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
       proxy_address: PROXY_ADDRESS1,
       entry_address: proxiedEntryAddress
     });
-    await alice.callSync('proxy', 'set_entry_proxy', {
+    await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
       proxy_address: PROXY_ADDRESS2,
       entry_address: proxiedEntryAddress
     });
 
     // And now we get both previously set links
-    links = await alice.callSync('proxy', 'get_links_to_proxy', {
+    links = await alice.call('uprtcl', 'proxy', 'get_links_to_proxy', {
       base_address: sampleEntryAddress,
       link_type: {
         Exactly: LINK_TYPE},
@@ -145,18 +145,18 @@ module.exports = scenario => {
     const sampleEntryAddress = await createSampleEntry(alice);
 
     // Create a ghost proxy
-    await alice.callSync('proxy', 'set_entry_proxy', {
+    await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
       proxy_address: PROXY_ADDRESS1,
       entry_address: null
     });
     // Create a link to said proxy
-    await alice.callSync('proxy', 'link_from_proxy', {
+    await alice.call('uprtcl', 'proxy', 'link_from_proxy', {
       proxy_address: PROXY_ADDRESS1,
       to_address: sampleEntryAddress,
       link_type: 'external_proxy',
       tag: ''
     });
-    let links = await alice.callSync('proxy', 'get_links_from_proxy', {
+    let links = await alice.call('uprtcl', 'proxy', 'get_links_from_proxy', {
       proxy_address: PROXY_ADDRESS1,
       link_type: {
         Exactly: 'external_proxy'
@@ -172,18 +172,18 @@ module.exports = scenario => {
       const sampleEntryAddress = await createSampleEntry(alice);
 
       // Create a ghost proxy
-      await alice.callSync('proxy', 'set_entry_proxy', {
+      await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
         proxy_address: PROXY_ADDRESS1,
         entry_address: null
       });
       // Create a link to said proxy
-      await alice.callSync('proxy', 'link_from_proxy', {
+      await alice.call('uprtcl', 'proxy', 'link_from_proxy', {
         proxy_address: PROXY_ADDRESS1,
         to_address: sampleEntryAddress,
         link_type: LINK_TYPE,
         tag: ''
       });
-      let links = await alice.callSync('proxy', 'get_links_from_proxy', {
+      let links = await alice.call('uprtcl', 'proxy', 'get_links_from_proxy', {
         proxy_address: PROXY_ADDRESS1,
         link_type: {
           Exactly: LINK_TYPE
@@ -192,12 +192,12 @@ module.exports = scenario => {
       });
 
       // Create second ghost proxy
-      await alice.callSync('proxy', 'set_entry_proxy', {
+      await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
         proxy_address: PROXY_ADDRESS2,
         entry_address: null
       });
       // And a link also
-      await alice.callSync('proxy', 'link_from_proxy', {
+      await alice.call('uprtcl', 'proxy', 'link_from_proxy', {
         proxy_address: PROXY_ADDRESS2,
         to_address: sampleEntryAddress,
         link_type: LINK_TYPE,
@@ -206,17 +206,17 @@ module.exports = scenario => {
 
       // Actually, we now know that both proxies identify the same entry
       const proxiedEntryAddress = await createSampleEntry(alice);
-      await alice.callSync('proxy', 'set_entry_proxy', {
+      await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
         proxy_address: PROXY_ADDRESS1,
         entry_address: proxiedEntryAddress
       });
-      await alice.callSync('proxy', 'set_entry_proxy', {
+      await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
         proxy_address: PROXY_ADDRESS2,
         entry_address: proxiedEntryAddress
       });
 
       // And now we get both previously set links
-      links = await alice.callSync('proxy', 'get_links_from_proxy', {
+      links = await alice.call('uprtcl', 'proxy', 'get_links_from_proxy', {
         proxy_address: PROXY_ADDRESS1,
         link_type: {
           Exactly: LINK_TYPE
@@ -231,18 +231,18 @@ module.exports = scenario => {
     const sampleEntryAddress = await createSampleEntry(alice);
 
     // Create a ghost proxy
-    await alice.callSync('proxy', 'set_entry_proxy', {
+    await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
       proxy_address: PROXY_ADDRESS1,
       entry_address: null
     });
     // Create a link to said proxy
-    await alice.callSync('proxy', 'link_to_proxy', {
+    await alice.call('uprtcl', 'proxy', 'link_to_proxy', {
       base_address: sampleEntryAddress,
       proxy_address: PROXY_ADDRESS1,
       link_type: LINK_TYPE,
       tag: ''
     });
-    let links = await alice.callSync('proxy', 'get_links_to_proxy', {
+    let links = await alice.call('uprtcl', 'proxy', 'get_links_to_proxy', {
       base_address: sampleEntryAddress,
       link_type: {
         Exactly: LINK_TYPE
@@ -252,13 +252,13 @@ module.exports = scenario => {
     t.equal(links.Ok.length, 1);
 
     // Remove the link
-    await alice.callSync('proxy', 'remove_link_to_proxy', {
+    await alice.call('uprtcl', 'proxy', 'remove_link_to_proxy', {
       base_address: sampleEntryAddress,
       proxy_address: PROXY_ADDRESS1,
       link_type: LINK_TYPE,
       tag: ''
     });
-    links = await alice.callSync('proxy', 'get_links_to_proxy', {
+    links = await alice.call('uprtcl', 'proxy', 'get_links_to_proxy', {
       base_address: sampleEntryAddress,
       link_type: {
         Exactly: LINK_TYPE
@@ -272,18 +272,18 @@ module.exports = scenario => {
     const sampleEntryAddress = await createSampleEntry(alice);
 
     // Create a ghost proxy
-    await alice.callSync('proxy', 'set_entry_proxy', {
+    await alice.call('uprtcl', 'proxy', 'set_entry_proxy', {
       proxy_address: PROXY_ADDRESS1,
       entry_address: null
     });
     // Create a link to said proxy
-    await alice.callSync('proxy', 'link_from_proxy', {
+    await alice.call('uprtcl', 'proxy', 'link_from_proxy', {
       proxy_address: PROXY_ADDRESS1,
       to_address: sampleEntryAddress,
       link_type: 'external_proxy',
       tag: ''
     });
-    let links = await alice.callSync('proxy', 'get_links_from_proxy', {
+    let links = await alice.call('uprtcl', 'proxy', 'get_links_from_proxy', {
       proxy_address: PROXY_ADDRESS1,
       link_type: {
         Exactly: 'external_proxy'
@@ -293,13 +293,13 @@ module.exports = scenario => {
     t.equal(links.Ok.length, 1);
 
     // Remove link from said proxy
-    await alice.callSync('proxy', 'remove_link_from_proxy', {
+    await alice.call('uprtcl', 'proxy', 'remove_link_from_proxy', {
       proxy_address: PROXY_ADDRESS1,
       to_address: sampleEntryAddress,
       link_type: 'external_proxy',
       tag: ''
     });
-    links = await alice.callSync('proxy', 'get_links_from_proxy', {
+    links = await alice.call('uprtcl', 'proxy', 'get_links_from_proxy', {
       proxy_address: PROXY_ADDRESS1,
       link_type: {
         Exactly: 'external_proxy'

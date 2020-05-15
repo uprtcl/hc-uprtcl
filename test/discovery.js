@@ -3,7 +3,7 @@ const SOURCES = ['ipfs://', 'http://collective.org'];
 
 module.exports = scenario => {
   scenario('get own source', async (s, t, { alice }) => {
-    const { Ok: ownSource } = await alice.callSync(
+    const { Ok: ownSource } = await alice.call('uprtcl', 
       'discovery',
       'get_own_source',
       {}
@@ -14,7 +14,7 @@ module.exports = scenario => {
   scenario(
     'unknown address returns no known sources',
     async (s, t, { alice }) => {
-      const knownSources = await alice.callSync(
+      const knownSources = await alice.call('uprtcl', 
         'discovery',
         'get_known_sources',
         {
@@ -26,12 +26,12 @@ module.exports = scenario => {
   );
 
   scenario('add known source for an address', async (s, t, { alice }) => {
-    await alice.callSync('discovery', 'add_known_sources', {
+    await alice.call('uprtcl', 'discovery', 'add_known_sources', {
       address: SAMPLE_ADDRESS,
       sources: SOURCES
     });
 
-    const knownSources = await alice.callSync(
+    const knownSources = await alice.call('uprtcl', 
       'discovery',
       'get_known_sources',
       {
@@ -42,17 +42,17 @@ module.exports = scenario => {
   });
 
   scenario('remove known source for an address', async (s, t, { alice }) => {
-    await alice.callSync('discovery', 'add_known_sources', {
+    await alice.call('uprtcl', 'discovery', 'add_known_sources', {
       address: SAMPLE_ADDRESS,
       sources: SOURCES
     });
 
-    await alice.callSync('discovery', 'remove_known_source', {
+    await alice.call('uprtcl', 'discovery', 'remove_known_source', {
       address: SAMPLE_ADDRESS,
       source: SOURCES[0]
     });
 
-    const knownSources = await alice.callSync(
+    const knownSources = await alice.call('uprtcl', 
       'discovery',
       'get_known_sources',
       {

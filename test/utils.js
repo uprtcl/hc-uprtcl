@@ -7,7 +7,7 @@ const parseResponse = function(response) {
 
 const getEntry = function(address) {
   return async caller => {
-    const entry = await caller.call('proxy', 'get_proxied_entry', {
+    const entry = await caller.call('uprtcl', 'proxy', 'get_proxied_entry', {
       address: address
     });
     return parseEntryResult(entry);
@@ -21,7 +21,7 @@ const getEntry = function(address) {
 const createContext = function(timestamp = Date.now(), nonce = 0) {
   return async caller =>
     parseResponse(
-      await caller.callSync('uprtcl', 'create_context', {
+      await caller.call('uprtcl', 'uprtcl', 'create_context', {
         timestamp,
         nonce
       })
@@ -33,7 +33,7 @@ const createContext = function(timestamp = Date.now(), nonce = 0) {
 const createPerspective = function(name, timestamp = Date.now()) {
   return async caller =>
     parseResponse(
-      await caller.callSync('uprtcl', 'create_perspective', {
+      await caller.call('uprtcl', 'uprtcl', 'create_perspective', {
         name,
         timestamp
       })
@@ -42,7 +42,7 @@ const createPerspective = function(name, timestamp = Date.now()) {
 
 const getContextPerspectives = function(contextAddress) {
   return async caller => {
-    const perspectives = await caller.callSync(
+    const perspectives = await caller.call('uprtcl', 
       'uprtcl',
       'get_context_perspectives',
       {
@@ -55,7 +55,7 @@ const getContextPerspectives = function(contextAddress) {
 
 const getPerspectiveHead = function(perspectiveAddress) {
   return async caller => {
-    const head = await caller.callSync('uprtcl', 'get_perspective_head', {
+    const head = await caller.call('uprtcl', 'uprtcl', 'get_perspective_head', {
       perspective_address: perspectiveAddress
     });
     return parseResponse(head);
@@ -64,7 +64,7 @@ const getPerspectiveHead = function(perspectiveAddress) {
 
 const updatePerspectiveHead = function(perspectiveAddress, headAddress) {
   return async caller =>
-    await caller.callSync('uprtcl', 'update_perspective_head', {
+    await caller.call('uprtcl', 'uprtcl', 'update_perspective_head', {
       perspective_address: perspectiveAddress,
       head_address: headAddress
     });
@@ -72,7 +72,7 @@ const updatePerspectiveHead = function(perspectiveAddress, headAddress) {
 
 const updatePerspectiveContext = function(perspectiveAddress, contextAddress) {
   return async caller =>
-    await caller.callSync('uprtcl', 'update_perspective_context', {
+    await caller.call('uprtcl', 'uprtcl', 'update_perspective_context', {
       perspective_address: perspectiveAddress,
       context_address: contextAddress
     });
@@ -88,7 +88,7 @@ const createCommit = function(
 ) {
   return async caller =>
     parseResponse(
-      await caller.callSync('uprtcl', 'create_commit', {
+      await caller.call('uprtcl', 'uprtcl', 'create_commit', {
         dataId: dataAddress,
         parentsIds: parentCommitAddresses,
         message,

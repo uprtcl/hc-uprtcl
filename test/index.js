@@ -15,11 +15,11 @@ process.on("unhandledRejection", (error) => {
   console.error("got unhandledRejection:", error);
 });
 
-const dnaPath = path.join(__dirname, "./dist/hc-uprtcl.dna.json");
+const dnaPath = path.join(__dirname, "../dist/hc-uprtcl.dna.json");
 
 const dna = Config.dna(dnaPath, "scaffold-test");
 const config = Config.gen(
-  { transactor: dna },
+  { uprtcl: dna },
   {
     network: {
       type: "sim2h",
