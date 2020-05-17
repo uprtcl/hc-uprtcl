@@ -1,6 +1,7 @@
 use crate::{proxy, versioned_tags};
 use hdk::prelude::*;
 
+#[derive(Serialize, Deserialize, Debug, self::DefaultJson, Clone)]
 pub struct PerspectiveDetails {
     pub name: Option<String>,
     pub context: Option<String>,
@@ -37,11 +38,11 @@ pub fn update_perspective_head(
 ) -> ZomeApiResult<()> {
     let proxy_address = proxy::proxy_address(head_address)?;
 
-    versioned_tags::link_with_content(&perspective_address, &proxy_address, "head", head_address)?;
+    versioned_tags::link_with_content(&perspective_address, &proxy_address, "head".into(), head_address)?;
 
     Ok(())
 }
 
 pub fn get_perspective_head(perspective_address: &Address) -> ZomeApiResult<Option<Address>> {
-    versioned_tags::get_last_content::<Address>(&perspective_address, "head")
+    versioned_tags::get_last_content::<Address>(&perspective_address, "head".into())
 }

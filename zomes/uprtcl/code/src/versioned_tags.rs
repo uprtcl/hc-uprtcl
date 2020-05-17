@@ -5,21 +5,21 @@ use std::convert::TryFrom;
 pub fn link_with_content<T>(
     base: &Address,
     target: &Address,
-    link_type: &str,
+    link_type: String,
     tag_content: T,
 ) -> ZomeApiResult<Address>
 where
-    T: Into<JsonString> + Clone,
+    T: Into<JsonString>,
 {
-    let count = hdk::get_links_count(&base, LinkMatch::Exactly(link_type), LinkMatch::Any)?;
+    let count = hdk::get_links_count(&base, LinkMatch::Exactly(link_type.as_str()), LinkMatch::Any)?;
 
     let tag = serialize_tag::<T>(tag_content, count.count);
 
-    hdk::link_entries(&base, &target, link_type, tag.as_str())
+    hdk::link_entries(&base, &target, link_type, tag)
 }
 
-pub fn get_last_link(base: &Address, link_type: &str) -> ZomeApiResult<Option<LinksResult>> {
-    let links_result = hdk::get_links(&base, LinkMatch::Exactly(link_type), LinkMatch::Any)?;
+pub fn get_last_link(base: &Address, link_type: String) -> ZomeApiResult<Option<LinksResult>> {
+    let links_result = hdk::get_links(&base, LinkMatch::Exactly(link_type.as_str()), LinkMatch::Any)?;
 
     let mut links = links_result.links();
 
@@ -28,7 +28,7 @@ pub fn get_last_link(base: &Address, link_type: &str) -> ZomeApiResult<Option<Li
     Ok(links.get(0).map(|l| l.clone()))
 }
 
-pub fn get_last_content<T>(base: &Address, link_type: &str) -> ZomeApiResult<Option<T>>
+pub fn get_last_content<T>(base: &Address, link_type: String) -> ZomeApiResult<Option<T>>
 where
     T: TryFrom<JsonString>,
 {

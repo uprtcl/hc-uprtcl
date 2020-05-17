@@ -14,18 +14,17 @@ extern crate holochain_anchors;
 
 use hdk::holochain_persistence_api::cas::content::Address;
 use hdk::prelude::*;
-use holochain_wasm_utils::api_serialization::get_entry::GetEntryResult;
 
 use hdk_proc_macros::zome;
 
 pub mod commit;
 pub mod context;
 pub mod perspective;
-pub mod versioned_tags;
+pub mod perspective_details;
 pub mod proof;
 pub mod proxy;
 pub mod utils;
-pub mod perspective_details;
+pub mod versioned_tags;
 
 #[zome]
 mod uprtcl {
@@ -107,9 +106,7 @@ mod uprtcl {
     }
 
     #[zome_fn("hc_public")]
-    fn get_context_perspectives(
-        context: String,
-    ) -> ZomeApiResult<Vec<ZomeApiResult<GetEntryResult>>> {
+    fn get_context_perspectives(context: String) -> ZomeApiResult<Vec<Address>> {
         context::get_context_perspectives(context)
     }
 
@@ -121,5 +118,4 @@ mod uprtcl {
     ) -> ZomeApiResult<()> {
         perspective_details::update_perspective_details(perspective_address, details)
     }
-
 }
