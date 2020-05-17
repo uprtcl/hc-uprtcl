@@ -50,7 +50,7 @@ pub fn update_perspective_context(
         &perspective_address,
         &context_address,
         "context".into(),
-        JsonString::from_json(context),
+        JsonString::from_json(&context),
     )?;
 
     hdk::link_entries(
