@@ -49,7 +49,7 @@ const getContextPerspectives = function(contextAddress) {
         context_address: contextAddress
       }
     );
-    return parseEntriesResult(perspectives);
+    return parseResponse(perspectives);
   };
 };
 

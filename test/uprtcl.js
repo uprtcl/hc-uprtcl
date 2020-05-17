@@ -85,7 +85,7 @@ module.exports = (orchestrator, config) => {
       // Check that the context has one perspective named master
       const perspectives = await getContextPerspectives(contextAddress)(alice);
       t.equal(perspectives.length, 1);
-      t.equal(perspectives[0].payload.name, "master");
+      t.equal(perspectives[0], perspectiveAddress);
 
       const masterAddress = perspectives[0].id;
 
@@ -159,8 +159,8 @@ module.exports = (orchestrator, config) => {
       const perspectives = await getContextPerspectives(contextAddress)(alice);
 
       // Check that the context now has the two correct perspectives
-      t.equal(perspectives[0].id, perspectiveAddress);
-      t.equal(perspectives[1].id, developAddress);
+      t.equal(perspectives[0], perspectiveAddress);
+      t.equal(perspectives[1], developAddress);
 
       // Set perspective head
       await updatePerspectiveHead(developAddress, commitAddress)(alice);
