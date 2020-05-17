@@ -21,6 +21,7 @@ use hdk_proc_macros::zome;
 pub mod commit;
 pub mod context;
 pub mod perspective;
+pub mod versioned_tags;
 pub mod proof;
 pub mod proxy;
 pub mod utils;
