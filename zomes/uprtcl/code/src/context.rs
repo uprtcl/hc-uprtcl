@@ -29,7 +29,7 @@ pub fn get_context_perspectives(context: String) -> ZomeApiResult<Vec<Address>> 
  * Update the context associated to the given perspective
  */
 pub fn update_perspective_context(
-    perspective_address: Address,
+    perspective_address: &Address,
     context: String,
 ) -> ZomeApiResult<()> {
     // Remove previous link from context if existent

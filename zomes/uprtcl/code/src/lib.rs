@@ -76,8 +76,8 @@ mod uprtcl {
     }
 
     #[zome_fn("hc_public")]
-    fn create_perspective(name: String, timestamp: u128) -> ZomeApiResult<Address> {
-        perspective::create_perspective(name, timestamp)
+    fn create_perspective(timestamp: u128) -> ZomeApiResult<Address> {
+        perspective::create_perspective(timestamp)
     }
 
     // Clone entries
@@ -99,6 +99,11 @@ mod uprtcl {
     }
 
     // Getters
+
+    #[zome_fn("hc_public")]
+    fn get_entry(entry_address: Address) -> ZomeApiResult<Option<Entry>> {
+        hdk::get_entry_initial(&entry_address)
+    }
 
     #[zome_fn("hc_public")]
     fn get_perspective_details(perspective_address: Address) -> ZomeApiResult<PerspectiveDetails> {

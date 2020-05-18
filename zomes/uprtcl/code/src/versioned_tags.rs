@@ -9,7 +9,7 @@ pub fn link_with_content<T>(
     tag_content: T,
 ) -> ZomeApiResult<Address>
 where
-    T: Into<JsonString>,
+    T: Into<String>,
 {
     let count = hdk::get_links_count(
         &base,
@@ -38,7 +38,7 @@ pub fn get_last_link(base: &Address, link_type: String) -> ZomeApiResult<Option<
 
 pub fn get_last_content<T>(base: &Address, link_type: String) -> ZomeApiResult<Option<T>>
 where
-    T: TryFrom<JsonString>,
+    T: TryFrom<String>,
 {
     let link_result = get_last_link(&base, link_type)?;
 
@@ -52,10 +52,10 @@ where
 
 fn serialize_tag<T>(tag_content: T, count: usize) -> String
 where
-    T: Into<JsonString>,
+    T: Into<String>,
 {
-    let content: JsonString = tag_content.into();
-    format!("content:{:?},count:{}", content, count)
+    let content: String = tag_content.into();
+    format!("content:{},count:{}", content, count)
 }
 
 fn count_from_tag(tag: String) -> usize {
@@ -72,7 +72,7 @@ fn count_from_tag(tag: String) -> usize {
 
 fn deserialize_tag<T>(tag: String) -> ZomeApiResult<(T, usize)>
 where
-    T: TryFrom<JsonString>,
+    T: TryFrom<String>,
 {
     let split: Vec<&str> = tag.split(",").collect();
     let content_string = split[0];
@@ -81,9 +81,7 @@ where
     let content: &str = content_string.split(":").collect::<Vec<&str>>()[1];
     let count: &str = count_string.split(":").collect::<Vec<&str>>()[1];
 
-    let jsonstring: JsonString = JsonString::from_json(content);
-
-    match T::try_from(jsonstring) {
+    match T::try_from(String::from(content)) {
         Ok(result) => Ok((result, String::from(count).parse::<usize>().unwrap())),
         Err(_) => Err(ZomeApiError::from(String::from(
             "Could not deserialize tag",

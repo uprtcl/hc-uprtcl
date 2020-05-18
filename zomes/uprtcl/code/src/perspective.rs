@@ -1,6 +1,5 @@
 use crate::proof::{Proof, Secured};
 use crate::utils;
-use hdk::{AGENT_ADDRESS,PUBLIC_TOKEN};
 use hdk::{
     entry_definition::ValidatingEntryType,
     error::ZomeApiResult,
@@ -8,6 +7,7 @@ use hdk::{
     holochain_json_api::{error::JsonError, json::JsonString},
     holochain_persistence_api::cas::content::Address,
 };
+use hdk::{AGENT_ADDRESS, PUBLIC_TOKEN};
 use std::convert::TryInto;
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
@@ -15,9 +15,7 @@ pub struct PerspectiveData {
     pub origin: String,
     pub creatorId: Address,
     pub timestamp: u128,
-    pub name: String,
 }
-
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct Perspective {
@@ -26,14 +24,13 @@ pub struct Perspective {
 }
 
 impl Perspective {
-    pub fn new(name: String, timestamp: u128) -> ZomeApiResult<Perspective> {
+    pub fn new(timestamp: u128) -> ZomeApiResult<Perspective> {
         let origin = utils::get_cas_id();
 
         let perspective_data = PerspectiveData {
-            name,
             timestamp,
             origin,
-            creatorId: AGENT_ADDRESS.clone()
+            creatorId: AGENT_ADDRESS.clone(),
         };
 
         Perspective::from_data(perspective_data)
@@ -77,8 +74,8 @@ pub fn definition() -> ValidatingEntryType {
         },
         validation: |validation_data: hdk::EntryValidationData<Perspective>| {
             match validation_data {
-                hdk::EntryValidationData::Create { entry: perspective, .. } => {
-                    Proof::verify(perspective)
+                hdk::EntryValidationData::Create { .. } => {
+                    Ok(())
                 },
                 _ => Err("Cannot modify or delete perspectives".into())
             }
@@ -141,10 +138,10 @@ pub fn definition() -> ValidatingEntryType {
 // Create
 
 /**
- * Create the perspective with the given input data 
+ * Create the perspective with the given input data
  */
-pub fn create_perspective(name: String, timestamp: u128) -> ZomeApiResult<Address> {
-    let perspective = Perspective::new(name, timestamp)?;
+pub fn create_perspective(timestamp: u128) -> ZomeApiResult<Address> {
+    let perspective = Perspective::new(timestamp)?;
 
     utils::create_entry(perspective)
 }
@@ -165,8 +162,11 @@ pub fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Op
     get_perspective_link_to_proxy(perspective_address, String::from("perspective->context"))
 }
 
-fn get_perspective_link_to_proxy(perspective_address: Address, link_type: String) -> ZomeApiResult<Option<Address>> {
-        // Get the internal perspective address, in case the given address is a hash with a different form than the one stored in this hApp
+fn get_perspective_link_to_proxy(
+    perspective_address: Address,
+    link_type: String,
+) -> ZomeApiResult<Option<Address>> {
+    // Get the internal perspective address, in case the given address is a hash with a different form than the one stored in this hApp
     let internal_perspective_address = utils::get_internal_address(perspective_address)?;
 
     let response = hdk::call(
