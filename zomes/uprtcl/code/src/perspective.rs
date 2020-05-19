@@ -7,12 +7,11 @@ use hdk::{
     holochain_json_api::{error::JsonError, json::JsonString},
     holochain_persistence_api::cas::content::Address,
 };
-use hdk::{AGENT_ADDRESS, PUBLIC_TOKEN};
-use std::convert::TryInto;
+use hdk::{AGENT_ADDRESS};
 
 #[derive(Serialize, Deserialize, Debug, DefaultJson, Clone)]
 pub struct PerspectiveData {
-    pub origin: String,
+    pub authority: String,
     pub creatorId: Address,
     pub timestamp: u128,
 }
@@ -25,11 +24,11 @@ pub struct Perspective {
 
 impl Perspective {
     pub fn new(timestamp: u128) -> ZomeApiResult<Perspective> {
-        let origin = utils::get_cas_id();
+        let authority = utils::get_cas_id();
 
         let perspective_data = PerspectiveData {
             timestamp,
-            origin,
+            authority,
             creatorId: AGENT_ADDRESS.clone(),
         };
 
@@ -122,6 +121,16 @@ pub fn definition() -> ValidatingEntryType {
                 }
             ),
             from!(
+                holochain_anchors::ANCHOR_TYPE,
+                link_type: "proxy",
+                validation_package: || {
+                    hdk::ValidationPackageDefinition::Entry
+                },
+                validation: |_validation_data: hdk::LinkValidationData | {
+                    Ok(())
+                }
+            ),
+            from!(
                 "%agent_id",
                 link_type: "agent->perspective",
                 validation_package: || {
@@ -147,45 +156,3 @@ pub fn create_perspective(timestamp: u128) -> ZomeApiResult<Address> {
 }
 
 // Getters
-
-/**
- * Get the head associated with the given perspective, if it exists
- */
-pub fn get_perspective_head(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
-    get_perspective_link_to_proxy(perspective_address, String::from("head"))
-}
-
-/**
- * Get the context associated with the given perspective, if it exists
- */
-pub fn get_perspective_context(perspective_address: Address) -> ZomeApiResult<Option<Address>> {
-    get_perspective_link_to_proxy(perspective_address, String::from("perspective->context"))
-}
-
-fn get_perspective_link_to_proxy(
-    perspective_address: Address,
-    link_type: String,
-) -> ZomeApiResult<Option<Address>> {
-    // Get the internal perspective address, in case the given address is a hash with a different form than the one stored in this hApp
-    let internal_perspective_address = utils::get_internal_address(perspective_address)?;
-
-    let response = hdk::call(
-        hdk::THIS_INSTANCE,
-        "proxy",
-        Address::from(PUBLIC_TOKEN.to_string()),
-        "get_links_to_proxy",
-        json!({ "base_address": internal_perspective_address, "link_type": { "Exactly": link_type }, "tag": "Any"})
-            .into(),
-    )?;
-
-    let links_result: ZomeApiResult<Vec<Address>> = response.try_into()?;
-    let links = links_result?;
-    if links.len() == 0 {
-        return Ok(None);
-    }
-    Ok(Some(links[0].clone()))
-}
-
-// Setters
-
-// Link helpers

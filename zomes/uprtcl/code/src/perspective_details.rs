@@ -9,9 +9,14 @@ pub struct PerspectiveDetails {
 }
 
 pub fn get_perspective_details(perspective_address: Address) -> ZomeApiResult<PerspectiveDetails> {
-    let head = get_perspective_head(&perspective_address)?;
-    let name = get_perspective_name(&perspective_address)?;
-    let context = context::get_perspective_context(&perspective_address)?;
+    let internal_address = match proxy::internal_address(&perspective_address)? {
+        Some(address) => Ok(address),
+        None => Err(ZomeApiError::from(String::from("Could not find given perspective")))
+    }?;
+
+    let head = get_perspective_head(&internal_address)?;
+    let name = get_perspective_name(&internal_address)?;
+    let context = context::get_perspective_context(&internal_address)?;
 
     Ok(PerspectiveDetails {
         head,
@@ -24,14 +29,19 @@ pub fn update_perspective_details(
     perspective_address: Address,
     details: PerspectiveDetails,
 ) -> ZomeApiResult<()> {
+    let internal_address = match proxy::internal_address(&perspective_address)? {
+        Some(address) => Ok(address),
+        None => Err(ZomeApiError::from(String::from("Could not find given perspective")))
+    }?;
+
     if let Some(head_address) = details.head {
-        update_perspective_head(&perspective_address, &head_address)?;
+        update_perspective_head(&internal_address, &head_address)?;
     }
     if let Some(context) = details.context {
-        context::update_perspective_context(&perspective_address, context)?;
+        context::update_perspective_context(&internal_address, context)?;
     }
     if let Some(name) = details.name {
-        update_perspective_name(&perspective_address, name)?;
+        update_perspective_name(&internal_address, name)?;
     }
 
     Ok(())

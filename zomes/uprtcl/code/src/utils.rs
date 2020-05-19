@@ -1,31 +1,14 @@
 use hdk::DNA_ADDRESS;
-use crate::proof::Secured;
+use crate::{proxy, proof::Secured};
 use hdk::{
-    error::{ZomeApiError, ZomeApiResult},
+    error::{ZomeApiResult},
     holochain_core_types::link::LinkMatch,
     holochain_persistence_api::cas::content::Address,
-    PUBLIC_TOKEN,
 };
 use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
-use std::convert::{From,TryInto};
+use std::convert::{From};
 
 /** Proxy handlers */
-
-pub fn set_entry_proxy(
-    proxy_address: Option<Address>,
-    entry_address: Option<Address>,
-) -> ZomeApiResult<()> {
-    let response = hdk::call(
-        hdk::THIS_INSTANCE,
-        "proxy",
-        Address::from(PUBLIC_TOKEN.to_string()),
-        "set_entry_proxy",
-        json!({"proxy_address": proxy_address, "entry_address": entry_address}).into(),
-    )?;
-    let _result: ZomeApiResult<Option<Address>> = response.try_into()?;
-    _result?;
-    Ok(())
-}
 
 pub fn clone_entry<S, T>(previous_address: Option<Address>, entry: T) -> ZomeApiResult<Address>
 where
@@ -33,7 +16,9 @@ where
 {
     let entry_address = hdk::commit_entry(&entry.entry())?;
 
-    set_entry_proxy(previous_address, Some(entry_address.clone()))?;
+    if let Some(proxy_address) = previous_address {   
+        proxy::set_entry_proxy(&proxy_address, &entry_address)?;
+    }
 
     Ok(entry_address)
 }
@@ -44,8 +29,6 @@ where
 {
     let entry_address = hdk::commit_entry(&secured.entry())?;
 
-    set_entry_proxy(None, Some(entry_address.clone()))?;
-
     Ok(entry_address)
 }
 
@@ -53,23 +36,6 @@ pub fn get_cas_id() -> String {
     String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
 }
 
-pub fn get_internal_address(address: Address) -> ZomeApiResult<Address> {
-    let response = hdk::call(
-        hdk::THIS_INSTANCE,
-        "proxy",
-        Address::from(PUBLIC_TOKEN.to_string()),
-        "get_internal_address",
-        json!({ "proxy_address": address }).into(),
-    )?;
-    let result: ZomeApiResult<Option<Address>> = response.try_into()?;
-    match result? {
-        Some(internal_address) => Ok(internal_address),
-        None => Err(ZomeApiError::from(format!(
-            "entry with hash {} does not exist",
-            address
-        ))),
-    }
-}
 
 pub fn remove_previous_links(
     base_address: &Address,

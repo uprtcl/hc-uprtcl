@@ -6,7 +6,6 @@ extern crate hdk_proc_macros;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate serde_json;
 #[macro_use]
 extern crate holochain_json_derive;
@@ -24,6 +23,7 @@ pub mod perspective_details;
 pub mod proof;
 pub mod proxy;
 pub mod utils;
+pub mod data;
 pub mod versioned_tags;
 
 #[zome]
@@ -49,6 +49,11 @@ mod uprtcl {
     }
 
     #[entry_def]
+    fn data_entry_def() -> ValidatingEntryType {
+        data::definition()
+    }
+
+    #[entry_def]
     fn commit_entry_def() -> ValidatingEntryType {
         commit::definition()
     }
@@ -64,6 +69,11 @@ mod uprtcl {
     }
 
     // Create entries
+
+    #[zome_fn("hc_public")]
+    fn create_data(data: JsonString) -> ZomeApiResult<Address> {
+        data::create_data(data)
+    }
 
     #[zome_fn("hc_public")]
     fn create_commit(
@@ -102,7 +112,10 @@ mod uprtcl {
 
     #[zome_fn("hc_public")]
     fn get_entry(entry_address: Address) -> ZomeApiResult<Option<Entry>> {
-        hdk::get_entry_initial(&entry_address)
+        match proxy::internal_address(&entry_address)? {
+            Some(internal_address) => hdk::get_entry_initial(&internal_address),
+            None => Ok(None)
+        }
     }
 
     #[zome_fn("hc_public")]
