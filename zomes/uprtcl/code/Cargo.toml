@@ -13,6 +13,10 @@ hdk_proc_macros = "=0.0.48-alpha1"
 holochain_wasm_utils = "=0.0.48-alpha1"
 holochain_json_derive = "^0.0"
 holochain_anchors = { git = "https://github.com/guillemcordoba/holochain-anchors" }
+multihash = "*"
+multibase = "=0.6.0"
+serde_cbor = "0.10"
+cid = "*"
 
 [lib]
 path = "src/lib.rs"

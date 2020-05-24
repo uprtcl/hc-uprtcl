@@ -1,12 +1,11 @@
+use crate::{proof::Secured, proxy};
 use hdk::DNA_ADDRESS;
-use crate::{proxy, proof::Secured};
 use hdk::{
-    error::{ZomeApiResult},
-    holochain_core_types::link::LinkMatch,
+    error::ZomeApiResult, holochain_core_types::link::LinkMatch,
     holochain_persistence_api::cas::content::Address,
 };
 use holochain_wasm_utils::api_serialization::get_links::GetLinksResult;
-use std::convert::{From};
+use std::convert::From;
 
 /** Proxy handlers */
 
@@ -14,11 +13,10 @@ pub fn clone_entry<S, T>(previous_address: Option<Address>, entry: T) -> ZomeApi
 where
     T: Secured<S>,
 {
-    let entry_address = hdk::commit_entry(&entry.entry())?;
+    let entry = entry.entry();
+    let entry_address = hdk::commit_entry(&entry)?;
 
-    if let Some(proxy_address) = previous_address {   
-        proxy::set_entry_proxy(&proxy_address, &entry_address)?;
-    }
+    proxy::set_entry_proxy(&entry, &previous_address)?;
 
     Ok(entry_address)
 }
@@ -35,7 +33,6 @@ where
 pub fn get_cas_id() -> String {
     String::from("holochain://") + &String::from(DNA_ADDRESS.to_owned())
 }
-
 
 pub fn remove_previous_links(
     base_address: &Address,

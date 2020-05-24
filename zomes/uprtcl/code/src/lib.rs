@@ -10,6 +10,9 @@ extern crate serde_json;
 #[macro_use]
 extern crate holochain_json_derive;
 extern crate holochain_anchors;
+extern crate multihash;
+extern crate multibase;
+extern crate serde_cbor;
 
 use hdk::holochain_persistence_api::cas::content::Address;
 use hdk::prelude::*;
@@ -68,11 +71,16 @@ mod uprtcl {
         Ok(utils::get_cas_id())
     }
 
+    #[zome_fn("hc_public")]
+    fn get_my_address() -> ZomeApiResult<Address> {
+        Ok(hdk::AGENT_ADDRESS.clone())
+    }
+
     // Create entries
 
     #[zome_fn("hc_public")]
-    fn create_data(data: JsonString) -> ZomeApiResult<Address> {
-        data::create_data(data)
+    fn create_data(data: JsonString, proxy_address: Option<Address>) -> ZomeApiResult<Address> {
+        data::create_data(data, proxy_address)
     }
 
     #[zome_fn("hc_public")]

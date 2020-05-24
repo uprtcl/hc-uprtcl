@@ -122,7 +122,7 @@ pub fn definition() -> ValidatingEntryType {
             ),
             from!(
                 holochain_anchors::ANCHOR_TYPE,
-                link_type: "proxy",
+                link_type: "proxy->perspective",
                 validation_package: || {
                     hdk::ValidationPackageDefinition::Entry
                 },
