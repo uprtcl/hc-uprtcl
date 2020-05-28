@@ -37,7 +37,6 @@ pub fn set_entry_proxy(entry: &Entry, proxied_address: &Option<Address>) -> Zome
 }
 
 fn get_raw_multihash(content: JsonString) -> ZomeApiResult<Address> {
-    hdk::debug(format!("hohoho {:?}", content.to_string().as_str()))?;
     let hashable: serde_json::Value = match serde_json::from_str(content.to_string().as_str()) {
         Ok(value) => Ok(value),
         Err(e) => Err(ZomeApiError::from(format!(
