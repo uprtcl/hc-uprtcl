@@ -1,3 +1,8 @@
 dist
 test
 README.md
+example-dna
+LICENSE
+target
+config.nix
+default.nix

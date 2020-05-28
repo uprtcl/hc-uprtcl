@@ -4,7 +4,7 @@ Implementation of a [_Prtcl](https://uprtcl.io) provider for Holochain.
 
 This is a new version control protocol that aims to provide the same potential that Git provides for source code, but as a general purpose and multiplatform protocol for all kinds of objects and applications.
 
-In the Holochain world, this project was previously known as Fractal Wiki.
+In the Holochain world, this project is a successor of the Fractal Wiki.
 
 ## FAQ
 
@@ -13,15 +13,9 @@ In the Holochain world, this project was previously known as Fractal Wiki.
  - [What is the _Prtcl technology stack?](https://github.com/uprtcl/spec/wiki/Technology-Stack)
  - [How can I integrate a Holochain application with the _Prtcl?](https://github.com/uprtcl/spec/wiki/How-can-I-integrate-the-_Prtcl-in-my-app%3F)
 
-## Overview
+## Usage
 
-This application is composed by these zomes. Whether this zomes should be organized in their own hApp will be made in the future, for now development is much easier in one repository.
-
-- **uprtcl**: contains contexts, perspectives and commits and their relationships.
-- **proxy**: contains proxy addresses to any entry, enabling linking to entries outside the hApp.
-- **discover**: contains the known sources for any proxied entry, that is the application or platform where they are stored. This enables the consuming app to know where to ask for that entry.
-- **documents**: contains simple text-node entries, documents that contain other subdocuments. 
-- **folder**: contains simple folder entries, that contain other any kind of entry.
+This is a holochain zome. To include it in your DNA, add this repository as a submodule inside the `zomes` folder in your dna.
 
 ## Status
 
@@ -31,11 +25,11 @@ This project is in active development, and in its early stages. Its intention is
 - [x] Implement clone functionality
 - [x] Implement demo content zomes compatible with the _Prtcl
 - [x] Link to entries outside the hApp (other platforms as well)
-- [x] Implement signatures inside the entries for external platforms validation
-- [ ] Implement merge request mechanism
-- [ ] Switch tests to try-o-rama
+- [x] Switch tests to try-o-rama
+- [ ] Implement signatures inside the entries for external platforms validation
+- [ ] Implement proposal mechanism
+- [ ] Implement invite to collaborate
 - [ ] Create clone tests
-- [ ] Integrate did provider to get the creatorId
 
 ## Development setup
 
@@ -47,9 +41,9 @@ $ nix-shell
 
 This will ensure you always have the appropriate version of `hc` installed.
 
-### How to build
+### How to build the example-dna
 
-In the project's root folder, run:
+In the `example-dna` folder, run:
 
 ```bash
 [nix-shell:]$ hc run
@@ -59,7 +53,7 @@ The compiled binary will be on the `dist` folder.
 
 ### How to run the tests
 
-In the project's root folder, run:
+In the `example-dna` folder, run:
 
 ```bash
 [nix-shell:]$ hc test
@@ -67,7 +61,7 @@ In the project's root folder, run:
 
 ### How to run the project
 
-In the project's root folder, run:
+In the `example-dna` folder, run:
 
 ```bash
 [nix-shell:]$ hc run
